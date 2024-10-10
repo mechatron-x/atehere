@@ -1,0 +1,49 @@
+name: containify
+
+networks:
+  backend_net:
+
+volumes:
+  pg_data:
+  log_data:
+
+services:
+  app:
+    depends_on:
+      - db
+    mem_limit: 6g
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      args:
+        ARG GOOS: linux
+        ARG GOARCH: arm64
+        ARG CGO_ENABLED: 0
+        ARG GO_VERSION: 1.23.2
+    develop:
+      watch:
+        - action: rebuild
+          path: ../
+          target: /app
+          ignore:
+            - docs/
+            - development/*
+    env_file: ".env.dev"
+    ports:
+      - 8080:8080
+    networks:
+      - backend_net
+    volumes:
+      - ./config:/app/config
+
+  db:
+    image: postgres:16-bookworm
+    env_file: ".env.dev"
+    ports:
+      - 5432:5432
+    networks:
+      - backend_net
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always

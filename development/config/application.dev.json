@@ -1,0 +1,33 @@
+{
+  "environment": "dev",
+  "logger": {
+    "level": "debug",
+    "development": true,
+    "disableCaller": false,
+    "encoding": "json",
+    "outputPaths": [
+      "stdout"
+    ],
+    "errorOutputPaths": [
+      "stderr",
+      "stdout"
+    ],
+    "encoderConfig": {
+      "messageKey": "message",
+      "levelKey": "level",
+      "levelEncoder": "lowercase"
+    }
+  },
+  "api": {
+    "version": "v1",
+    "name": "8here",
+    "host": "0.0.0.0",
+    "port": "8080"
+  },
+  "db": {
+    "driver": "postgres",
+    "dsn": "postgres://developer:postgres@db:5432/8here?sslmode=disable",
+    "timeout": "2s",
+    "tryCount": 5
+  }
+}
