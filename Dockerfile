@@ -1,0 +1,40 @@
+# Top level arguments
+ARG GO_VERSION=1.23.2
+ARG BUILD_OS=bookworm
+ARG OS=alpine:3
+
+# Build api stage
+FROM golang:${GO_VERSION}-${BUILD_OS} as build
+
+ARG GOOS=linux
+ARG GOARCH=arm64
+ARG CGO_ENABLED=0
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download && \
+    go mod tidy && \
+    go mod verify
+
+COPY . ./
+
+RUN go build -o bin/ -v -x ./cmd/8here
+
+# Publish stage
+FROM ${OS}
+
+ARG LOG_DIR=/var/log/net.codebrewlab.8here
+
+WORKDIR /app
+
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache bash docker docker-compose jq
+
+RUN mkdir -p config ${LOG_DIR} >> /dev/null
+
+COPY --from=build /app/bin ./
+
+CMD ./8here
