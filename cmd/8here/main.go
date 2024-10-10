@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/mechatron-x/8here/internal/cmdarg"
 	"github.com/mechatron-x/8here/internal/config"
 	"github.com/mechatron-x/8here/internal/httpserver"
@@ -11,19 +13,19 @@ import (
 )
 
 func main() {
-	flags, err := cmdarg.Setup()
+	flags := cmdarg.Setup()
+	conf, err := config.Load(flags.ConfPath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err.Error())
 	}
 
-	conf := config.Load(flags.ConfPath)
 	log := logger.New(conf)
 
 	db, err := sqldb.Connect(conf.DB, log)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	db.Ping()
+	_ = db.Ping()
 
 	mux := httpserver.NewServeMux([]handler.Route{}, log)
 	err = httpserver.NewHTTP(conf.Api, mux, log)
