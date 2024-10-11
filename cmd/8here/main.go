@@ -27,7 +27,13 @@ func main() {
 	}
 	_ = db.Ping()
 
-	mux := httpserver.NewServeMux([]handler.Route{}, log)
+	handlers := make([]handler.Route, 0)
+	handlers = append(
+		handlers,
+		handler.NewHealth(),
+	)
+
+	mux := httpserver.NewServeMux(handlers, log)
 	err = httpserver.NewHTTP(conf.Api, mux, log)
 	if err != nil {
 		log.Fatal("Cannot start HTTP server", zap.String("reason", err.Error()))
