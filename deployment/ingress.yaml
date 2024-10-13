@@ -9,7 +9,7 @@ metadata:
 
 spec:
   rules:
-    - host: atehere.mechatronx.net
+    - host: atehere.dorduncuboyut.media
       http:
         paths:
           - path: /api
@@ -20,4 +20,4 @@ spec:
                 port:
                   number: 80
   tls:
-    - secretName: mechatronx.net.certs
+    - secretName: dorduncuboyut.media.certs
