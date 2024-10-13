@@ -4,7 +4,7 @@ ARG BUILD_OS=bookworm
 ARG OS=alpine:3
 
 # Build api stage
-FROM golang:${GO_VERSION}-${BUILD_OS} as build
+FROM golang:${GO_VERSION}-${BUILD_OS} AS build
 
 ARG GOOS=linux
 ARG GOARCH=arm64
@@ -20,21 +20,18 @@ RUN go mod download && \
 
 COPY . ./
 
-RUN go build -o bin/ -v -x ./cmd/8here
+RUN go build -o bin/ -v -x ./cmd/atehere
 
 # Publish stage
 FROM ${OS}
 
-ARG LOG_DIR=/var/log/net.codebrewlab.8here
-
-WORKDIR /app
-
 RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache bash docker docker-compose jq
+    apk upgrade
 
-RUN mkdir -p config ${LOG_DIR} >> /dev/null
+RUN mkdir -p /etc/atehere
+
+WORKDIR /usr/local/bin
 
 COPY --from=build /app/bin ./
 
-CMD ./8here
+CMD [ "atehere" ]

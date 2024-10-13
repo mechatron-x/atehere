@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/mechatron-x/8here/internal/config"
+	"github.com/mechatron-x/atehere/internal/config"
 	"go.uber.org/zap"
 )
 

@@ -1,4 +1,4 @@
-module github.com/mechatron-x/8here
+module github.com/mechatron-x/atehere
 
 go 1.23.2
 

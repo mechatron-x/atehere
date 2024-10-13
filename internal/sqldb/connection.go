@@ -7,7 +7,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/mechatron-x/8here/internal/config"
+	"github.com/mechatron-x/atehere/internal/config"
 	"go.uber.org/zap"
 )
 
