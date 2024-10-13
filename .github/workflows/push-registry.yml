@@ -11,6 +11,13 @@ env:
 
 jobs:
   build-and-push-image:
+    strategy:
+      matrix:
+        os:
+          - linux
+        arch:
+          - arm64
+          - amd64
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -44,14 +51,11 @@ jobs:
         id: push
         uses: docker/build-push-action@v6.9.0
         with:
-          platforms: |
-            linux/amd64
-            linux/arm64
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GO_VERSION=${{ vars.GO_VERSION }}
-            GOOS=${{ runner.os }}
-            GOARCH=${{ runner.arch }}
+            GOOS=${{ matrix.os }}
+            GOARCH=${{ matrix.arch }}
