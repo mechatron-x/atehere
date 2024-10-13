@@ -6,6 +6,7 @@ on:
     branches: ["release", "master"]
 
 env:
+  GO_VERSION: 1.23.2
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -50,6 +51,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            GO_VERSION=${{ vars.GO_VERSION }}
+            GO_VERSION=${{ env.GO_VERSION }}
             GOOS=${{ matrix.os }}
             GOARCH=${{ matrix.arch }}
