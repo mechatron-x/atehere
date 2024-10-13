@@ -15,5 +15,5 @@ func (h *Health) Pattern() string {
 
 // ServeHTTP implements Route.
 func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Healthy"))
+	_, _ = w.Write([]byte("Healthy"))
 }
