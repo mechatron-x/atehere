@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: atehere-deployment
-  namespace: mechatron-x
+  namespace: dorduncuboyut
 spec:
   selector:
     matchLabels:

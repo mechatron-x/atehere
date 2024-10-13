@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: atehere-service
-  namespace: mechatron-x
+  namespace: dorduncuboyut
 spec:
   selector:
     app: atehere
