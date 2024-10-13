@@ -3,7 +3,7 @@ name: Create and Push Docker Image
 on:
   workflow_dispatch:
   push:
-    branches: ["release", "master", "dev"]
+    branches: ["release", "master"]
 
 env:
   REGISTRY: ghcr.io
