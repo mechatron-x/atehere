@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atehere-deployment
+  namespace: mechatron-x
+spec:
+  selector:
+    matchLabels:
+      app: atehere
+  template:
+    metadata:
+      labels:
+        app: atehere
+    spec:
+      containers:
+        - name: atehere
+          image: ghcr.io/mechatron-x/atehere:master
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          command: ["atehere"]
+          args: ["-c", "/etc/atehere/application.json"]
+          volumes:
+            - name: config-volume
+              configMap:
+                name: atehere-appconfig
+                items:
+                  - key: application.json
+                    path: /etc/atehere
+                ports:
+            - name: web
+              containerPort: 80
+          imagePullPolicy: Always
+
+        - name: atehere-db
+          image: postgres:17-bookworm
+          envFrom:
+            - configMapRef:
+                name: atehere-dbconfig
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          volumes:
+            - name: atehere-pg-data
+              persistentVolumeClaim:
+                claimName: atehere-pvc
+                mountPath: /var/lib/postgresql/data
+          ports:
+            - containerPort: 5432
+          imagePullPolicy: Always
