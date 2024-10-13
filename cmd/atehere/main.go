@@ -3,12 +3,12 @@ package main
 import (
 	"log"
 
-	"github.com/mechatron-x/8here/internal/cmdarg"
-	"github.com/mechatron-x/8here/internal/config"
-	"github.com/mechatron-x/8here/internal/httpserver"
-	"github.com/mechatron-x/8here/internal/httpserver/handler"
-	"github.com/mechatron-x/8here/internal/logger"
-	"github.com/mechatron-x/8here/internal/sqldb"
+	"github.com/mechatron-x/atehere/internal/cmdarg"
+	"github.com/mechatron-x/atehere/internal/config"
+	"github.com/mechatron-x/atehere/internal/httpserver"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/logger"
+	"github.com/mechatron-x/atehere/internal/sqldb"
 	"go.uber.org/zap"
 )
 

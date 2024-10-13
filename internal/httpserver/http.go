@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mechatron-x/8here/internal/config"
-	"github.com/mechatron-x/8here/internal/httpserver/handler"
-	"github.com/mechatron-x/8here/internal/httpserver/middleware"
+	"github.com/mechatron-x/atehere/internal/config"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/httpserver/middleware"
 	"go.uber.org/zap"
 )
 

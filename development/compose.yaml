@@ -1,4 +1,4 @@
-name: containify
+name: atehere
 
 networks:
   backend_net:
@@ -20,13 +20,13 @@ services:
         ARG GOARCH: arm64
         ARG CGO_ENABLED: 0
         ARG GO_VERSION: 1.23.2
+    command: ["atehere", "-c", "/etc/atehere/application.json"]
     develop:
       watch:
         - action: rebuild
           path: ../
           target: /app
           ignore:
-            - docs/
             - development/*
     env_file: ".env.dev"
     ports:
@@ -34,7 +34,7 @@ services:
     networks:
       - backend_net
     volumes:
-      - ./config:/app/config
+      - ./config:/etc/atehere
 
   db:
     image: postgres:16-bookworm
