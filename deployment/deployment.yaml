@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: atehere
-          image: ghcr.io/mechatron-x/atehere:master
+          image: ghcr.io/mechatron-x/atehere:release
           resources:
             limits:
               memory: "128Mi"

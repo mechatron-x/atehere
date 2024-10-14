@@ -3,7 +3,7 @@ name: Create and Push Docker Image
 on:
   workflow_dispatch:
   push:
-    branches: ["release", "master"]
+    branches: ["release"]
 
 env:
   GO_VERSION: 1.23.2
