@@ -18,6 +18,7 @@ jobs:
           - linux
         arch:
           - arm64
+          - amd64
     runs-on: ubuntu-latest
     permissions:
       contents: read
