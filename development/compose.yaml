@@ -16,8 +16,6 @@ services:
       context: ../
       dockerfile: Dockerfile
       args:
-        ARG GOOS: linux
-        ARG GOARCH: arm64
         ARG CGO_ENABLED: 0
         ARG GO_VERSION: 1.23.2
     command: ["atehere", "-c", "/etc/atehere/application.json"]

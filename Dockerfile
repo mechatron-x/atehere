@@ -6,8 +6,6 @@ ARG OS=alpine:3
 # Build api stage
 FROM golang:${GO_VERSION}-${BUILD_OS} AS build
 
-ARG GOOS=linux
-ARG GOARCH=arm64
 ARG CGO_ENABLED=0
 
 WORKDIR /app
