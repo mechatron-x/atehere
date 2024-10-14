@@ -18,7 +18,6 @@ jobs:
           - linux
         arch:
           - arm64
-          - amd64
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -48,9 +47,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ steps.meta.outputs.tags }}
-            ${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GO_VERSION=${{ env.GO_VERSION }}
