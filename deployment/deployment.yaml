@@ -24,8 +24,8 @@ spec:
           command: ["atehere"]
           args: ["-c", "/etc/atehere/application.json"]
           volumeMounts:
-          - name: config-volume
-            mountPath: /etc/atehere
+            - name: config-volume
+              mountPath: /etc/atehere
           ports:
             - name: web
               containerPort: 80
@@ -41,8 +41,8 @@ spec:
             - configMapRef:
                 name: atehere-dbconfig
           volumeMounts:
-          - name: pg-volume
-            mountPath: /var/lib/postgresql/data
+            - name: pg-volume
+              mountPath: /var/lib/postgresql/data
           ports:
             - containerPort: 5432
           imagePullPolicy: Always
