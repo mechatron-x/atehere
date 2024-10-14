@@ -17,7 +17,7 @@ on:
 
 jobs:
   security_checks:
-    uses: code-brew-lab/go-workflows/.github/workflows/security_checks.yml@master
+    uses: mechatron-x/go-workflows/.github/workflows/security_checks.yml@master
     with:
       go-version: ${{ vars.GO_VERSION }}
     secrets: inherit

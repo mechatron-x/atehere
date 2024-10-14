@@ -3,9 +3,10 @@ name: Create and Push Docker Image
 on:
   workflow_dispatch:
   push:
-    branches: ["release", "master"]
+    branches: ["release"]
 
 env:
+  GO_VERSION: 1.23.2
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -47,9 +48,11 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            GO_VERSION=${{ vars.GO_VERSION }}
+            GO_VERSION=${{ env.GO_VERSION }}
             GOOS=${{ matrix.os }}
             GOARCH=${{ matrix.arch }}
