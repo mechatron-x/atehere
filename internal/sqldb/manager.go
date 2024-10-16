@@ -42,7 +42,7 @@ func (dm *DbManager) Connect() error {
 		return err
 	}
 
-	if err := dm.setupMigrate(); err != nil {
+	if err := dm.setupMigration(); err != nil {
 		return err
 	}
 
@@ -82,7 +82,7 @@ func (dm *DbManager) setupConnection() error {
 	return nil
 }
 
-func (dm *DbManager) setupMigrate() error {
+func (dm *DbManager) setupMigration() error {
 	dbConf := dm.conf
 
 	db, err := sql.Open(dbConf.Driver, dbConf.DSN)
