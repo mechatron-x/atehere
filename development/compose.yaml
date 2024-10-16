@@ -33,6 +33,7 @@ services:
       - backend_net
     volumes:
       - ./config:/etc/atehere
+      - ./logs:/var/lib/atehere/logs
 
   db:
     image: postgres:16-bookworm
@@ -42,6 +43,5 @@ services:
     networks:
       - backend_net
     volumes:
-      - pg_data:/var/lib/postgresql/data
-      - ./initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - atehere_pg_data:/var/lib/postgresql/data
     restart: always
