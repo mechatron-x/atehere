@@ -26,10 +26,10 @@ FROM ${OS}
 RUN apk update && \
     apk upgrade
 
-RUN mkdir -p /etc/atehere
+RUN mkdir -p /usr/local/bin /var/lib/atehere/logs /var/lib/atehere/migrations
 
-WORKDIR /usr/local/bin
-
-COPY --from=build /app/bin ./
+COPY --from=build /app/bin /usr/local/bin
+COPY --from=build /app/db/migrations /var/lib/atehere/migrations
+COPY --from=build /app/db/queries /var/lib/atehere/queries
 
 CMD [ "atehere" ]

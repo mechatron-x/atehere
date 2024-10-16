@@ -21,11 +21,13 @@ func main() {
 
 	log := logger.New(conf)
 
-	db, err := sqldb.Connect(conf.DB, log)
-	if err != nil {
-		log.Fatal(err.Error())
+	dm := sqldb.New(conf.DB, log)
+	if err = dm.Connect(); err != nil {
+		log.Fatal("Unable to connect to the db", logger.ErrorReason(err))
 	}
-	_ = db.Ping()
+	if err = dm.MigrateUp(); err != nil {
+		log.Fatal("Unable to migrate the db", logger.ErrorReason(err))
+	}
 
 	handlers := make([]handler.Route, 0)
 	handlers = append(
