@@ -3,7 +3,6 @@ module github.com/mechatron-x/atehere
 go 1.23.2
 
 require (
-	firebase.google.com/go v3.13.0+incompatible
 	firebase.google.com/go/v4 v4.14.1
 	github.com/jackc/pgx/v5 v5.7.1
 	go.uber.org/zap v1.27.0
@@ -18,9 +17,11 @@ require (
 	cloud.google.com/go/iam v1.1.7 // indirect
 	cloud.google.com/go/longrunning v0.5.5 // indirect
 	cloud.google.com/go/storage v1.40.0 // indirect
+	github.com/MicahParks/keyfunc v1.9.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect

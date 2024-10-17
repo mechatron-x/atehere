@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	firebase "firebase.google.com/go"
-	"firebase.google.com/go/auth"
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
 	"github.com/mechatron-x/atehere/internal/config"
 	"google.golang.org/api/option"
 )
