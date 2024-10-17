@@ -4,8 +4,7 @@ networks:
   backend_net:
 
 volumes:
-  pg_data:
-  log_data:
+  atehere_pg_data:
 
 services:
   app:
