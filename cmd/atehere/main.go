@@ -8,6 +8,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/httpserver"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
 	"github.com/mechatron-x/atehere/internal/logger"
+	"github.com/mechatron-x/atehere/internal/service"
 	"github.com/mechatron-x/atehere/internal/sqldb"
 	"go.uber.org/zap"
 )
@@ -29,6 +30,11 @@ func main() {
 		log.Fatal("Unable to migrate the db", logger.ErrorReason(err))
 	}
 
+	_, err = service.NewFirebase(conf.Firebase)
+	if err != nil {
+		log.Fatal("Firebase initialization error", logger.ErrorReason(err))
+	}
+
 	handlers := make([]handler.Route, 0)
 	handlers = append(
 		handlers,
@@ -40,4 +46,5 @@ func main() {
 	if err != nil {
 		log.Fatal("Cannot start HTTP server", zap.String("reason", err.Error()))
 	}
+
 }
