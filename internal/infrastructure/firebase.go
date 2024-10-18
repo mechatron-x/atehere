@@ -1,4 +1,4 @@
-package service
+package infrastructure
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 )
 
 type (
-	Firebase struct {
+	FirebaseAuth struct {
 		app *firebase.App
 	}
 )
 
-func NewFirebase(conf config.Firebase) (*Firebase, error) {
+func NewFirebaseAuth(conf config.Firebase) (*FirebaseAuth, error) {
 	bytes, err := json.Marshal(conf)
 	if err != nil {
 		return nil, err
@@ -29,14 +29,14 @@ func NewFirebase(conf config.Firebase) (*Firebase, error) {
 		return nil, err
 	}
 
-	return &Firebase{
+	return &FirebaseAuth{
 		app: app,
 	}, nil
 
 }
 
-func (f *Firebase) VerifyUser(idToken string) (*auth.UserRecord, error) {
-	client, err := f.app.Auth(context.Background())
+func (fa *FirebaseAuth) VerifyUser(idToken string) (*auth.UserRecord, error) {
+	client, err := fa.app.Auth(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +49,8 @@ func (f *Firebase) VerifyUser(idToken string) (*auth.UserRecord, error) {
 	return client.GetUser(context.Background(), authToken.UID)
 }
 
-func (f *Firebase) RevokeRefreshTokens(idToken string) error {
-	client, err := f.app.Auth(context.Background())
+func (fa *FirebaseAuth) RevokeRefreshTokens(idToken string) error {
+	client, err := fa.app.Auth(context.Background())
 	if err != nil {
 		return err
 	}
