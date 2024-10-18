@@ -11,7 +11,7 @@ type User struct {
 	authInfrastructure port.AuthInfrastructure
 }
 
-func (us *User) SignUp(fullName string, birthDate string) (*aggregate.User, error) {
+func (us *User) SignUp(email, password, fullName, birthDate string) (*aggregate.User, error) {
 	name, err := valueobject.NewFullName(fullName)
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func (us *User) SignUp(fullName string, birthDate string) (*aggregate.User, erro
 
 	user := aggregate.NewUser(name, date)
 
-	err = us.authInfrastructure.CreateUser(user)
+	err = us.authInfrastructure.CreateUser(email, password, user)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (us *User) SignUp(fullName string, birthDate string) (*aggregate.User, erro
 	return user, nil
 }
 
-func (us *User) GetUser(idToken string) (*aggregate.User, error) {
+func (us *User) GetProfile(idToken string) (*aggregate.User, error) {
 	authUser, err := us.authInfrastructure.VerifyUser(idToken)
 	if err != nil {
 		return nil, err

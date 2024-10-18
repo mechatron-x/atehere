@@ -15,7 +15,7 @@ type (
 	}
 
 	AuthInfrastructure interface {
-		CreateUser(user *aggregate.User) error
+		CreateUser(email, password string, user *aggregate.User) error
 		RevokeRefreshTokens(idToken string) error
 		VerifyUser(idToken string) (*AuthUserRecord, error)
 	}
