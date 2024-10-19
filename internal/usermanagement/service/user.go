@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/usermanagement/port"
@@ -11,27 +12,31 @@ type User struct {
 	authInfrastructure port.AuthInfrastructure
 }
 
+const (
+	model = "user"
+)
+
 func (us *User) SignUp(email, password, fullName, birthDate string) (*aggregate.User, error) {
 	name, err := valueobject.NewFullName(fullName)
 	if err != nil {
-		return nil, err
+		return nil, core.ErrModelValidation(model, err)
 	}
 
 	date, err := valueobject.NewBirthDate(birthDate)
 	if err != nil {
-		return nil, err
+		return nil, core.ErrModelValidation(model, err)
 	}
 
 	user := aggregate.NewUser(name, date)
 
 	err = us.authInfrastructure.CreateUser(email, password, user)
 	if err != nil {
-		return nil, err
+		return nil, core.ErrModelCreation(model, err)
 	}
 
-	user, err = us.userRepository.Save(user)
+	err = us.userRepository.Save(user)
 	if err != nil {
-		return nil, err
+		return nil, core.ErrModelPersistence(model, err)
 	}
 
 	return user, nil
