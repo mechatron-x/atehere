@@ -27,7 +27,10 @@ func (us *User) SignUp(email, password, fullName, birthDate string) (*aggregate.
 		return nil, core.ErrModelValidation(model, err)
 	}
 
-	user := aggregate.NewUser(name, date)
+	user, err := aggregate.NewUser(core.NewAggregate(), name, date)
+	if err != nil {
+		return nil, core.ErrModelValidation(model, err)
+	}
 
 	err = us.authInfrastructure.CreateUser(email, password, user)
 	if err != nil {

@@ -13,7 +13,7 @@ type Aggregate struct {
 	deletedAt *time.Time
 }
 
-func DefaultAggregate() *Aggregate {
+func NewAggregate() *Aggregate {
 	return &Aggregate{
 		id:        uuid.New(),
 		createdAt: time.Now(),
@@ -22,7 +22,7 @@ func DefaultAggregate() *Aggregate {
 	}
 }
 
-func NewAggregate(id uuid.UUID, createdAt, updatedAt time.Time, deletedAt *time.Time) *Aggregate {
+func DefaultAggregate(id uuid.UUID, createdAt, updatedAt time.Time, deletedAt *time.Time) *Aggregate {
 	return &Aggregate{
 		id:        id,
 		createdAt: createdAt,
