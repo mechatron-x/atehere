@@ -22,3 +22,7 @@ func NewAge(age int) (Age, error) {
 
 	return Age(age), nil
 }
+
+func (a Age) String() string {
+	return string(a)
+}

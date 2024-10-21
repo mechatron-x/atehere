@@ -26,7 +26,15 @@ func NewBirthDate(date string) (BirthDate, error) {
 	return BirthDate{birthDate}, nil
 }
 
-func (b BirthDate) GetAge() int {
+func (b BirthDate) CalculateAge() int {
 	birthDate := b.date
 	return time.Now().Year() - birthDate.Year()
+}
+
+func (b BirthDate) Date() time.Time {
+	return b.date
+}
+
+func (b BirthDate) String() string {
+	return b.date.Format(BirthDateLayout)
 }

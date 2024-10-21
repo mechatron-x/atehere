@@ -1,7 +1,11 @@
 -- name: SaveUser :one
 INSERT INTO users (
-    id, email, full_name, created_at, updated_at
+    id, full_name, birth_date, created_at, updated_at, deleted_at
 ) VALUES (
-    $1, $2, $3, $4, $5
-) ON CONFLICT (id) DO UPDATE SET email = $2, full_name = $3, updated_at = NOW()
+    $1, $2, $3, $4, $5, $6
+) ON CONFLICT (id) DO UPDATE SET full_name = $2, birth_date = $3, updated_at = NOW()
 RETURNING *;
+
+-- name: GetUserByID :one
+SELECT * FROM users
+WHERE id=$1;

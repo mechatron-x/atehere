@@ -16,6 +16,13 @@ const (
 	model = "user"
 )
 
+func NewUser(userRepository port.UserRepository, authInfrastructure port.AuthInfrastructure) *User {
+	return &User{
+		userRepository:     userRepository,
+		authInfrastructure: authInfrastructure,
+	}
+}
+
 func (us *User) SignUp(email, password, fullName, birthDate string) (*aggregate.User, error) {
 	name, err := valueobject.NewFullName(fullName)
 	if err != nil {
@@ -27,10 +34,7 @@ func (us *User) SignUp(email, password, fullName, birthDate string) (*aggregate.
 		return nil, core.ErrModelValidation(model, err)
 	}
 
-	user, err := aggregate.NewUser(core.NewAggregate(), name, date)
-	if err != nil {
-		return nil, core.ErrModelValidation(model, err)
-	}
+	user := aggregate.NewUser(name, date)
 
 	err = us.authInfrastructure.CreateUser(email, password, user)
 	if err != nil {

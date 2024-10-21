@@ -13,8 +13,8 @@ type Aggregate struct {
 	deletedAt *time.Time
 }
 
-func NewAggregate() *Aggregate {
-	return &Aggregate{
+func NewAggregate() Aggregate {
+	return Aggregate{
 		id:        uuid.New(),
 		createdAt: time.Now(),
 		updatedAt: time.Now(),
@@ -22,8 +22,8 @@ func NewAggregate() *Aggregate {
 	}
 }
 
-func DefaultAggregate(id uuid.UUID, createdAt, updatedAt time.Time, deletedAt *time.Time) *Aggregate {
-	return &Aggregate{
+func LoadAggregate(id uuid.UUID, createdAt, updatedAt time.Time, deletedAt *time.Time) Aggregate {
+	return Aggregate{
 		id:        id,
 		createdAt: createdAt,
 		updatedAt: updatedAt,
@@ -31,38 +31,26 @@ func DefaultAggregate(id uuid.UUID, createdAt, updatedAt time.Time, deletedAt *t
 	}
 }
 
-func (a *Aggregate) GetID() uuid.UUID {
+func (a Aggregate) ID() uuid.UUID {
 	return a.id
 }
 
-func (a *Aggregate) GetCreatedAt() time.Time {
+func (a Aggregate) CreatedAt() time.Time {
 	return a.createdAt
 }
 
-func (a *Aggregate) GetUpdatedAt() time.Time {
+func (a Aggregate) UpdatedAt() time.Time {
 	return a.updatedAt
 }
 
-func (a *Aggregate) GetDeletedAt() (bool, time.Time) {
-	if a.isDeleted() {
-		return true, *a.deletedAt
+func (a Aggregate) DeletedAt() time.Time {
+	if a.IsDeleted() {
+		return *a.deletedAt
 	}
 
-	return false, time.Time{}
+	return time.Time{}
 }
 
-func (a *Aggregate) SetCreatedAt(createdAt time.Time) {
-	a.createdAt = createdAt
-}
-
-func (a *Aggregate) SetUpdatedAt(updatedAt time.Time) {
-	a.updatedAt = updatedAt
-}
-
-func (a *Aggregate) SetDeletedAt(deletedAt time.Time) {
-	a.deletedAt = &deletedAt
-}
-
-func (a *Aggregate) isDeleted() bool {
+func (a Aggregate) IsDeleted() bool {
 	return a.deletedAt != nil
 }

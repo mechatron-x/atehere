@@ -36,7 +36,7 @@ func NewHTTP(apiConf config.Api, mux *http.ServeMux, log *zap.Logger) error {
 	return srv.Serve(ln)
 }
 
-func NewServeMux(routes []handler.Route, log *zap.Logger) *http.ServeMux {
+func NewServeMux(routes []handler.Router, log *zap.Logger) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	for i := 0; i < len(routes); i++ {

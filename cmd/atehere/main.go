@@ -10,6 +10,8 @@ import (
 	"github.com/mechatron-x/atehere/internal/infrastructure"
 	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/sqldb"
+	"github.com/mechatron-x/atehere/internal/sqldb/repository"
+	"github.com/mechatron-x/atehere/internal/usermanagement/service"
 	"go.uber.org/zap"
 )
 
@@ -22,6 +24,7 @@ func main() {
 
 	log := logger.New(conf)
 
+	// DB Connection and Migrations
 	dm := sqldb.New(conf.DB, log)
 	if err = dm.Connect(); err != nil {
 		log.Fatal("Unable to connect to the db", logger.ErrorReason(err))
@@ -30,17 +33,27 @@ func main() {
 		log.Fatal("Unable to migrate the db", logger.ErrorReason(err))
 	}
 
+	// Repositories
+	userRepo := repository.NewUser(dm.DB())
+
+	// Infrastructure services
 	_, err = infrastructure.NewFirebaseAuth(conf.Firebase)
 	if err != nil {
 		log.Fatal("Firebase initialization error", logger.ErrorReason(err))
 	}
 
-	handlers := make([]handler.Route, 0)
+	// Services
+	userService := service.NewUser(userRepo, nil)
+
+	// HTTP handlers
+	handlers := make([]handler.Router, 0)
 	handlers = append(
 		handlers,
 		handler.NewHealth(),
+		handler.NewUserSignUp(*userService),
 	)
 
+	// Start HTTP server
 	mux := httpserver.NewServeMux(handlers, log)
 	err = httpserver.NewHTTP(conf.Api, mux, log)
 	if err != nil {

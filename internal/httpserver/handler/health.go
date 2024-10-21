@@ -4,16 +4,16 @@ import "net/http"
 
 type Health struct{}
 
-func NewHealth() Route {
-	return &Health{}
+func NewHealth() Router {
+	return Health{}
 }
 
-// Pattern implements Route.
-func (h *Health) Pattern() string {
+// Pattern implements Router.
+func (h Health) Pattern() string {
 	return "GET /health"
 }
 
-// ServeHTTP implements Route.
-func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP implements Router.
+func (h Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("Healthy"))
 }

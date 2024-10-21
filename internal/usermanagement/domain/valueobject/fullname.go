@@ -2,6 +2,7 @@ package valueobject
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -35,4 +36,20 @@ func NewFullName(name string) (FullName, error) {
 	}
 
 	return fullName, nil
+}
+
+func (fn FullName) FirstName() string {
+	return fn.firstName
+}
+
+func (fn FullName) MiddleName() string {
+	return fn.middleName
+}
+
+func (fn FullName) LastName() string {
+	return fn.lastName
+}
+
+func (fn FullName) String() string {
+	return fmt.Sprintf("%s %s %s", fn.firstName, fn.middleName, fn.lastName)
 }

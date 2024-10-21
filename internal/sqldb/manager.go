@@ -1,17 +1,14 @@
 package sqldb
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/pgx"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mechatron-x/atehere/internal/config"
 	"go.uber.org/zap"
 )
@@ -23,7 +20,7 @@ const (
 type DbManager struct {
 	conf    config.DB
 	log     *zap.Logger
-	pool    *pgxpool.Pool
+	db      *sql.DB
 	migrate *migrate.Migrate
 }
 
@@ -50,6 +47,10 @@ func (dm *DbManager) Connect() error {
 	return nil
 }
 
+func (dm *DbManager) DB() *sql.DB {
+	return dm.db
+}
+
 func (dm *DbManager) MigrateUp() error {
 	err := dm.migrate.Up()
 	if err != migrate.ErrNoChange {
@@ -73,12 +74,12 @@ func (dm *DbManager) setupConnection() error {
 		timeout = defaultConnTimeout
 	}
 
-	connPool, err := connect(dbConf.DSN, dbConf.TryCount, timeout)
+	db, err := connect(dbConf.DSN, dbConf.TryCount, timeout)
 	if err != nil {
 		return err
 	}
 
-	dm.pool = connPool
+	dm.db = db
 	return nil
 }
 
@@ -90,7 +91,7 @@ func (dm *DbManager) setupMigration() error {
 		return err
 	}
 
-	driver, err := pgx.WithInstance(db, &pgx.Config{})
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return err
 	}
@@ -108,38 +109,21 @@ func (dm *DbManager) setupMigration() error {
 	return nil
 }
 
-func Connect(dbConf config.DB, log *zap.Logger) (*pgxpool.Pool, error) {
-	timeout, err := time.ParseDuration(dbConf.Timeout)
-	if err != nil {
-		log.Warn(fmt.Sprintf("Using default timeout: %s", defaultConnTimeout), zap.String("reason", err.Error()))
-		timeout = defaultConnTimeout
-	}
-
-	connPool, err := connect(dbConf.DSN, dbConf.TryCount, timeout)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Info("DB connection established", zap.String("address", dbConf.DSN))
-
-	return connPool, nil
-}
-
-func connect(dsn string, tyrCount uint, timeout time.Duration) (*pgxpool.Pool, error) {
+func connect(dsn string, tyrCount uint, timeout time.Duration) (*sql.DB, error) {
 	if tyrCount <= 0 {
 		return nil, errors.New("connection failed, all retries exhausted")
 	}
 
-	connPool, err := pgxpool.New(context.Background(), dsn)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("unable to connect to database: %v\n", err)
+		return nil, fmt.Errorf("unable to connect to database: %v", err)
 	}
 
-	err = connPool.Ping(context.Background())
+	err = db.Ping()
 	if err != nil {
 		time.Sleep(timeout)
 		return connect(dsn, tyrCount-1, timeout)
 	}
 
-	return connPool, nil
+	return db, nil
 }
