@@ -5,7 +5,7 @@ import (
 )
 
 type (
-	AuthUserRecord struct {
+	CustomerAuthRecord struct {
 		UID           string
 		Disabled      bool
 		EmailVerified bool
@@ -14,9 +14,9 @@ type (
 		PhoneNumber   string
 	}
 
-	AuthInfrastructure interface {
-		CreateUser(email, password string, user *aggregate.User) error
+	CustomerAuthenticator interface {
+		CreateUser(user *aggregate.Customer) error
 		RevokeRefreshTokens(idToken string) error
-		VerifyUser(idToken string) (*AuthUserRecord, error)
+		VerifyUser(idToken string) (*CustomerAuthRecord, error)
 	}
 )

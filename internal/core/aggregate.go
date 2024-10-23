@@ -22,28 +22,19 @@ func NewAggregate() Aggregate {
 	}
 }
 
-func LoadAggregate(id uuid.UUID, createdAt, updatedAt time.Time, deletedAt *time.Time) Aggregate {
-	return Aggregate{
-		id:        id,
-		createdAt: createdAt,
-		updatedAt: updatedAt,
-		deletedAt: deletedAt,
-	}
-}
-
-func (a Aggregate) ID() uuid.UUID {
+func (a *Aggregate) ID() uuid.UUID {
 	return a.id
 }
 
-func (a Aggregate) CreatedAt() time.Time {
+func (a *Aggregate) CreatedAt() time.Time {
 	return a.createdAt
 }
 
-func (a Aggregate) UpdatedAt() time.Time {
+func (a *Aggregate) UpdatedAt() time.Time {
 	return a.updatedAt
 }
 
-func (a Aggregate) DeletedAt() time.Time {
+func (a *Aggregate) DeletedAt() time.Time {
 	if a.IsDeleted() {
 		return *a.deletedAt
 	}
@@ -51,6 +42,22 @@ func (a Aggregate) DeletedAt() time.Time {
 	return time.Time{}
 }
 
-func (a Aggregate) IsDeleted() bool {
+func (a *Aggregate) SetID(id uuid.UUID) {
+	a.id = id
+}
+
+func (a *Aggregate) SetCreatedAt(createdAt time.Time) {
+	a.createdAt = createdAt
+}
+
+func (a *Aggregate) SetUpdatedAt(updatedAt time.Time) {
+	a.updatedAt = updatedAt
+}
+
+func (a *Aggregate) SetDeletedAt(deletedAt time.Time) {
+	a.deletedAt = &deletedAt
+}
+
+func (a *Aggregate) IsDeleted() bool {
 	return a.deletedAt != nil
 }

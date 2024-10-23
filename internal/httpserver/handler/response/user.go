@@ -1,10 +1,9 @@
 package response
 
+import "github.com/mechatron-x/atehere/internal/usermanagement/dto"
+
 type (
-	SignUpUser struct {
-		ID        string `json:"id"`
-		Email     string `json:"email"`
-		FullName  string `json:"full_name,omitempty"`
-		BirthDate string `json:"birth_date,omitempty"`
+	SignUpCustomer struct {
+		dto.CustomerSignUp
 	}
 )

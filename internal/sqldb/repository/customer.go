@@ -9,23 +9,23 @@ import (
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 )
 
-type User struct {
+type Customer struct {
 	q *query.Queries
-	m mapper.User
+	m mapper.Customer
 }
 
-func NewUser(db *sql.DB) *User {
+func NewCustomer(db *sql.DB) *Customer {
 	q := query.New(db)
 	m := mapper.NewUser()
-	return &User{
+	return &Customer{
 		q: q,
 		m: m,
 	}
 }
 
-func (u *User) Save(user *aggregate.User) error {
-	userModel := u.m.FromAggregate(user)
-	saveParams := query.SaveUserParams{
+func (c *Customer) Save(user *aggregate.Customer) error {
+	userModel := c.m.FromAggregate(user)
+	saveParams := query.SaveCustomerParams{
 		ID:        userModel.ID,
 		FullName:  userModel.FullName,
 		BirthDate: userModel.BirthDate,
@@ -34,17 +34,17 @@ func (u *User) Save(user *aggregate.User) error {
 		DeletedAt: userModel.DeletedAt,
 	}
 
-	_, err := u.q.SaveUser(context.Background(), saveParams)
+	_, err := c.q.SaveCustomer(context.Background(), saveParams)
 	return err
 }
 
-func (u *User) GetByID(id string) (*aggregate.User, error) {
-	userModel, err := u.q.GetUserByID(context.Background(), id)
+func (c *Customer) GetByID(id string) (*aggregate.Customer, error) {
+	userModel, err := c.q.GetCustomer(context.Background(), id)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := u.m.FromModel(&userModel)
+	user, err := c.m.FromModel(&userModel)
 	if err != nil {
 		return nil, err
 	}

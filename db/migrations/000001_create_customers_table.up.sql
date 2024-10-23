@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS customers (
   id CHAR(36),
   full_name VARCHAR(255) NOT NULL,
   birth_date TIMESTAMP,

@@ -8,7 +8,7 @@ import (
 	"database/sql"
 )
 
-type User struct {
+type Customer struct {
 	ID        string
 	FullName  string
 	BirthDate sql.NullTime

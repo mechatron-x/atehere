@@ -4,29 +4,27 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/sqldb/query"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 )
 
-type User struct{}
+type Customer struct{}
 
-func NewUser() User {
-	return User{}
+func NewUser() Customer {
+	return Customer{}
 }
 
-func (u User) FromModel(model *query.User) (*aggregate.User, error) {
+func (c Customer) FromModel(model *query.Customer) (*aggregate.Customer, error) {
 	id, err := uuid.Parse(model.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	root := core.LoadAggregate(
-		id,
-		model.CreatedAt.Time,
-		model.UpdatedAt.Time,
-		&model.DeletedAt.Time)
+	customer := aggregate.NewCustomer()
+	customer.SetID(id)
+	customer.SetCreatedAt(model.CreatedAt.Time)
+	customer.SetUpdatedAt(model.UpdatedAt.Time)
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
@@ -37,12 +35,14 @@ func (u User) FromModel(model *query.User) (*aggregate.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	customer.SetFullName(fullName)
+	customer.SetBirthDate(birthDate)
 
-	return aggregate.LoadUser(root, fullName, birthDate), nil
+	return customer, nil
 }
 
-func (u User) FromAggregate(user *aggregate.User) *query.User {
-	return &query.User{
+func (c Customer) FromAggregate(user *aggregate.Customer) *query.Customer {
+	return &query.Customer{
 		ID:       user.ID().String(),
 		FullName: user.FullName().String(),
 		BirthDate: sql.NullTime{

@@ -34,7 +34,7 @@ func main() {
 	}
 
 	// Repositories
-	userRepo := repository.NewUser(dm.DB())
+	userRepo := repository.NewCustomer(dm.DB())
 
 	// Infrastructure services
 	_, err = infrastructure.NewFirebaseAuth(conf.Firebase)
@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// Services
-	userService := service.NewUser(userRepo, nil)
+	userService := service.NewCustomer(userRepo, nil)
 
 	// HTTP handlers
 	handlers := make([]handler.Router, 0)
