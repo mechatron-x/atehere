@@ -24,11 +24,15 @@ func NewCustomer(userRepository port.CustomerRepository, authInfrastructure port
 	}
 }
 
-func (cs *Customer) SignUp(signUpDto dto.CustomerSignUp) (dto.CustomerSignUp, error) {
+func (cs *Customer) SignUp(customerDto dto.Customer) (dto.SignUpCustomer, error) {
+	customerSignUpDto := dto.SignUpCustomer{
+		DateFormat: valueobject.BirthDateLayoutANSIC,
+		Genders:    valueobject.GetGenders(),
+	}
 
-	customer, err := cs.validateSignUpDto(signUpDto)
+	customer, err := cs.validateSignUpDto(customerDto)
 	if err != nil {
-		return dto.CustomerSignUp{}, core.ErrModelValidation(model, err)
+		return customerSignUpDto, core.ErrModelValidation(model, err)
 	}
 
 	// err = cs.authInfrastructure.CreateUser(user)
@@ -38,19 +42,21 @@ func (cs *Customer) SignUp(signUpDto dto.CustomerSignUp) (dto.CustomerSignUp, er
 
 	err = cs.userRepository.Save(customer)
 	if err != nil {
-		return dto.CustomerSignUp{}, core.ErrModelPersistence(model, err)
+		return customerSignUpDto, core.ErrModelPersistence(model, err)
 	}
 
-	return dto.CustomerSignUp{
+	customerSignUpDto.Customer = dto.Customer{
 		ID:        customer.ID().String(),
 		Email:     customer.Email().String(),
 		FullName:  customer.FullName().String(),
 		Gender:    customer.Gender().String(),
 		BirthDate: customer.BirthDate().String(),
-	}, nil
+	}
+
+	return customerSignUpDto, nil
 }
 
-func (cs *Customer) validateSignUpDto(signUpDto dto.CustomerSignUp) (*aggregate.Customer, error) {
+func (cs *Customer) validateSignUpDto(signUpDto dto.Customer) (*aggregate.Customer, error) {
 	verifiedEmail, err := valueobject.NewEmail(signUpDto.Email)
 	if err != nil {
 		return nil, err

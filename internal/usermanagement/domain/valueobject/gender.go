@@ -27,6 +27,15 @@ func ParseGender(gender string) Gender {
 	}
 }
 
+func GetGenders() []string {
+	return []string{
+		Undefined.String(),
+		Male.String(),
+		Female.String(),
+		Other.String(),
+	}
+}
+
 func (g Gender) String() string {
 	switch g {
 	case 1:

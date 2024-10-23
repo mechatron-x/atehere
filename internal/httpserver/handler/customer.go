@@ -31,13 +31,13 @@ func (u CustomerSignUp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	customer, err := u.cs.SignUp(reqBody.CustomerSignUp)
+	customer, err := u.cs.SignUp(reqBody.Customer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	userResponse := response.SignUpCustomer{CustomerSignUp: customer}
+	resp := response.SignUpCustomer{SignUpCustomer: customer}
 
-	response.Encode(w, userResponse, http.StatusCreated)
+	response.Encode(w, resp, http.StatusCreated)
 }

@@ -10,7 +10,8 @@ type BirthDate struct {
 }
 
 const (
-	BirthDateLayout = "02-01-2006" // dd-mm-yyyy
+	BirthDateLayout      = "02-01-2006" // dd-mm-yyyy
+	BirthDateLayoutANSIC = "dd-mm-yyyy"
 )
 
 func NewBirthDate(date string) (BirthDate, error) {
