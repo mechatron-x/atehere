@@ -24,7 +24,7 @@ func NewCustomer(userRepository port.CustomerRepository, authInfrastructure port
 	}
 }
 
-func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.SignUpCustomer, core.DomainError) {
+func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, core.DomainError) {
 	customer, err := cs.validateSignUpDto(customerDto)
 	if err != nil {
 		return nil, core.NewValidationError(context, err)
@@ -39,24 +39,20 @@ func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.SignUpCustomer, core.
 		return nil, core.NewConflictError(context, err)
 	}
 
-	err = cs.customerRepo.Save(customer)
+	savedCustomer, err := cs.customerRepo.Save(customer)
 	if err != nil {
 		return nil, core.NewPersistenceError(context, err)
 	}
 
-	customerSignUpDto := &dto.SignUpCustomer{
-		DateFormat: valueobject.BirthDateLayoutANSIC,
-		Genders:    valueobject.GetGenders(),
-		Customer: dto.Customer{
-			ID:        customer.ID().String(),
-			Email:     customer.Email().String(),
-			FullName:  customer.FullName().String(),
-			Gender:    customer.Gender().String(),
-			BirthDate: customer.BirthDate().String(),
-		},
-	}
+	savedCustomer.SetEmail(customer.Email())
 
-	return customerSignUpDto, nil
+	return &dto.Customer{
+		ID:        savedCustomer.ID().String(),
+		Email:     savedCustomer.Email().String(),
+		FullName:  savedCustomer.FullName().String(),
+		Gender:    savedCustomer.Gender().String(),
+		BirthDate: savedCustomer.BirthDate().String(),
+	}, nil
 }
 
 func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, error) {

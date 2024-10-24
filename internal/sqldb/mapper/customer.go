@@ -11,11 +11,11 @@ import (
 
 type Customer struct{}
 
-func NewUser() Customer {
+func NewCustomer() Customer {
 	return Customer{}
 }
 
-func (c Customer) FromModel(model *dal.Customer) (*aggregate.Customer, error) {
+func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
 	id, err := uuid.Parse(model.ID)
 	if err != nil {
 		return nil, err
@@ -31,20 +31,25 @@ func (c Customer) FromModel(model *dal.Customer) (*aggregate.Customer, error) {
 		return nil, err
 	}
 
+	gender := valueobject.ParseGender(model.Gender)
+
 	birthDate, err := valueobject.NewBirthDate(model.BirthDate.Time.Format(valueobject.BirthDateLayout))
 	if err != nil {
 		return nil, err
 	}
+
 	customer.SetFullName(fullName)
+	customer.SetGender(gender)
 	customer.SetBirthDate(birthDate)
 
 	return customer, nil
 }
 
-func (c Customer) FromAggregate(user *aggregate.Customer) *dal.Customer {
-	return &dal.Customer{
+func (c Customer) FromAggregate(user *aggregate.Customer) dal.Customer {
+	return dal.Customer{
 		ID:       user.ID().String(),
 		FullName: user.FullName().String(),
+		Gender:   user.Gender().String(),
 		BirthDate: sql.NullTime{
 			Time:  user.BirthDate().Date(),
 			Valid: true,

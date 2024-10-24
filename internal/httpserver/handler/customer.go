@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
@@ -48,13 +47,12 @@ func (u CustomerSignUp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	customer, err := u.cs.SignUp(reqBody.Customer)
-	fmt.Println(err)
 	if err != nil {
 		errorHandler(w, err)
 		return
 	}
 
-	resp := response.SignUpCustomer{SignUpCustomer: customer}
+	resp := response.SignUpCustomer{Customer: customer}
 
 	response.Encode(w, resp, http.StatusCreated)
 }

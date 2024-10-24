@@ -11,6 +11,7 @@ import (
 type Customer struct {
 	ID        string
 	FullName  string
+	Gender    string
 	BirthDate sql.NullTime
 	CreatedAt sql.NullTime
 	UpdatedAt sql.NullTime

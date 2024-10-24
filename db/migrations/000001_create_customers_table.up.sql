@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS customers (
   id CHAR(36),
   full_name VARCHAR(255) NOT NULL,
+  gender VARCHAR(50) NOT NULL,
   birth_date TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),

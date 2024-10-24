@@ -11,7 +11,7 @@ import (
 )
 
 const getCustomer = `-- name: GetCustomer :one
-SELECT id, full_name, birth_date, created_at, updated_at, deleted_at FROM customers
+SELECT id, full_name, gender, birth_date, created_at, updated_at, deleted_at FROM customers
 WHERE id=$1
 `
 
@@ -21,6 +21,7 @@ func (q *Queries) GetCustomer(ctx context.Context, id string) (Customer, error) 
 	err := row.Scan(
 		&i.ID,
 		&i.FullName,
+		&i.Gender,
 		&i.BirthDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -31,16 +32,17 @@ func (q *Queries) GetCustomer(ctx context.Context, id string) (Customer, error) 
 
 const saveCustomer = `-- name: SaveCustomer :one
 INSERT INTO customers (
-    id, full_name, birth_date, created_at, updated_at, deleted_at
+    id, full_name, gender, birth_date, created_at, updated_at, deleted_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
-) ON CONFLICT (id) DO UPDATE SET full_name = $2, birth_date = $3, updated_at = NOW()
-RETURNING id, full_name, birth_date, created_at, updated_at, deleted_at
+    $1, $2, $3, $4, $5, $6, $7
+) ON CONFLICT (id) DO UPDATE SET full_name = $2,gender = $3 ,birth_date = $4, updated_at = NOW()
+RETURNING id, full_name, gender, birth_date, created_at, updated_at, deleted_at
 `
 
 type SaveCustomerParams struct {
 	ID        string
 	FullName  string
+	Gender    string
 	BirthDate sql.NullTime
 	CreatedAt sql.NullTime
 	UpdatedAt sql.NullTime
@@ -51,6 +53,7 @@ func (q *Queries) SaveCustomer(ctx context.Context, arg SaveCustomerParams) (Cus
 	row := q.db.QueryRowContext(ctx, saveCustomer,
 		arg.ID,
 		arg.FullName,
+		arg.Gender,
 		arg.BirthDate,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -60,6 +63,7 @@ func (q *Queries) SaveCustomer(ctx context.Context, arg SaveCustomerParams) (Cus
 	err := row.Scan(
 		&i.ID,
 		&i.FullName,
+		&i.Gender,
 		&i.BirthDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
