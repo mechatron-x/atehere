@@ -25,11 +25,6 @@ func NewCustomer(userRepository port.CustomerRepository, authInfrastructure port
 }
 
 func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.SignUpCustomer, core.DomainError) {
-	customerSignUpDto := &dto.SignUpCustomer{
-		DateFormat: valueobject.BirthDateLayoutANSIC,
-		Genders:    valueobject.GetGenders(),
-	}
-
 	customer, err := cs.validateSignUpDto(customerDto)
 	if err != nil {
 		return nil, core.NewValidationError(context, err)
@@ -49,15 +44,51 @@ func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.SignUpCustomer, core.
 		return nil, core.NewPersistenceError(context, err)
 	}
 
-	customerSignUpDto.Customer = dto.Customer{
-		ID:        customer.ID().String(),
-		Email:     customer.Email().String(),
-		FullName:  customer.FullName().String(),
-		Gender:    customer.Gender().String(),
-		BirthDate: customer.BirthDate().String(),
+	customerSignUpDto := &dto.SignUpCustomer{
+		DateFormat: valueobject.BirthDateLayoutANSIC,
+		Genders:    valueobject.GetGenders(),
+		Customer: dto.Customer{
+			ID:        customer.ID().String(),
+			Email:     customer.Email().String(),
+			FullName:  customer.FullName().String(),
+			Gender:    customer.Gender().String(),
+			BirthDate: customer.BirthDate().String(),
+		},
 	}
 
 	return customerSignUpDto, nil
+}
+
+func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, error) {
+	authRecord, err := cs.authenticator.VerifyUser(idToken)
+	if err != nil {
+		return nil, core.NewAuthorizationError(context, err)
+	}
+
+	customer, err := cs.customerRepo.GetByID(authRecord.UID)
+	if err != nil {
+		return nil, core.NewNotFoundError(context, err)
+	}
+
+	verifiedEmail, err := valueobject.NewEmail(authRecord.Email)
+	if err != nil {
+		return nil, core.NewValidationError(context, err)
+	}
+	customer.SetEmail(verifiedEmail)
+
+	customerProfileDto := &dto.CustomerProfile{
+		DateFormat: valueobject.BirthDateLayoutANSIC,
+		Genders:    valueobject.GetGenders(),
+		Customer: dto.Customer{
+			ID:        customer.ID().String(),
+			Email:     customer.Email().String(),
+			FullName:  customer.FullName().String(),
+			Gender:    customer.Gender().String(),
+			BirthDate: customer.BirthDate().String(),
+		},
+	}
+
+	return customerProfileDto, nil
 }
 
 func (cs *Customer) validateSignUpDto(signUpDto dto.Customer) (*aggregate.Customer, error) {

@@ -14,3 +14,9 @@ type SignUpCustomer struct {
 	Genders    []string `json:"genders,omitempty"`
 	Customer   Customer `json:"customer,omitempty"`
 }
+
+type CustomerProfile struct {
+	DateFormat string   `json:"date_format,omitempty"`
+	Genders    []string `json:"genders,omitempty"`
+	Customer   Customer `json:"customer,omitempty"`
+}

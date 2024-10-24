@@ -12,13 +12,8 @@ type FullName struct {
 	lastName   string
 }
 
-const (
-	nameSeparator = " "
-)
-
 func NewFullName(name string) (FullName, error) {
-	name = strings.TrimSpace(name)
-	splitName := strings.Split(name, nameSeparator)
+	splitName := strings.Fields(name)
 	if len(splitName) == 0 {
 		return FullName{}, errors.New("name should not be empty")
 	}

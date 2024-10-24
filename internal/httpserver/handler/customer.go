@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/request"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
 	"github.com/mechatron-x/atehere/internal/usermanagement/service"
@@ -11,18 +12,32 @@ import (
 
 type (
 	CustomerSignUp struct {
-		cs service.Customer
+		cs *service.Customer
+	}
+
+	CustomerProfile struct {
+		cs *service.Customer
 	}
 )
 
-func NewUserSignUp(customerService service.Customer) CustomerSignUp {
+func NewCustomerSignUp(customerService *service.Customer) CustomerSignUp {
 	return CustomerSignUp{
+		cs: customerService,
+	}
+}
+
+func NewCustomerProfile(customerService *service.Customer) CustomerProfile {
+	return CustomerProfile{
 		cs: customerService,
 	}
 }
 
 func (u CustomerSignUp) Pattern() string {
 	return "POST /api/v1/customer/auth"
+}
+
+func (p CustomerProfile) Pattern() string {
+	return "GET /api/v1/customer/profile"
 }
 
 func (u CustomerSignUp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -42,4 +57,22 @@ func (u CustomerSignUp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp := response.SignUpCustomer{SignUpCustomer: customer}
 
 	response.Encode(w, resp, http.StatusCreated)
+}
+
+func (p CustomerProfile) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		errorHandler(w, err)
+		return
+	}
+
+	customerProfile, err := p.cs.GetProfile(token)
+	if err != nil {
+		errorHandler(w, err)
+		return
+	}
+
+	resp := response.CustomerProfile{CustomerProfile: customerProfile}
+
+	response.Encode(w, resp, http.StatusOK)
 }

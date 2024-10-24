@@ -6,4 +6,8 @@ type (
 	SignUpCustomer struct {
 		*dto.SignUpCustomer
 	}
+
+	CustomerProfile struct {
+		*dto.CustomerProfile
+	}
 )
