@@ -11,12 +11,12 @@ import (
 )
 
 type (
-	FirebaseAuth struct {
+	FirebaseAuthenticator struct {
 		app *firebase.App
 	}
 )
 
-func NewFirebaseAuth(conf config.Firebase) (*FirebaseAuth, error) {
+func NewFirebaseAuthenticator(conf config.Firebase) (*FirebaseAuthenticator, error) {
 	bytes, err := json.Marshal(conf)
 	if err != nil {
 		return nil, err
@@ -29,13 +29,13 @@ func NewFirebaseAuth(conf config.Firebase) (*FirebaseAuth, error) {
 		return nil, err
 	}
 
-	return &FirebaseAuth{
+	return &FirebaseAuthenticator{
 		app: app,
 	}, nil
 
 }
 
-func (fa *FirebaseAuth) VerifyUser(idToken string) (*auth.UserRecord, error) {
+func (fa *FirebaseAuthenticator) VerifyUser(idToken string) (*auth.UserRecord, error) {
 	client, err := fa.app.Auth(context.Background())
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (fa *FirebaseAuth) VerifyUser(idToken string) (*auth.UserRecord, error) {
 	return client.GetUser(context.Background(), authToken.UID)
 }
 
-func (fa *FirebaseAuth) RevokeRefreshTokens(idToken string) error {
+func (fa *FirebaseAuthenticator) RevokeRefreshTokens(idToken string) error {
 	client, err := fa.app.Auth(context.Background())
 	if err != nil {
 		return err

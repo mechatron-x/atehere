@@ -9,40 +9,40 @@ import (
 )
 
 type Customer struct {
-	userRepository     port.CustomerRepository
-	authInfrastructure port.CustomerAuthenticator
+	customerRepo port.CustomerRepository
+	customerAuth port.CustomerAuthenticator
 }
 
 const (
-	model = "customer"
+	context = "service.Customer"
 )
 
 func NewCustomer(userRepository port.CustomerRepository, authInfrastructure port.CustomerAuthenticator) *Customer {
 	return &Customer{
-		userRepository:     userRepository,
-		authInfrastructure: authInfrastructure,
+		customerRepo: userRepository,
+		customerAuth: authInfrastructure,
 	}
 }
 
-func (cs *Customer) SignUp(customerDto dto.Customer) (dto.SignUpCustomer, error) {
-	customerSignUpDto := dto.SignUpCustomer{
+func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.SignUpCustomer, core.DomainError) {
+	customerSignUpDto := &dto.SignUpCustomer{
 		DateFormat: valueobject.BirthDateLayoutANSIC,
 		Genders:    valueobject.GetGenders(),
 	}
 
 	customer, err := cs.validateSignUpDto(customerDto)
 	if err != nil {
-		return customerSignUpDto, core.ErrModelValidation(model, err)
+		return nil, core.NewValidationError(context, err)
 	}
 
-	// err = cs.authInfrastructure.CreateUser(user)
+	// err = cs.customerAuth.CreateUser(customer)
 	// if err != nil {
 	// 	return nil, core.ErrModelCreation(model, err)
 	// }
 
-	err = cs.userRepository.Save(customer)
+	err = cs.customerRepo.Save(customer)
 	if err != nil {
-		return customerSignUpDto, core.ErrModelPersistence(model, err)
+		return nil, core.NewPersistenceError(context, err)
 	}
 
 	customerSignUpDto.Customer = dto.Customer{
