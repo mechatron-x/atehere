@@ -26,11 +26,14 @@ func errorHandler(w http.ResponseWriter, err error) {
 
 	var validationErr *core.ValidationError
 	var persistenceErr *core.PersistenceError
+	var conflictErr *core.ConflictError
 
 	if errors.As(domainErr, &validationErr) {
 		code = http.StatusBadRequest
 	} else if errors.As(domainErr, &persistenceErr) {
 		code = http.StatusInternalServerError
+	} else if errors.As(domainErr, &conflictErr) {
+		code = http.StatusConflict
 	}
 
 	responseErr := &response.Error{

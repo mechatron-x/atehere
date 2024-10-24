@@ -9,18 +9,18 @@ import (
 )
 
 type Customer struct {
-	customerRepo port.CustomerRepository
-	customerAuth port.CustomerAuthenticator
+	customerRepo  port.CustomerRepository
+	authenticator port.Authenticator
 }
 
 const (
 	context = "service.Customer"
 )
 
-func NewCustomer(userRepository port.CustomerRepository, authInfrastructure port.CustomerAuthenticator) *Customer {
+func NewCustomer(userRepository port.CustomerRepository, authInfrastructure port.Authenticator) *Customer {
 	return &Customer{
-		customerRepo: userRepository,
-		customerAuth: authInfrastructure,
+		customerRepo:  userRepository,
+		authenticator: authInfrastructure,
 	}
 }
 
@@ -35,10 +35,14 @@ func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.SignUpCustomer, core.
 		return nil, core.NewValidationError(context, err)
 	}
 
-	// err = cs.customerAuth.CreateUser(customer)
-	// if err != nil {
-	// 	return nil, core.ErrModelCreation(model, err)
-	// }
+	err = cs.authenticator.CreateUser(
+		customer.ID().String(),
+		customer.Email().String(),
+		customer.Password().String(),
+	)
+	if err != nil {
+		return nil, core.NewConflictError(context, err)
+	}
 
 	err = cs.customerRepo.Save(customer)
 	if err != nil {

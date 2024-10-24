@@ -21,6 +21,11 @@ type (
 		context string
 		reason  error
 	}
+
+	ConflictError struct {
+		context string
+		reason  error
+	}
 )
 
 func NewValidationError(context string, reason error) *ValidationError {
@@ -51,4 +56,19 @@ func (v *PersistenceError) Error() string {
 
 func (v *PersistenceError) Reason() error {
 	return v.reason
+}
+
+func NewConflictError(context string, reason error) *ConflictError {
+	return &ConflictError{
+		context: context,
+		reason:  reason,
+	}
+}
+
+func (c *ConflictError) Error() string {
+	return fmt.Sprintf("%s: %s", c.context, c.reason)
+}
+
+func (c *ConflictError) Reason() error {
+	return c.reason
 }

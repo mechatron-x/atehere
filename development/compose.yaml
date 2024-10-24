@@ -4,7 +4,7 @@ networks:
   backend_net:
 
 volumes:
-  atehere_pg_data:
+  pg_data:
 
 services:
   app:
@@ -42,5 +42,5 @@ services:
     networks:
       - backend_net
     volumes:
-      - atehere_pg_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     restart: always

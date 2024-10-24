@@ -1,11 +1,7 @@
 package port
 
-import (
-	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
-)
-
 type (
-	CustomerAuthRecord struct {
+	AuthRecord struct {
 		UID           string
 		Disabled      bool
 		EmailVerified bool
@@ -14,9 +10,9 @@ type (
 		PhoneNumber   string
 	}
 
-	CustomerAuthenticator interface {
-		CreateUser(user *aggregate.Customer) error
+	Authenticator interface {
+		CreateUser(id, email, password string) error
 		RevokeRefreshTokens(idToken string) error
-		VerifyUser(idToken string) (*CustomerAuthRecord, error)
+		VerifyUser(idToken string) (*AuthRecord, error)
 	}
 )

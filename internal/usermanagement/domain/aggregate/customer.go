@@ -24,6 +24,10 @@ func (c *Customer) Email() valueobject.Email {
 	return c.email
 }
 
+func (c *Customer) Password() valueobject.Password {
+	return c.password
+}
+
 func (c *Customer) FullName() valueobject.FullName {
 	return c.fullName
 }

@@ -7,6 +7,7 @@ import (
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"github.com/mechatron-x/atehere/internal/config"
+	"github.com/mechatron-x/atehere/internal/usermanagement/port"
 	"google.golang.org/api/option"
 )
 
@@ -35,7 +36,23 @@ func NewFirebaseAuthenticator(conf config.Firebase) (*FirebaseAuthenticator, err
 
 }
 
-func (fa *FirebaseAuthenticator) VerifyUser(idToken string) (*auth.UserRecord, error) {
+func (fa *FirebaseAuthenticator) CreateUser(id, email, password string) error {
+	client, err := fa.app.Auth(context.Background())
+	if err != nil {
+		return err
+	}
+
+	user := &auth.UserToCreate{}
+	user.UID(id)
+	user.Email(email)
+	user.Password(password)
+
+	_, err = client.CreateUser(context.Background(), user)
+
+	return err
+}
+
+func (fa *FirebaseAuthenticator) VerifyUser(idToken string) (*port.AuthRecord, error) {
 	client, err := fa.app.Auth(context.Background())
 	if err != nil {
 		return nil, err
@@ -46,7 +63,18 @@ func (fa *FirebaseAuthenticator) VerifyUser(idToken string) (*auth.UserRecord, e
 		return nil, err
 	}
 
-	return client.GetUser(context.Background(), authToken.UID)
+	record, err := client.GetUser(context.Background(), authToken.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &port.AuthRecord{
+		UID:           record.UID,
+		Disabled:      record.Disabled,
+		EmailVerified: record.EmailVerified,
+		Email:         record.Email,
+		PhoneNumber:   record.PhoneNumber,
+	}, nil
 }
 
 func (fa *FirebaseAuthenticator) RevokeRefreshTokens(idToken string) error {
