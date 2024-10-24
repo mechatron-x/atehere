@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/mechatron-x/atehere/internal/sqldb/query"
+	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 )
@@ -15,7 +15,7 @@ func NewUser() Customer {
 	return Customer{}
 }
 
-func (c Customer) FromModel(model *query.Customer) (*aggregate.Customer, error) {
+func (c Customer) FromModel(model *dal.Customer) (*aggregate.Customer, error) {
 	id, err := uuid.Parse(model.ID)
 	if err != nil {
 		return nil, err
@@ -41,8 +41,8 @@ func (c Customer) FromModel(model *query.Customer) (*aggregate.Customer, error) 
 	return customer, nil
 }
 
-func (c Customer) FromAggregate(user *aggregate.Customer) *query.Customer {
-	return &query.Customer{
+func (c Customer) FromAggregate(user *aggregate.Customer) *dal.Customer {
+	return &dal.Customer{
 		ID:       user.ID().String(),
 		FullName: user.FullName().String(),
 		BirthDate: sql.NullTime{

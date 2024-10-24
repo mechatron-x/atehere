@@ -3,7 +3,7 @@
 //   sqlc v1.27.0
 // source: customer.sql
 
-package query
+package dal
 
 import (
 	"context"

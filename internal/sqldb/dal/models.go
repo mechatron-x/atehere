@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.27.0
 
-package query
+package dal
 
 import (
 	"database/sql"

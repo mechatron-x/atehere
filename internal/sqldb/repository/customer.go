@@ -4,18 +4,18 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
-	"github.com/mechatron-x/atehere/internal/sqldb/query"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 )
 
 type Customer struct {
-	q *query.Queries
+	q *dal.Queries
 	m mapper.Customer
 }
 
 func NewCustomer(db *sql.DB) *Customer {
-	q := query.New(db)
+	q := dal.New(db)
 	m := mapper.NewUser()
 	return &Customer{
 		q: q,
@@ -25,7 +25,7 @@ func NewCustomer(db *sql.DB) *Customer {
 
 func (c *Customer) Save(user *aggregate.Customer) error {
 	userModel := c.m.FromAggregate(user)
-	saveParams := query.SaveCustomerParams{
+	saveParams := dal.SaveCustomerParams{
 		ID:        userModel.ID,
 		FullName:  userModel.FullName,
 		BirthDate: userModel.BirthDate,
