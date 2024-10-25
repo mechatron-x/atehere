@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
 )
 
@@ -23,6 +24,8 @@ func errorHandler(w http.ResponseWriter, err error) {
 		code = http.StatusUnauthorized
 	} else if errors.Is(err, core.ErrValidation) {
 		code = http.StatusBadRequest
+	} else if errors.Is(err, header.ErrInvalidBearerToken) {
+		code = http.StatusUnauthorized
 	}
 
 	responseErr := &response.Error{
