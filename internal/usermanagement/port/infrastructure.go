@@ -1,18 +1,17 @@
 package port
 
-type (
-	AuthRecord struct {
-		UID           string
-		Disabled      bool
-		EmailVerified bool
-		DisplayName   string
-		Email         string
-		PhoneNumber   string
-	}
+import "errors"
 
+var (
+	ErrUserUnauthorized = errors.New("user unauthorized")
+	ErrUserCreation     = errors.New("user creation failed")
+)
+
+type (
 	Authenticator interface {
 		CreateUser(id, email, password string) error
 		RevokeRefreshTokens(idToken string) error
-		VerifyUser(idToken string) (*AuthRecord, error)
+		GetUserID(idToken string) (string, error)
+		GetUserEmail(idToken string) (string, error)
 	}
 )

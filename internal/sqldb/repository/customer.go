@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
@@ -27,7 +29,7 @@ func (c *Customer) Save(customer *aggregate.Customer) (*aggregate.Customer, erro
 
 	customerModel, err := c.queries.SaveCustomer(context.Background(), saveParams)
 	if err != nil {
-		return nil, err
+		return nil, core.ErrDbConnection
 	}
 
 	return c.mapper.FromModel(customerModel)
@@ -36,13 +38,11 @@ func (c *Customer) Save(customer *aggregate.Customer) (*aggregate.Customer, erro
 func (c *Customer) GetByID(id string) (*aggregate.Customer, error) {
 	userModel, err := c.queries.GetCustomer(context.Background(), id)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, core.ErrModelNotFound
+		}
+		return nil, core.ErrDbConnection
 	}
 
-	user, err := c.mapper.FromModel(userModel)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return c.mapper.FromModel(userModel)
 }

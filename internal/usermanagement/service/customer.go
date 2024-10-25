@@ -17,7 +17,10 @@ const (
 	context = "service.Customer"
 )
 
-func NewCustomer(userRepository port.CustomerRepository, authInfrastructure port.Authenticator) *Customer {
+func NewCustomer(
+	userRepository port.CustomerRepository,
+	authInfrastructure port.Authenticator,
+) *Customer {
 	return &Customer{
 		customerRepo:  userRepository,
 		authenticator: authInfrastructure,
@@ -36,12 +39,12 @@ func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, core.Domain
 		customer.Password().String(),
 	)
 	if err != nil {
-		return nil, core.NewConflictError(context, err)
+		return nil, core.MapPortErrorToDomain(context, err)
 	}
 
 	savedCustomer, err := cs.customerRepo.Save(customer)
 	if err != nil {
-		return nil, core.NewPersistenceError(context, err)
+		return nil, core.MapPortErrorToDomain(context, err)
 	}
 
 	savedCustomer.SetEmail(customer.Email())
@@ -55,20 +58,25 @@ func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, core.Domain
 	}, nil
 }
 
-func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, error) {
-	authRecord, err := cs.authenticator.VerifyUser(idToken)
+func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, core.DomainError) {
+	uid, err := cs.authenticator.GetUserID(idToken)
 	if err != nil {
-		return nil, core.NewAuthorizationError(context, err)
+		return nil, core.MapPortErrorToDomain(context, err)
 	}
 
-	customer, err := cs.customerRepo.GetByID(authRecord.UID)
+	email, err := cs.authenticator.GetUserEmail(idToken)
 	if err != nil {
-		return nil, core.NewNotFoundError(context, err)
+		return nil, core.MapPortErrorToDomain(context, err)
 	}
 
-	verifiedEmail, err := valueobject.NewEmail(authRecord.Email)
+	customer, err := cs.customerRepo.GetByID(uid)
 	if err != nil {
-		return nil, core.NewValidationError(context, err)
+		return nil, core.MapPortErrorToDomain(context, err)
+	}
+
+	verifiedEmail, err := valueobject.NewEmail(email)
+	if err != nil {
+		return nil, core.MapPortErrorToDomain(context, err)
 	}
 	customer.SetEmail(verifiedEmail)
 

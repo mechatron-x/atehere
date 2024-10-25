@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
@@ -18,7 +19,7 @@ func NewCustomer() Customer {
 func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
 	id, err := uuid.Parse(model.ID)
 	if err != nil {
-		return nil, err
+		return nil, core.ErrModelMappingFailed
 	}
 
 	customer := aggregate.NewCustomer()
@@ -28,14 +29,14 @@ func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
-		return nil, err
+		return nil, core.ErrModelMappingFailed
 	}
 
 	gender := valueobject.ParseGender(model.Gender)
 
 	birthDate, err := valueobject.NewBirthDate(model.BirthDate.Time.Format(valueobject.BirthDateLayout))
 	if err != nil {
-		return nil, err
+		return nil, core.ErrModelMappingFailed
 	}
 
 	customer.SetFullName(fullName)

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -36,7 +37,34 @@ type (
 		context string
 		reason  error
 	}
+
+	UnhandledError struct {
+		context string
+		reason  error
+	}
 )
+
+func MapPortErrorToDomain(context string, err error) DomainError {
+	if errors.Is(err, ErrDbConnection) {
+		return NewPersistenceError(context, err)
+	}
+	if errors.Is(err, ErrModelAlreadyExists) {
+		return NewConflictError(context, err)
+	}
+	if errors.Is(err, ErrModelNotFound) {
+		return NewNotFoundError(context, err)
+	}
+	if errors.Is(err, ErrModelMappingFailed) {
+		return NewValidationError(context, err)
+	}
+	if errors.Is(err, ErrUserCreation) {
+		return NewPersistenceError(context, err)
+	}
+	if errors.Is(err, ErrUserUnauthorized) {
+		return NewAuthorizationError(context, err)
+	}
+	return NewUnhandledError(context, err)
+}
 
 func NewValidationError(context string, reason error) *ValidationError {
 	return &ValidationError{
@@ -111,4 +139,19 @@ func (n *NotFoundError) Error() string {
 
 func (n *NotFoundError) Reason() error {
 	return n.reason
+}
+
+func NewUnhandledError(context string, reason error) *UnhandledError {
+	return &UnhandledError{
+		context: context,
+		reason:  reason,
+	}
+}
+
+func (u *UnhandledError) Error() string {
+	return fmt.Sprintf("%s: %s", u.context, u.reason)
+}
+
+func (u *UnhandledError) Reason() error {
+	return u.reason
 }
