@@ -26,6 +26,16 @@ type (
 		context string
 		reason  error
 	}
+
+	AuthorizationError struct {
+		context string
+		reason  error
+	}
+
+	NotFoundError struct {
+		context string
+		reason  error
+	}
 )
 
 func NewValidationError(context string, reason error) *ValidationError {
@@ -71,4 +81,34 @@ func (c *ConflictError) Error() string {
 
 func (c *ConflictError) Reason() error {
 	return c.reason
+}
+
+func NewAuthorizationError(context string, reason error) *AuthorizationError {
+	return &AuthorizationError{
+		context: context,
+		reason:  reason,
+	}
+}
+
+func (a *AuthorizationError) Error() string {
+	return fmt.Sprintf("%s: %s", a.context, a.reason)
+}
+
+func (a *AuthorizationError) Reason() error {
+	return a.reason
+}
+
+func NewNotFoundError(context string, reason error) *NotFoundError {
+	return &NotFoundError{
+		context: context,
+		reason:  reason,
+	}
+}
+
+func (n *NotFoundError) Error() string {
+	return fmt.Sprintf("%s: %s", n.context, n.reason)
+}
+
+func (n *NotFoundError) Reason() error {
+	return n.reason
 }

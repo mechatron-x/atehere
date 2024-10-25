@@ -27,6 +27,8 @@ func errorHandler(w http.ResponseWriter, err error) {
 	var validationErr *core.ValidationError
 	var persistenceErr *core.PersistenceError
 	var conflictErr *core.ConflictError
+	var authorizationErr *core.AuthorizationError
+	var notFoundErr *core.NotFoundError
 
 	if errors.As(domainErr, &validationErr) {
 		code = http.StatusBadRequest
@@ -34,6 +36,10 @@ func errorHandler(w http.ResponseWriter, err error) {
 		code = http.StatusInternalServerError
 	} else if errors.As(domainErr, &conflictErr) {
 		code = http.StatusConflict
+	} else if errors.As(domainErr, &authorizationErr) {
+		code = http.StatusUnauthorized
+	} else if errors.As(domainErr, &notFoundErr) {
+		code = http.StatusNotFound
 	}
 
 	responseErr := &response.Error{

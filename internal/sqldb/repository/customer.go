@@ -10,41 +10,36 @@ import (
 )
 
 type Customer struct {
-	q *dal.Queries
-	m mapper.Customer
+	queries *dal.Queries
+	mapper  mapper.Customer
 }
 
 func NewCustomer(db *sql.DB) *Customer {
-	q := dal.New(db)
-	m := mapper.NewUser()
 	return &Customer{
-		q: q,
-		m: m,
+		queries: dal.New(db),
+		mapper:  mapper.NewCustomer(),
 	}
 }
 
-func (c *Customer) Save(user *aggregate.Customer) error {
-	userModel := c.m.FromAggregate(user)
-	saveParams := dal.SaveCustomerParams{
-		ID:        userModel.ID,
-		FullName:  userModel.FullName,
-		BirthDate: userModel.BirthDate,
-		CreatedAt: userModel.CreatedAt,
-		UpdatedAt: userModel.UpdatedAt,
-		DeletedAt: userModel.DeletedAt,
-	}
+func (c *Customer) Save(customer *aggregate.Customer) (*aggregate.Customer, error) {
+	customerModel := c.mapper.FromAggregate(customer)
+	saveParams := dal.SaveCustomerParams(customerModel)
 
-	_, err := c.q.SaveCustomer(context.Background(), saveParams)
-	return err
-}
-
-func (c *Customer) GetByID(id string) (*aggregate.Customer, error) {
-	userModel, err := c.q.GetCustomer(context.Background(), id)
+	customerModel, err := c.queries.SaveCustomer(context.Background(), saveParams)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := c.m.FromModel(&userModel)
+	return c.mapper.FromModel(customerModel)
+}
+
+func (c *Customer) GetByID(id string) (*aggregate.Customer, error) {
+	userModel, err := c.queries.GetCustomer(context.Background(), id)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := c.mapper.FromModel(userModel)
 	if err != nil {
 		return nil, err
 	}

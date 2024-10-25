@@ -9,7 +9,7 @@ type Customer struct {
 	BirthDate string `json:"birth_date,omitempty"`
 }
 
-type SignUpCustomer struct {
+type CustomerProfile struct {
 	DateFormat string   `json:"date_format,omitempty"`
 	Genders    []string `json:"genders,omitempty"`
 	Customer   Customer `json:"customer,omitempty"`

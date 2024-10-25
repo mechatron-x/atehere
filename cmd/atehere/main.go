@@ -50,7 +50,8 @@ func main() {
 	handlers = append(
 		handlers,
 		handler.NewHealth(),
-		handler.NewUserSignUp(*userService),
+		handler.NewCustomerSignUp(userService),
+		handler.NewCustomerProfile(userService),
 	)
 
 	// Start HTTP server
