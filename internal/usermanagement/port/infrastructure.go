@@ -1,17 +1,14 @@
 package port
 
-import "errors"
-
-var (
-	ErrUserUnauthorized = errors.New("user unauthorized")
-	ErrUserCreation     = errors.New("user creation failed")
+import (
+	"github.com/mechatron-x/atehere/internal/core"
 )
 
 type (
 	Authenticator interface {
-		CreateUser(id, email, password string) error
-		RevokeRefreshTokens(idToken string) error
-		GetUserID(idToken string) (string, error)
-		GetUserEmail(idToken string) (string, error)
+		CreateUser(id, email, password string) core.PortError
+		RevokeRefreshTokens(idToken string) core.PortError
+		GetUserID(idToken string) (string, core.PortError)
+		GetUserEmail(idToken string) (string, core.PortError)
 	}
 )

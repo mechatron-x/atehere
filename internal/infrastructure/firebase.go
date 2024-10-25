@@ -7,8 +7,7 @@ import (
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"github.com/mechatron-x/atehere/internal/config"
-	"github.com/mechatron-x/atehere/internal/usermanagement/port"
-	"go.uber.org/zap"
+	"github.com/mechatron-x/atehere/internal/core"
 	"google.golang.org/api/option"
 )
 
@@ -19,11 +18,10 @@ const (
 type (
 	FirebaseAuthenticator struct {
 		app *firebase.App
-		log *zap.Logger
 	}
 )
 
-func NewFirebaseAuthenticator(conf config.Firebase, log *zap.Logger) (*FirebaseAuthenticator, error) {
+func NewFirebaseAuthenticator(conf config.Firebase) (*FirebaseAuthenticator, error) {
 	bytes, err := json.Marshal(conf)
 	if err != nil {
 		return nil, err
@@ -38,16 +36,14 @@ func NewFirebaseAuthenticator(conf config.Firebase, log *zap.Logger) (*FirebaseA
 
 	return &FirebaseAuthenticator{
 		app: app,
-		log: log,
 	}, nil
 
 }
 
-func (fa *FirebaseAuthenticator) CreateUser(id, email, password string) error {
+func (fa *FirebaseAuthenticator) CreateUser(id, email, password string) core.PortError {
 	client, err := fa.app.Auth(context.Background())
 	if err != nil {
-		fa.logError("Firebase connection failed", err)
-		return err
+		return core.NewConnectionError(pkg, err)
 	}
 
 	user := &auth.UserToCreate{}
@@ -57,69 +53,59 @@ func (fa *FirebaseAuthenticator) CreateUser(id, email, password string) error {
 
 	_, err = client.CreateUser(context.Background(), user)
 	if err != nil {
-		fa.logError("Creating firebase user failed", err)
-		return err
+		return core.NewDataNotFoundError(pkg, err)
 	}
 
 	return nil
 }
 
-func (fa *FirebaseAuthenticator) GetUserID(idToken string) (string, error) {
+func (fa *FirebaseAuthenticator) GetUserID(idToken string) (string, core.PortError) {
 	record, err := fa.getUserRecord(idToken)
 	if err != nil {
-		fa.logError("User retrieval failed", err)
-		return "", err
+		return "", core.NewAuthenticationFailedError(pkg, err)
 	}
 
 	return record.UID, nil
 }
 
-func (fa *FirebaseAuthenticator) GetUserEmail(idToken string) (string, error) {
+func (fa *FirebaseAuthenticator) GetUserEmail(idToken string) (string, core.PortError) {
 	record, err := fa.getUserRecord(idToken)
 	if err != nil {
-		fa.logError("User retrieval failed", err)
-		return "", err
+		return "", core.NewAuthenticationFailedError(pkg, err)
 	}
 
 	return record.Email, nil
 }
 
-func (fa *FirebaseAuthenticator) RevokeRefreshTokens(idToken string) error {
+func (fa *FirebaseAuthenticator) RevokeRefreshTokens(idToken string) core.PortError {
 	client, err := fa.app.Auth(context.Background())
 	if err != nil {
-		fa.logError("Firebase connection failed", err)
-		return err
+		return core.NewConnectionError(pkg, err)
 	}
 
 	authToken, err := client.VerifyIDTokenAndCheckRevoked(context.Background(), idToken)
 	if err != nil {
-		fa.logError("User verification failed", err)
-		return port.ErrUserUnauthorized
+		return core.NewAuthenticationFailedError(pkg, err)
 	}
 
-	return client.RevokeRefreshTokens(context.Background(), authToken.UID)
+	err = client.RevokeRefreshTokens(context.Background(), authToken.UID)
+	if err != nil {
+		return core.NewAuthenticationFailedError(pkg, err)
+	}
+
+	return nil
 }
 
 func (fa *FirebaseAuthenticator) getUserRecord(idToken string) (*auth.UserRecord, error) {
 	client, err := fa.app.Auth(context.Background())
 	if err != nil {
-		fa.logError("Firebase connection failed", err)
 		return nil, err
 	}
 
 	authToken, err := client.VerifyIDTokenAndCheckRevoked(context.Background(), idToken)
 	if err != nil {
-		fa.logError("User verification failed", err)
-		return nil, port.ErrUserUnauthorized
+		return nil, err
 	}
 
 	return client.GetUser(context.Background(), authToken.UID)
-}
-
-func (fa *FirebaseAuthenticator) logError(msg string, err error) {
-	fa.log.Error(
-		msg,
-		zap.String("package", pkg),
-		zap.String("reason", err.Error()),
-	)
 }

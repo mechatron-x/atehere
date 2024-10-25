@@ -10,16 +10,20 @@ import (
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 )
 
+const (
+	pkg = "mapper.Customer"
+)
+
 type Customer struct{}
 
 func NewCustomer() Customer {
 	return Customer{}
 }
 
-func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
+func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, core.PortError) {
 	id, err := uuid.Parse(model.ID)
 	if err != nil {
-		return nil, core.ErrModelMappingFailed
+		return nil, core.NewDataMappingError(pkg, err)
 	}
 
 	customer := aggregate.NewCustomer()
@@ -29,14 +33,14 @@ func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
-		return nil, core.ErrModelMappingFailed
+		return nil, core.NewDataMappingError(pkg, err)
 	}
 
 	gender := valueobject.ParseGender(model.Gender)
 
 	birthDate, err := valueobject.NewBirthDate(model.BirthDate.Time.Format(valueobject.BirthDateLayout))
 	if err != nil {
-		return nil, core.ErrModelMappingFailed
+		return nil, core.NewDataMappingError(pkg, err)
 	}
 
 	customer.SetFullName(fullName)

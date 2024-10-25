@@ -37,7 +37,7 @@ func main() {
 	userRepo := repository.NewCustomer(dm.DB())
 
 	// Infrastructure services
-	firebaseAuthenticator, err := infrastructure.NewFirebaseAuthenticator(conf.Firebase, log)
+	firebaseAuthenticator, err := infrastructure.NewFirebaseAuthenticator(conf.Firebase)
 	if err != nil {
 		log.Fatal("Firebase initialization error", logger.ErrorReason(err))
 	}

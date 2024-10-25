@@ -11,43 +11,23 @@ import (
 
 func errorHandler(w http.ResponseWriter, err error) {
 	now := time.Now().String()
-	domainErr, ok := err.(core.DomainError)
-	if !ok {
-		responseErr := &response.Error{
-			Code:      http.StatusInternalServerError,
-			Message:   "internal server error",
-			CreatedAt: now,
-		}
-		response.Encode(w, responseErr, http.StatusInternalServerError)
-		return
-	}
+	code := http.StatusInternalServerError
 
-	var code int
-
-	var validationErr *core.ValidationError
-	var persistenceErr *core.PersistenceError
-	var conflictErr *core.ConflictError
-	var authorizationErr *core.AuthorizationError
-	var notFoundErr *core.NotFoundError
-	var unhandledErr *core.UnhandledError
-
-	if errors.As(domainErr, &validationErr) {
-		code = http.StatusBadRequest
-	} else if errors.As(domainErr, &persistenceErr) {
-		code = http.StatusInternalServerError
-	} else if errors.As(domainErr, &conflictErr) {
+	if errors.Is(err, core.ErrConflict) {
 		code = http.StatusConflict
-	} else if errors.As(domainErr, &authorizationErr) {
-		code = http.StatusUnauthorized
-	} else if errors.As(domainErr, &notFoundErr) {
+	} else if errors.Is(err, core.ErrNotFound) {
 		code = http.StatusNotFound
-	} else if errors.As(domainErr, &unhandledErr) {
+	} else if errors.Is(err, core.ErrPersistence) {
 		code = http.StatusInternalServerError
+	} else if errors.Is(err, core.ErrUnauthorized) {
+		code = http.StatusUnauthorized
+	} else if errors.Is(err, core.ErrValidation) {
+		code = http.StatusBadRequest
 	}
 
 	responseErr := &response.Error{
 		Code:      code,
-		Message:   domainErr.Reason().Error(),
+		Message:   err.Error(),
 		CreatedAt: now,
 	}
 

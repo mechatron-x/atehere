@@ -13,10 +13,6 @@ type Customer struct {
 	authenticator port.Authenticator
 }
 
-const (
-	context = "service.Customer"
-)
-
 func NewCustomer(
 	userRepository port.CustomerRepository,
 	authInfrastructure port.Authenticator,
@@ -27,24 +23,24 @@ func NewCustomer(
 	}
 }
 
-func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, core.DomainError) {
+func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, error) {
 	customer, err := cs.validateSignUpDto(customerDto)
 	if err != nil {
-		return nil, core.NewValidationError(context, err)
+		return nil, core.ErrValidation
 	}
 
-	err = cs.authenticator.CreateUser(
+	portErr := cs.authenticator.CreateUser(
 		customer.ID().String(),
 		customer.Email().String(),
 		customer.Password().String(),
 	)
-	if err != nil {
-		return nil, core.MapPortErrorToDomain(context, err)
+	if portErr != nil {
+		return nil, core.MapPortErrorToDomain(portErr)
 	}
 
-	savedCustomer, err := cs.customerRepo.Save(customer)
-	if err != nil {
-		return nil, core.MapPortErrorToDomain(context, err)
+	savedCustomer, portErr := cs.customerRepo.Save(customer)
+	if portErr != nil {
+		return nil, core.MapPortErrorToDomain(portErr)
 	}
 
 	savedCustomer.SetEmail(customer.Email())
@@ -58,25 +54,25 @@ func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, core.Domain
 	}, nil
 }
 
-func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, core.DomainError) {
-	uid, err := cs.authenticator.GetUserID(idToken)
-	if err != nil {
-		return nil, core.MapPortErrorToDomain(context, err)
+func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, error) {
+	uid, portErr := cs.authenticator.GetUserID(idToken)
+	if portErr != nil {
+		return nil, core.MapPortErrorToDomain(portErr)
 	}
 
-	email, err := cs.authenticator.GetUserEmail(idToken)
-	if err != nil {
-		return nil, core.MapPortErrorToDomain(context, err)
+	email, portErr := cs.authenticator.GetUserEmail(idToken)
+	if portErr != nil {
+		return nil, core.MapPortErrorToDomain(portErr)
 	}
 
-	customer, err := cs.customerRepo.GetByID(uid)
-	if err != nil {
-		return nil, core.MapPortErrorToDomain(context, err)
+	customer, portErr := cs.customerRepo.GetByID(uid)
+	if portErr != nil {
+		return nil, core.MapPortErrorToDomain(portErr)
 	}
 
 	verifiedEmail, err := valueobject.NewEmail(email)
 	if err != nil {
-		return nil, core.MapPortErrorToDomain(context, err)
+		return nil, core.ErrValidation
 	}
 	customer.SetEmail(verifiedEmail)
 
