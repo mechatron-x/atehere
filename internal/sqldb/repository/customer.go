@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	pkg = "repository.Customer"
+	pkgCustomer = "repository.Customer"
 )
 
 type Customer struct {
@@ -33,20 +33,20 @@ func (c *Customer) Save(customer *aggregate.Customer) (*aggregate.Customer, core
 
 	customerModel, err := c.queries.SaveCustomer(context.Background(), saveParams)
 	if err != nil {
-		return nil, core.NewConnectionError(pkg, err)
+		return nil, core.NewConnectionError(pkgCustomer, err)
 	}
 
 	return c.mapper.FromModel(customerModel)
 }
 
 func (c *Customer) GetByID(id string) (*aggregate.Customer, core.PortError) {
-	userModel, err := c.queries.GetCustomer(context.Background(), id)
+	customerModel, err := c.queries.GetCustomer(context.Background(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, core.NewDataNotFoundError(pkg, err)
+			return nil, core.NewDataNotFoundError(pkgCustomer, err)
 		}
-		return nil, core.NewConnectionError(pkg, err)
+		return nil, core.NewConnectionError(pkgCustomer, err)
 	}
 
-	return c.mapper.FromModel(userModel)
+	return c.mapper.FromModel(customerModel)
 }

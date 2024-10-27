@@ -17,3 +17,12 @@ type Customer struct {
 	UpdatedAt sql.NullTime
 	DeletedAt sql.NullTime
 }
+
+type Manager struct {
+	ID          string
+	FullName    string
+	PhoneNumber string
+	CreatedAt   sql.NullTime
+	UpdatedAt   sql.NullTime
+	DeletedAt   sql.NullTime
+}

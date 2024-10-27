@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	pkg = "mapper.Customer"
+	pkgCustomer = "mapper.Customer"
 )
 
 type Customer struct{}
@@ -23,7 +23,7 @@ func NewCustomer() Customer {
 func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, core.PortError) {
 	id, err := uuid.Parse(model.ID)
 	if err != nil {
-		return nil, core.NewDataMappingError(pkg, err)
+		return nil, core.NewDataMappingError(pkgCustomer, err)
 	}
 
 	customer := aggregate.NewCustomer()
@@ -33,14 +33,14 @@ func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, core.PortE
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
-		return nil, core.NewDataMappingError(pkg, err)
+		return nil, core.NewDataMappingError(pkgCustomer, err)
 	}
 
 	gender := valueobject.ParseGender(model.Gender)
 
 	birthDate, err := valueobject.NewBirthDate(model.BirthDate.Time.Format(valueobject.BirthDateLayout))
 	if err != nil {
-		return nil, core.NewDataMappingError(pkg, err)
+		return nil, core.NewDataMappingError(pkgCustomer, err)
 	}
 
 	customer.SetFullName(fullName)
