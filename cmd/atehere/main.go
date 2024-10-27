@@ -34,7 +34,8 @@ func main() {
 	}
 
 	// Repositories
-	userRepo := repository.NewCustomer(dm.DB())
+	customerRepository := repository.NewCustomer(dm.DB())
+	managerRepository := repository.NewManager(dm.DB())
 
 	// Infrastructure services
 	firebaseAuthenticator, err := infrastructure.NewFirebaseAuthenticator(conf.Firebase)
@@ -43,22 +44,24 @@ func main() {
 	}
 
 	// Services
-	userService := service.NewCustomer(userRepo, firebaseAuthenticator)
+	customerService := service.NewCustomer(customerRepository, firebaseAuthenticator)
+	managerService := service.NewManager(managerRepository, firebaseAuthenticator)
 
 	// HTTP handlers
-	handlers := make([]handler.Router, 0)
-	handlers = append(
-		handlers,
-		handler.NewHealth(),
-		handler.NewCustomerSignUp(userService),
-		handler.NewCustomerProfile(userService),
-	)
+	healthHandler := handler.NewHealth()
+	customerHandler := handler.NewCustomerHandler(*customerService)
+	managerHandler := handler.NewManagerHandler(*managerService)
 
 	// Start HTTP server
-	mux := httpserver.NewServeMux(handlers, log)
+	mux := httpserver.NewServeMux(
+		conf.Api,
+		log,
+		healthHandler,
+		customerHandler,
+		managerHandler,
+	)
 	err = httpserver.NewHTTP(conf.Api, mux, log)
 	if err != nil {
 		log.Fatal("Cannot start HTTP server", zap.String("reason", err.Error()))
 	}
-
 }

@@ -62,6 +62,10 @@ type (
 	TokenExpiredError struct {
 		BasePortError
 	}
+
+	DataValidationError struct {
+		BasePortError
+	}
 )
 
 func NewConnectionError(context string, reason error) *ConnectionError {
@@ -114,6 +118,12 @@ func NewTokenInvalidError(context string, reason error) *TokenInvalidError {
 
 func NewTokenExpiredError(context string, reason error) *TokenExpiredError {
 	return &TokenExpiredError{
+		BasePortError{context: context, reason: reason},
+	}
+}
+
+func NewDataValidationError(context string, reason error) *DataValidationError {
+	return &DataValidationError{
 		BasePortError{context: context, reason: reason},
 	}
 }

@@ -9,46 +9,46 @@ import (
 	"github.com/mechatron-x/atehere/internal/usermanagement/service"
 )
 
-type Customer struct {
-	cs service.Customer
+type Manager struct {
+	ms service.Manager
 }
 
-func NewCustomerHandler(cs service.Customer) Customer {
-	return Customer{cs}
+func NewManagerHandler(ms service.Manager) Manager {
+	return Manager{ms}
 }
 
-func (ch Customer) SignUp(w http.ResponseWriter, r *http.Request) {
-	reqBody := &request.SignUpCustomer{}
+func (mh Manager) SignUp(w http.ResponseWriter, r *http.Request) {
+	reqBody := &request.SignUpManager{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
 		return
 	}
 
-	customer, err := ch.cs.SignUp(reqBody.Customer)
+	customer, err := mh.ms.SignUp(reqBody.Manager)
 	if err != nil {
 		errorHandler(w, err)
 		return
 	}
 
-	resp := response.SignUpCustomer{Customer: customer}
+	resp := response.SignUpManager{Manager: customer}
 
 	response.Encode(w, resp, http.StatusCreated)
 }
 
-func (ch Customer) GetProfile(w http.ResponseWriter, r *http.Request) {
+func (mh Manager) GetProfile(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
 		errorHandler(w, err)
 		return
 	}
 
-	customerProfile, err := ch.cs.GetProfile(token)
+	managerProfile, err := mh.ms.GetProfile(token)
 	if err != nil {
 		errorHandler(w, err)
 		return
 	}
 
-	resp := response.CustomerProfile{CustomerProfile: customerProfile}
+	resp := response.ManagerProfile{ManagerProfile: managerProfile}
 
 	response.Encode(w, resp, http.StatusOK)
 }
