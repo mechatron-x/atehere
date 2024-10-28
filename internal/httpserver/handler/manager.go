@@ -24,13 +24,13 @@ func (mh Manager) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	customer, err := mh.ms.SignUp(reqBody.Manager)
+	manager, err := mh.ms.SignUp(reqBody.Manager)
 	if err != nil {
 		errorHandler(w, err)
 		return
 	}
 
-	resp := response.SignUpManager{Manager: customer}
+	resp := response.SignUpManager{Manager: manager}
 
 	response.Encode(w, resp, http.StatusCreated)
 }
