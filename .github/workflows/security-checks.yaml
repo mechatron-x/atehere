@@ -4,11 +4,11 @@ on:
     branches:
       - master
       - dev
-      - feature/*
-      - hotfix/*
-      - release/*
-      - bugfix/*
-      - integration/*
+      - feature/**/*
+      - hotfix/**/*
+      - release/**/*
+      - bugfix/**/*
+      - integration/**/*
   pull_request:
     branches:
       - master
