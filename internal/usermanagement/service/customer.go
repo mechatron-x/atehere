@@ -14,11 +14,11 @@ type Customer struct {
 }
 
 func NewCustomer(
-	userRepository port.CustomerRepository,
+	customerRepository port.CustomerRepository,
 	authInfrastructure port.Authenticator,
 ) *Customer {
 	return &Customer{
-		customerRepo:  userRepository,
+		customerRepo:  customerRepository,
 		authenticator: authInfrastructure,
 	}
 }

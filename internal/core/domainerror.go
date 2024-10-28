@@ -14,7 +14,7 @@ func MapPortErrorToDomain(portErr PortError) error {
 	switch portErr.(type) {
 	case *ConnectionError:
 		return ErrPersistence
-	case *DataMappingError:
+	case *DataMappingError, *DataValidationError:
 		return ErrValidation
 	case *DataNotFoundError:
 		return ErrNotFound

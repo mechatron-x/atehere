@@ -53,7 +53,7 @@ func (fa *FirebaseAuthenticator) CreateUser(id, email, password string) core.Por
 
 	_, err = client.CreateUser(context.Background(), user)
 	if err != nil {
-		return core.NewDataNotFoundError(pkg, err)
+		return core.NewDataValidationError(pkg, err)
 	}
 
 	return nil
