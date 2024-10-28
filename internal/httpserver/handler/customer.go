@@ -52,3 +52,27 @@ func (ch Customer) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	response.Encode(w, resp, http.StatusOK)
 }
+
+func (ch Customer) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		errorHandler(w, err)
+		return
+	}
+
+	reqBody := &request.UpdateCustomer{}
+	err = request.Decode(r, w, reqBody)
+	if err != nil {
+		return
+	}
+
+	customerProfile, err := ch.cs.UpdateProfile(token, reqBody.Customer)
+	if err != nil {
+		errorHandler(w, err)
+		return
+	}
+
+	resp := response.CustomerProfile{CustomerProfile: customerProfile}
+
+	response.Encode(w, resp, http.StatusOK)
+}

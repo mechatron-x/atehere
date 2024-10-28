@@ -91,6 +91,67 @@ func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, error) {
 	return customerProfileDto, nil
 }
 
+func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dto.CustomerProfile, error) {
+	id, portErr := cs.authenticator.GetUserID(idToken)
+	if portErr != nil {
+		return nil, core.MapPortErrorToDomain(portErr)
+	}
+
+	customer, portErr := cs.customerRepo.GetByID(id)
+	if portErr != nil {
+		return nil, core.MapPortErrorToDomain(portErr)
+	}
+
+	err := cs.updateCustomer(customerDto, customer)
+	if err != nil {
+		return nil, core.ErrValidation
+	}
+
+	customer, portErr = cs.customerRepo.Save(customer)
+	if portErr != nil {
+		return nil, core.MapPortErrorToDomain(portErr)
+	}
+
+	customerProfileDto := &dto.CustomerProfile{
+		DateFormat: valueobject.BirthDateLayoutANSIC,
+		Genders:    valueobject.GetGenders(),
+		Customer: dto.Customer{
+			ID:        customer.ID().String(),
+			Email:     customer.Email().String(),
+			FullName:  customer.FullName().String(),
+			Gender:    customer.Gender().String(),
+			BirthDate: customer.BirthDate().String(),
+		},
+	}
+
+	return customerProfileDto, nil
+}
+
+func (cs *Customer) updateCustomer(updateDto dto.Customer, customer *aggregate.Customer) error {
+	if !core.IsEmptyString(updateDto.FullName) {
+		verifiedFullName, err := valueobject.NewFullName(updateDto.FullName)
+		if err != nil {
+			return err
+		}
+		customer.SetFullName(verifiedFullName)
+	}
+
+	if !core.IsEmptyString(updateDto.BirthDate) {
+		verifiedBirthDate, err := valueobject.NewBirthDate(updateDto.BirthDate)
+		if err != nil {
+			return err
+		}
+		customer.SetBirthDate(verifiedBirthDate)
+	}
+
+	if !core.IsEmptyString(updateDto.Gender) {
+		verifiedGender := valueobject.ParseGender(updateDto.Gender)
+		customer.SetGender(verifiedGender)
+	}
+
+	return nil
+}
+
 func (cs *Customer) validateSignUpDto(signUpDto dto.Customer) (*aggregate.Customer, error) {
 	verifiedEmail, err := valueobject.NewEmail(signUpDto.Email)
 	if err != nil {

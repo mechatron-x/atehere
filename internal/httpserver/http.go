@@ -52,6 +52,7 @@ func NewServeMux(
 
 	// Customer endpoints
 	versionMux.HandleFunc("GET /customer/profile", ch.GetProfile)
+	versionMux.HandleFunc("PATCH /customer/profile", ch.UpdateProfile)
 	versionMux.HandleFunc("POST /customer/auth/signup", ch.SignUp)
 
 	// Manager endpoints

@@ -6,4 +6,8 @@ type (
 	SignUpCustomer struct {
 		dto.Customer
 	}
+
+	UpdateCustomer struct {
+		dto.Customer
+	}
 )
