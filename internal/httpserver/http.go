@@ -57,6 +57,7 @@ func NewServeMux(
 
 	// Manager endpoints
 	versionMux.HandleFunc("GET /manager/profile", mh.GetProfile)
+	versionMux.HandleFunc("PATCH /manager/profile", mh.UpdateProfile)
 	versionMux.HandleFunc("POST /manager/auth/signup", mh.SignUp)
 
 	// Routers

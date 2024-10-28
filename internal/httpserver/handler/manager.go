@@ -18,37 +18,58 @@ func NewManagerHandler(ms service.Manager) Manager {
 }
 
 func (mh Manager) SignUp(w http.ResponseWriter, r *http.Request) {
-	reqBody := &request.SignUpManager{}
+	reqBody := &request.ManagerSignUp{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
 		return
 	}
 
-	manager, err := mh.ms.SignUp(reqBody.Manager)
+	manager, err := mh.ms.SignUp(reqBody.ManagerSignUp)
 	if err != nil {
-		errorHandler(w, err)
+		response.EncodeError(w, err)
 		return
 	}
 
-	resp := response.SignUpManager{Manager: manager}
-
+	resp := response.ManagerSignUp{Manager: manager}
 	response.Encode(w, resp, http.StatusCreated)
 }
 
 func (mh Manager) GetProfile(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
-		errorHandler(w, err)
+		response.EncodeError(w, err)
 		return
 	}
 
-	managerProfile, err := mh.ms.GetProfile(token)
+	manager, err := mh.ms.GetProfile(token)
 	if err != nil {
-		errorHandler(w, err)
+		response.EncodeError(w, err)
 		return
 	}
 
-	resp := response.ManagerProfile{ManagerProfile: managerProfile}
+	resp := response.ManagerGetProfile{Manager: manager}
+	response.Encode(w, resp, http.StatusOK)
+}
 
+func (mh Manager) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.EncodeError(w, err)
+		return
+	}
+
+	reqBody := &request.ManagerUpdateProfile{}
+	err = request.Decode(r, w, reqBody)
+	if err != nil {
+		return
+	}
+
+	manager, err := mh.ms.UpdateProfile(token, reqBody.Manager)
+	if err != nil {
+		response.EncodeError(w, err)
+		return
+	}
+
+	resp := response.ManagerGetProfile{Manager: manager}
 	response.Encode(w, resp, http.StatusOK)
 }

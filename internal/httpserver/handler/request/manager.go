@@ -3,7 +3,11 @@ package request
 import "github.com/mechatron-x/atehere/internal/usermanagement/dto"
 
 type (
-	SignUpManager struct {
+	ManagerSignUp struct {
+		dto.ManagerSignUp
+	}
+
+	ManagerUpdateProfile struct {
 		dto.Manager
 	}
 )

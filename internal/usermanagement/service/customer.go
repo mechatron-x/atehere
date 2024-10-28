@@ -23,7 +23,7 @@ func NewCustomer(
 	}
 }
 
-func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, error) {
+func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error) {
 	customer, err := cs.validateSignUpDto(customerDto)
 	if err != nil {
 		return nil, core.ErrValidation
@@ -46,7 +46,6 @@ func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, error) {
 	savedCustomer.SetEmail(customer.Email())
 
 	return &dto.Customer{
-		ID:        savedCustomer.ID().String(),
 		Email:     savedCustomer.Email().String(),
 		FullName:  savedCustomer.FullName().String(),
 		Gender:    savedCustomer.Gender().String(),
@@ -54,7 +53,7 @@ func (cs *Customer) SignUp(customerDto dto.Customer) (*dto.Customer, error) {
 	}, nil
 }
 
-func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, error) {
+func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
 	uid, portErr := cs.authenticator.GetUserID(idToken)
 	if portErr != nil {
 		return nil, core.MapPortErrorToDomain(portErr)
@@ -76,22 +75,15 @@ func (cs *Customer) GetProfile(idToken string) (*dto.CustomerProfile, error) {
 	}
 	customer.SetEmail(verifiedEmail)
 
-	customerProfileDto := &dto.CustomerProfile{
-		DateFormat: valueobject.BirthDateLayoutANSIC,
-		Genders:    valueobject.GetGenders(),
-		Customer: dto.Customer{
-			ID:        customer.ID().String(),
-			Email:     customer.Email().String(),
-			FullName:  customer.FullName().String(),
-			Gender:    customer.Gender().String(),
-			BirthDate: customer.BirthDate().String(),
-		},
-	}
-
-	return customerProfileDto, nil
+	return &dto.Customer{
+		Email:     customer.Email().String(),
+		FullName:  customer.FullName().String(),
+		Gender:    customer.Gender().String(),
+		BirthDate: customer.BirthDate().String(),
+	}, nil
 }
 
-func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dto.CustomerProfile, error) {
+func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dto.Customer, error) {
 	id, portErr := cs.authenticator.GetUserID(idToken)
 	if portErr != nil {
 		return nil, core.MapPortErrorToDomain(portErr)
@@ -112,47 +104,40 @@ func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dt
 		return nil, core.MapPortErrorToDomain(portErr)
 	}
 
-	customerProfileDto := &dto.CustomerProfile{
-		DateFormat: valueobject.BirthDateLayoutANSIC,
-		Genders:    valueobject.GetGenders(),
-		Customer: dto.Customer{
-			ID:        customer.ID().String(),
-			Email:     customer.Email().String(),
-			FullName:  customer.FullName().String(),
-			Gender:    customer.Gender().String(),
-			BirthDate: customer.BirthDate().String(),
-		},
-	}
-
-	return customerProfileDto, nil
+	return &dto.Customer{
+		Email:     customer.Email().String(),
+		FullName:  customer.FullName().String(),
+		Gender:    customer.Gender().String(),
+		BirthDate: customer.BirthDate().String(),
+	}, nil
 }
 
-func (cs *Customer) updateCustomer(updateDto dto.Customer, customer *aggregate.Customer) error {
-	if !core.IsEmptyString(updateDto.FullName) {
-		verifiedFullName, err := valueobject.NewFullName(updateDto.FullName)
+func (cs *Customer) updateCustomer(customerDto dto.Customer, customer *aggregate.Customer) error {
+	if !core.IsEmptyString(customerDto.FullName) {
+		verifiedFullName, err := valueobject.NewFullName(customerDto.FullName)
 		if err != nil {
 			return err
 		}
 		customer.SetFullName(verifiedFullName)
 	}
 
-	if !core.IsEmptyString(updateDto.BirthDate) {
-		verifiedBirthDate, err := valueobject.NewBirthDate(updateDto.BirthDate)
+	if !core.IsEmptyString(customerDto.BirthDate) {
+		verifiedBirthDate, err := valueobject.NewBirthDate(customerDto.BirthDate)
 		if err != nil {
 			return err
 		}
 		customer.SetBirthDate(verifiedBirthDate)
 	}
 
-	if !core.IsEmptyString(updateDto.Gender) {
-		verifiedGender := valueobject.ParseGender(updateDto.Gender)
+	if !core.IsEmptyString(customerDto.Gender) {
+		verifiedGender := valueobject.ParseGender(customerDto.Gender)
 		customer.SetGender(verifiedGender)
 	}
 
 	return nil
 }
 
-func (cs *Customer) validateSignUpDto(signUpDto dto.Customer) (*aggregate.Customer, error) {
+func (cs *Customer) validateSignUpDto(signUpDto dto.CustomerSignUp) (*aggregate.Customer, error) {
 	verifiedEmail, err := valueobject.NewEmail(signUpDto.Email)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,10 @@
 package handler
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
+)
 
 type Health struct{}
 
@@ -9,5 +13,9 @@ func NewHealth() Health {
 }
 
 func (hh Health) GetHealth(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte("Healthy"))
+	resp := response.Health{
+		Status: "Healthy",
+	}
+
+	response.Encode(w, resp, http.StatusOK)
 }
