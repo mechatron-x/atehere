@@ -1,16 +1,33 @@
-package handler
+package response
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
-	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
 )
 
-func errorHandler(w http.ResponseWriter, err error) {
+type (
+	ErrorResponse struct {
+		Code      int    `json:"code"`
+		Message   string `json:"message"`
+		CreatedAt string `json:"created_at"`
+	}
+)
+
+func Encode(w http.ResponseWriter, v any, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	err := json.NewEncoder(w).Encode(v)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+	}
+}
+
+func EncodeError(w http.ResponseWriter, err error) {
 	now := time.Now().String()
 	code := http.StatusInternalServerError
 
@@ -28,11 +45,11 @@ func errorHandler(w http.ResponseWriter, err error) {
 		code = http.StatusUnauthorized
 	}
 
-	responseErr := &response.Error{
+	errResp := ErrorResponse{
 		Code:      code,
 		Message:   err.Error(),
 		CreatedAt: now,
 	}
 
-	response.Encode(w, responseErr, code)
+	Encode(w, errResp, code)
 }

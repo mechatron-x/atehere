@@ -18,37 +18,58 @@ func NewCustomerHandler(cs service.Customer) Customer {
 }
 
 func (ch Customer) SignUp(w http.ResponseWriter, r *http.Request) {
-	reqBody := &request.SignUpCustomer{}
+	reqBody := &request.CustomerSignUp{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
 		return
 	}
 
-	customer, err := ch.cs.SignUp(reqBody.Customer)
+	customer, err := ch.cs.SignUp(reqBody.CustomerSignUp)
 	if err != nil {
-		errorHandler(w, err)
+		response.EncodeError(w, err)
 		return
 	}
 
-	resp := response.SignUpCustomer{Customer: customer}
-
+	resp := response.CustomerSignUp{Customer: customer}
 	response.Encode(w, resp, http.StatusCreated)
 }
 
 func (ch Customer) GetProfile(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
-		errorHandler(w, err)
+		response.EncodeError(w, err)
 		return
 	}
 
-	customerProfile, err := ch.cs.GetProfile(token)
+	customer, err := ch.cs.GetProfile(token)
 	if err != nil {
-		errorHandler(w, err)
+		response.EncodeError(w, err)
 		return
 	}
 
-	resp := response.CustomerProfile{CustomerProfile: customerProfile}
+	resp := response.CustomerGetProfile{Customer: customer}
+	response.Encode(w, resp, http.StatusOK)
+}
 
+func (ch Customer) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.EncodeError(w, err)
+		return
+	}
+
+	reqBody := &request.CustomerUpdateProfile{}
+	err = request.Decode(r, w, reqBody)
+	if err != nil {
+		return
+	}
+
+	customer, err := ch.cs.UpdateProfile(token, reqBody.Customer)
+	if err != nil {
+		response.EncodeError(w, err)
+		return
+	}
+
+	resp := response.CustomerUpdateProfile{Customer: customer}
 	response.Encode(w, resp, http.StatusOK)
 }
