@@ -7,12 +7,7 @@ import (
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"github.com/mechatron-x/atehere/internal/config"
-	"github.com/mechatron-x/atehere/internal/core"
 	"google.golang.org/api/option"
-)
-
-const (
-	pkg string = "infrastructure.Firebase"
 )
 
 type (
@@ -40,10 +35,10 @@ func NewFirebaseAuthenticator(conf config.Firebase) (*FirebaseAuthenticator, err
 
 }
 
-func (fa *FirebaseAuthenticator) CreateUser(id, email, password string) core.PortError {
+func (fa *FirebaseAuthenticator) CreateUser(id, email, password string) error {
 	client, err := fa.app.Auth(context.Background())
 	if err != nil {
-		return core.NewConnectionError(pkg, err)
+		return err
 	}
 
 	user := &auth.UserToCreate{}
@@ -53,44 +48,44 @@ func (fa *FirebaseAuthenticator) CreateUser(id, email, password string) core.Por
 
 	_, err = client.CreateUser(context.Background(), user)
 	if err != nil {
-		return core.NewDataValidationError(pkg, err)
+		return err
 	}
 
 	return nil
 }
 
-func (fa *FirebaseAuthenticator) GetUserID(idToken string) (string, core.PortError) {
+func (fa *FirebaseAuthenticator) GetUserID(idToken string) (string, error) {
 	record, err := fa.getUserRecord(idToken)
 	if err != nil {
-		return "", core.NewAuthenticationFailedError(pkg, err)
+		return "", err
 	}
 
 	return record.UID, nil
 }
 
-func (fa *FirebaseAuthenticator) GetUserEmail(idToken string) (string, core.PortError) {
+func (fa *FirebaseAuthenticator) GetUserEmail(idToken string) (string, error) {
 	record, err := fa.getUserRecord(idToken)
 	if err != nil {
-		return "", core.NewAuthenticationFailedError(pkg, err)
+		return "", err
 	}
 
 	return record.Email, nil
 }
 
-func (fa *FirebaseAuthenticator) RevokeRefreshTokens(idToken string) core.PortError {
+func (fa *FirebaseAuthenticator) RevokeRefreshTokens(idToken string) error {
 	client, err := fa.app.Auth(context.Background())
 	if err != nil {
-		return core.NewConnectionError(pkg, err)
+		return err
 	}
 
 	authToken, err := client.VerifyIDTokenAndCheckRevoked(context.Background(), idToken)
 	if err != nil {
-		return core.NewAuthenticationFailedError(pkg, err)
+		return err
 	}
 
 	err = client.RevokeRefreshTokens(context.Background(), authToken.UID)
 	if err != nil {
-		return core.NewAuthenticationFailedError(pkg, err)
+		return err
 	}
 
 	return nil

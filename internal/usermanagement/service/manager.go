@@ -26,54 +26,37 @@ func NewManager(
 func (ms *Manager) SignUp(signUpDto dto.ManagerSignUp) (*dto.Manager, error) {
 	manager, err := ms.validateSignUpDto(signUpDto)
 	if err != nil {
-		return nil, core.ErrValidation
+		return nil, core.NewValidationFailureError(err)
 	}
 
-	portErr := ms.authenticator.CreateUser(
+	err = ms.authenticator.CreateUser(
 		manager.ID().String(),
 		manager.Email().String(),
 		manager.Password().String(),
 	)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
+	if err != nil {
+		return nil, core.NewPersistenceFailureError(err)
 	}
 
-	savedManager, portErr := ms.managerRepo.Save(manager)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
+	err = ms.managerRepo.Save(manager)
+	if err != nil {
+		return nil, core.NewPersistenceFailureError(err)
 	}
 
-	savedManager.SetEmail(manager.Email())
 	manager.SetPhoneNumber(manager.PhoneNumber())
 
 	return &dto.Manager{
-		Email:       savedManager.Email().String(),
-		FullName:    savedManager.FullName().String(),
-		PhoneNumber: savedManager.PhoneNumber().String(),
+		Email:       manager.Email().String(),
+		FullName:    manager.FullName().String(),
+		PhoneNumber: manager.PhoneNumber().String(),
 	}, nil
 }
 
 func (ms *Manager) GetProfile(idToken string) (*dto.Manager, error) {
-	uid, portErr := ms.authenticator.GetUserID(idToken)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	email, portErr := ms.authenticator.GetUserEmail(idToken)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	manager, portErr := ms.managerRepo.GetByID(uid)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	verifiedEmail, err := valueobject.NewEmail(email)
+	manager, err := ms.getManager(idToken)
 	if err != nil {
-		return nil, core.ErrValidation
+		return nil, err
 	}
-	manager.SetEmail(verifiedEmail)
 
 	return &dto.Manager{
 		Email:       manager.Email().String(),
@@ -83,36 +66,20 @@ func (ms *Manager) GetProfile(idToken string) (*dto.Manager, error) {
 }
 
 func (ms *Manager) UpdateProfile(idToken string, updateDto dto.Manager) (*dto.Manager, error) {
-	uid, portErr := ms.authenticator.GetUserID(idToken)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	email, portErr := ms.authenticator.GetUserEmail(idToken)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	manager, portErr := ms.managerRepo.GetByID(uid)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	err := ms.updateManager(updateDto, manager)
+	manager, err := ms.getManager(idToken)
 	if err != nil {
-		return nil, core.ErrValidation
+		return nil, err
 	}
 
-	manager, portErr = ms.managerRepo.Save(manager)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	verifiedEmail, err := valueobject.NewEmail(email)
+	err = ms.updateManager(updateDto, manager)
 	if err != nil {
-		return nil, core.ErrValidation
+		return nil, core.NewValidationFailureError(err)
 	}
-	manager.SetEmail(verifiedEmail)
+
+	err = ms.managerRepo.Save(manager)
+	if err != nil {
+		return nil, core.NewPersistenceFailureError(err)
+	}
 
 	return &dto.Manager{
 		Email:       manager.Email().String(),
@@ -169,4 +136,29 @@ func (ms *Manager) validateSignUpDto(signUpDto dto.ManagerSignUp) (*aggregate.Ma
 	manager.SetPhoneNumber(verifiedPhoneNumber)
 
 	return manager, nil
+}
+
+func (ms *Manager) getManager(idToken string) (*aggregate.Manager, error) {
+	id, err := ms.authenticator.GetUserID(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	email, err := ms.authenticator.GetUserEmail(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	manager, err := ms.managerRepo.GetByID(id)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	verifiedEmail, err := valueobject.NewEmail(email)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+	manager.SetEmail(verifiedEmail)
+
+	return manager, err
 }

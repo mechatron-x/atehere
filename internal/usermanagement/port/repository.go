@@ -1,16 +1,15 @@
 package port
 
 import (
-	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 )
 
 type CustomerRepository interface {
-	Save(customer *aggregate.Customer) (*aggregate.Customer, core.PortError)
-	GetByID(id string) (*aggregate.Customer, core.PortError)
+	Save(customer *aggregate.Customer) error
+	GetByID(id string) (*aggregate.Customer, error)
 }
 
 type ManagerRepository interface {
-	Save(manager *aggregate.Manager) (*aggregate.Manager, core.PortError)
-	GetByID(id string) (*aggregate.Manager, core.PortError)
+	Save(manager *aggregate.Manager) error
+	GetByID(id string) (*aggregate.Manager, error)
 }
