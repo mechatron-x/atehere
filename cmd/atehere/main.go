@@ -7,9 +7,11 @@ import (
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/infrastructure"
 	"github.com/mechatron-x/atehere/internal/logger"
-	"github.com/mechatron-x/atehere/internal/service"
 	"github.com/mechatron-x/atehere/internal/sqldb"
+	"github.com/mechatron-x/atehere/internal/sqldb/repository"
+	"github.com/mechatron-x/atehere/internal/usermanagement/service"
 	"go.uber.org/zap"
 )
 
@@ -22,6 +24,7 @@ func main() {
 
 	log := logger.New(conf)
 
+	// DB Connection and Migrations
 	dm := sqldb.New(conf.DB, log)
 	if err = dm.Connect(); err != nil {
 		log.Fatal("Unable to connect to the db", logger.ErrorReason(err))
@@ -30,21 +33,35 @@ func main() {
 		log.Fatal("Unable to migrate the db", logger.ErrorReason(err))
 	}
 
-	_, err = service.NewFirebase(conf.Firebase)
+	// Repositories
+	customerRepository := repository.NewCustomer(dm.DB())
+	managerRepository := repository.NewManager(dm.DB())
+
+	// Infrastructure services
+	firebaseAuthenticator, err := infrastructure.NewFirebaseAuthenticator(conf.Firebase)
 	if err != nil {
 		log.Fatal("Firebase initialization error", logger.ErrorReason(err))
 	}
 
-	handlers := make([]handler.Route, 0)
-	handlers = append(
-		handlers,
-		handler.NewHealth(),
-	)
+	// Services
+	customerService := service.NewCustomer(customerRepository, firebaseAuthenticator)
+	managerService := service.NewManager(managerRepository, firebaseAuthenticator)
 
-	mux := httpserver.NewServeMux(handlers, log)
+	// HTTP handlers
+	healthHandler := handler.NewHealth()
+	customerHandler := handler.NewCustomerHandler(*customerService)
+	managerHandler := handler.NewManagerHandler(*managerService)
+
+	// Start HTTP server
+	mux := httpserver.NewServeMux(
+		conf.Api,
+		log,
+		healthHandler,
+		customerHandler,
+		managerHandler,
+	)
 	err = httpserver.NewHTTP(conf.Api, mux, log)
 	if err != nil {
 		log.Fatal("Cannot start HTTP server", zap.String("reason", err.Error()))
 	}
-
 }

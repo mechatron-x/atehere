@@ -5,6 +5,5 @@ sql:
     queries: "./queries"
     gen:
       go:
-        package: "repository"
-        out: "../internal/sqldb/repository"
-        sql_package: "pgx/v5"
+        package: "dal"
+        out: "../internal/sqldb/dal"

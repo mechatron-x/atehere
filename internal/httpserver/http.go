@@ -36,20 +36,34 @@ func NewHTTP(apiConf config.Api, mux *http.ServeMux, log *zap.Logger) error {
 	return srv.Serve(ln)
 }
 
-func NewServeMux(routes []handler.Route, log *zap.Logger) *http.ServeMux {
+func NewServeMux(
+	conf config.Api,
+	log *zap.Logger,
+	hh handler.Health,
+	ch handler.Customer,
+	mh handler.Manager,
+) *http.ServeMux {
 	mux := http.NewServeMux()
+	apiMux := http.NewServeMux()
+	versionMux := http.NewServeMux()
 
-	for i := 0; i < len(routes); i++ {
-		route := routes[i]
-		mux.Handle(route.Pattern(),
-			middleware.Logger(
-				middleware.Header(
-					route,
-				),
-				log,
-			),
-		)
-	}
+	// Health endpoints
+	apiMux.HandleFunc("GET /api/health", hh.GetHealth)
+
+	// Customer endpoints
+	versionMux.HandleFunc("GET /customer/profile", ch.GetProfile)
+	versionMux.HandleFunc("PATCH /customer/profile", ch.UpdateProfile)
+	versionMux.HandleFunc("POST /customer/auth/signup", ch.SignUp)
+
+	// Manager endpoints
+	versionMux.HandleFunc("GET /manager/profile", mh.GetProfile)
+	versionMux.HandleFunc("PATCH /manager/profile", mh.UpdateProfile)
+	versionMux.HandleFunc("POST /manager/auth/signup", mh.SignUp)
+
+	// Routers
+	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, log)))
+	apiMux.Handle("/api/", http.StripPrefix("/api", versionMux))
+	versionMux.Handle(fmt.Sprintf("/%s/", conf.Version), http.StripPrefix(fmt.Sprintf("/%s", conf.Version), versionMux))
 
 	return mux
 }
