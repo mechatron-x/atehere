@@ -15,7 +15,9 @@
     "encoderConfig": {
       "messageKey": "message",
       "levelKey": "level",
-      "levelEncoder": "lowercase"
+      "levelEncoder": "capital",
+      "timeKey": "timestamp",
+      "timeEncoder": "ISO8601"
     }
   },
   "api": {

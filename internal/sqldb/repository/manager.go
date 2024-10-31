@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
@@ -27,7 +28,7 @@ func (m *Manager) Save(manager *aggregate.Manager) error {
 
 	err := m.queries.SaveManager(context.Background(), saveParams)
 	if err != nil {
-		return err
+		return m.wrapError(err)
 	}
 
 	return nil
@@ -36,8 +37,12 @@ func (m *Manager) Save(manager *aggregate.Manager) error {
 func (m *Manager) GetByID(id string) (*aggregate.Manager, error) {
 	managerModel, err := m.queries.GetManager(context.Background(), id)
 	if err != nil {
-		return nil, err
+		return nil, m.wrapError(err)
 	}
 
 	return m.mapper.FromModel(managerModel)
+}
+
+func (m *Manager) wrapError(err error) error {
+	return fmt.Errorf("repository.Manager: %v", err)
 }

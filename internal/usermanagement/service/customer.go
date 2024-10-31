@@ -1,7 +1,10 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/usermanagement/dto"
@@ -26,6 +29,7 @@ func NewCustomer(
 func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error) {
 	customer, err := cs.validateSignUpDto(customerDto)
 	if err != nil {
+		logger.Error("Cannot map customer dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
 	}
 
@@ -35,11 +39,13 @@ func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error
 		customer.Password().String(),
 	)
 	if err != nil {
+		logger.Error("Failed to authenticate customer", err)
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
 	err = cs.customerRepo.Save(customer)
 	if err != nil {
+		logger.Error("Failed to save customer to db", err)
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
@@ -54,6 +60,7 @@ func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error
 func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
 	customer, err := cs.getCustomer(idToken)
 	if err != nil {
+		logger.Error(fmt.Sprintf("Cannot get customer with id %s", idToken), err)
 		return nil, err
 	}
 
@@ -68,16 +75,19 @@ func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
 func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dto.Customer, error) {
 	customer, err := cs.getCustomer(idToken)
 	if err != nil {
+		logger.Error("Cannot get customer", err)
 		return nil, err
 	}
 
 	err = cs.updateCustomer(customerDto, customer)
 	if err != nil {
+		logger.Error("Cannot map customer update dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
 	}
 
 	err = cs.customerRepo.Save(customer)
 	if err != nil {
+		logger.Error("Failed to save user to db", err)
 		return nil, core.NewPersistenceFailureError(err)
 	}
 

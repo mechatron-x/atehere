@@ -10,6 +10,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/mechatron-x/atehere/internal/config"
+	"github.com/mechatron-x/atehere/internal/logger"
 	"go.uber.org/zap"
 )
 
@@ -24,10 +25,10 @@ type DbManager struct {
 	migrate *migrate.Migrate
 }
 
-func New(conf config.DB, log *zap.Logger) *DbManager {
+func New(conf config.DB) *DbManager {
 	return &DbManager{
 		conf: conf,
-		log:  log,
+		log:  logger.Instance(),
 	}
 }
 
@@ -43,7 +44,7 @@ func (dm *DbManager) Connect() error {
 		return err
 	}
 
-	log.Info("DB connection established", zap.String("address", dbConf.DSN))
+	log.Info(fmt.Sprintf("DB connection established at: %s", dbConf.DSN))
 	return nil
 }
 

@@ -12,7 +12,6 @@ import (
 	"github.com/mechatron-x/atehere/internal/sqldb"
 	"github.com/mechatron-x/atehere/internal/sqldb/repository"
 	"github.com/mechatron-x/atehere/internal/usermanagement/service"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -22,15 +21,15 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	log := logger.New(conf)
+	logger.Config(conf.Logger)
 
 	// DB Connection and Migrations
-	dm := sqldb.New(conf.DB, log)
+	dm := sqldb.New(conf.DB)
 	if err = dm.Connect(); err != nil {
-		log.Fatal("Unable to connect to the db", logger.ErrorReason(err))
+		logger.Fatal("Unable to connect to the db", err)
 	}
 	if err = dm.MigrateUp(); err != nil {
-		log.Fatal("Unable to migrate the db", logger.ErrorReason(err))
+		logger.Fatal("Unable to migrate the db", err)
 	}
 
 	// Repositories
@@ -40,7 +39,7 @@ func main() {
 	// Infrastructure services
 	firebaseAuthenticator, err := infrastructure.NewFirebaseAuthenticator(conf.Firebase)
 	if err != nil {
-		log.Fatal("Firebase initialization error", logger.ErrorReason(err))
+		logger.Fatal("Firebase initialization error", err)
 	}
 
 	// Services
@@ -55,13 +54,12 @@ func main() {
 	// Start HTTP server
 	mux := httpserver.NewServeMux(
 		conf.Api,
-		log,
 		healthHandler,
 		customerHandler,
 		managerHandler,
 	)
-	err = httpserver.NewHTTP(conf.Api, mux, log)
+	err = httpserver.NewHTTP(conf.Api, mux)
 	if err != nil {
-		log.Fatal("Cannot start HTTP server", zap.String("reason", err.Error()))
+		logger.Fatal("Cannot start HTTP server", err)
 	}
 }
