@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/usermanagement/dto"
@@ -26,6 +27,7 @@ func NewManager(
 func (ms *Manager) SignUp(signUpDto dto.ManagerSignUp) (*dto.Manager, error) {
 	manager, err := ms.validateSignUpDto(signUpDto)
 	if err != nil {
+		logger.Error("Cannot map manager dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
 	}
 
@@ -35,11 +37,13 @@ func (ms *Manager) SignUp(signUpDto dto.ManagerSignUp) (*dto.Manager, error) {
 		manager.Password().String(),
 	)
 	if err != nil {
+		logger.Error("Failed to authenticate manager", err)
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
 	err = ms.managerRepo.Save(manager)
 	if err != nil {
+		logger.Error("Failed to save manager to db", err)
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
@@ -55,6 +59,7 @@ func (ms *Manager) SignUp(signUpDto dto.ManagerSignUp) (*dto.Manager, error) {
 func (ms *Manager) GetProfile(idToken string) (*dto.Manager, error) {
 	manager, err := ms.getManager(idToken)
 	if err != nil {
+		logger.Error("Cannot get manager with id token", err)
 		return nil, err
 	}
 
@@ -68,16 +73,19 @@ func (ms *Manager) GetProfile(idToken string) (*dto.Manager, error) {
 func (ms *Manager) UpdateProfile(idToken string, updateDto dto.Manager) (*dto.Manager, error) {
 	manager, err := ms.getManager(idToken)
 	if err != nil {
+		logger.Error("Cannot get manager with id token", err)
 		return nil, err
 	}
 
 	err = ms.updateManager(updateDto, manager)
 	if err != nil {
+		logger.Error("Cannot map manager update dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
 	}
 
 	err = ms.managerRepo.Save(manager)
 	if err != nil {
+		logger.Error("Failed to save manager to db", err)
 		return nil, core.NewPersistenceFailureError(err)
 	}
 

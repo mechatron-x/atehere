@@ -25,7 +25,9 @@ services:
           target: /app
           ignore:
             - development/*
-    env_file: ".env.dev"
+    env_file:
+      - .env
+      - .env.dev
     ports:
       - 8080:8080
     networks:

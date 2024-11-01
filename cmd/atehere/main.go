@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/mechatron-x/atehere/internal/cmdarg"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver"
@@ -14,21 +12,30 @@ import (
 	"github.com/mechatron-x/atehere/internal/usermanagement/service"
 )
 
-func main() {
+var (
+	conf *config.App
+)
+
+func init() {
 	flags := cmdarg.Setup()
-	conf, err := config.Load(flags.ConfPath)
+	c, err := config.Load(flags.ConfPath)
 	if err != nil {
-		log.Fatal(err.Error())
+		panic(err)
 	}
 
+	conf = c
+}
+
+func main() {
+	// Logger config
 	logger.Config(conf.Logger)
 
 	// DB Connection and Migrations
 	dm := sqldb.New(conf.DB)
-	if err = dm.Connect(); err != nil {
+	if err := dm.Connect(); err != nil {
 		logger.Fatal("Unable to connect to the db", err)
 	}
-	if err = dm.MigrateUp(); err != nil {
+	if err := dm.MigrateUp(); err != nil {
 		logger.Fatal("Unable to migrate the db", err)
 	}
 

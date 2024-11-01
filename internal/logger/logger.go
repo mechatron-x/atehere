@@ -17,12 +17,7 @@ func Instance() *zap.Logger {
 		return log
 	}
 
-	log, err := zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
-
-	return log
+	panic("logger is not initialized")
 }
 
 func Error(msg string, reason error) {

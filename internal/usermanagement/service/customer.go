@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
@@ -60,7 +58,7 @@ func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error
 func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
 	customer, err := cs.getCustomer(idToken)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Cannot get customer with id %s", idToken), err)
+		logger.Error("Cannot get customer with id token", err)
 		return nil, err
 	}
 
@@ -75,7 +73,7 @@ func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
 func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dto.Customer, error) {
 	customer, err := cs.getCustomer(idToken)
 	if err != nil {
-		logger.Error("Cannot get customer", err)
+		logger.Error("Cannot get customer with id token", err)
 		return nil, err
 	}
 
@@ -87,7 +85,7 @@ func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dt
 
 	err = cs.customerRepo.Save(customer)
 	if err != nil {
-		logger.Error("Failed to save user to db", err)
+		logger.Error("Failed to save customer to db", err)
 		return nil, core.NewPersistenceFailureError(err)
 	}
 

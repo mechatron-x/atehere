@@ -2,7 +2,11 @@ package config
 
 type DB struct {
 	Driver     string `json:"driver"`
-	DSN        string `json:"dsn"`
+	Name       string `json:"Name"`
+	User       string `json:"user"`
+	Password   string `json:"password"`
+	Host       string `json:"host"`
+	Port       string `json:"port"`
 	Migrations string `json:"migrations"`
 	Timeout    string `json:"timeout"`
 	TryCount   uint   `json:"tryCount"`
