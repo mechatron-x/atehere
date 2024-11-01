@@ -30,13 +30,12 @@ func (q *Queries) GetCustomer(ctx context.Context, id string) (Customer, error) 
 	return i, err
 }
 
-const saveCustomer = `-- name: SaveCustomer :one
+const saveCustomer = `-- name: SaveCustomer :exec
 INSERT INTO customers (
     id, full_name, gender, birth_date, created_at, updated_at, deleted_at
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7
 ) ON CONFLICT (id) DO UPDATE SET full_name = $2,gender = $3 ,birth_date = $4, updated_at = NOW()
-RETURNING id, full_name, gender, birth_date, created_at, updated_at, deleted_at
 `
 
 type SaveCustomerParams struct {
@@ -49,8 +48,8 @@ type SaveCustomerParams struct {
 	DeletedAt sql.NullTime
 }
 
-func (q *Queries) SaveCustomer(ctx context.Context, arg SaveCustomerParams) (Customer, error) {
-	row := q.db.QueryRowContext(ctx, saveCustomer,
+func (q *Queries) SaveCustomer(ctx context.Context, arg SaveCustomerParams) error {
+	_, err := q.db.ExecContext(ctx, saveCustomer,
 		arg.ID,
 		arg.FullName,
 		arg.Gender,
@@ -59,15 +58,5 @@ func (q *Queries) SaveCustomer(ctx context.Context, arg SaveCustomerParams) (Cus
 		arg.UpdatedAt,
 		arg.DeletedAt,
 	)
-	var i Customer
-	err := row.Scan(
-		&i.ID,
-		&i.FullName,
-		&i.Gender,
-		&i.BirthDate,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+	return err
 }

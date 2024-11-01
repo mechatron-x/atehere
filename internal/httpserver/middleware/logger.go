@@ -1,8 +1,11 @@
 package middleware
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -33,23 +36,36 @@ func (rcv *logResponseWriter) Write(b []byte) (int, error) {
 }
 
 func Logger(next http.Handler, log *zap.Logger) http.Handler {
+	traceId := uuid.NewString()
+
 	f := func(w http.ResponseWriter, r *http.Request) {
+		buf, _ := io.ReadAll(r.Body)
+
+		rdr := io.NopCloser(bytes.NewBuffer(buf))
+		r.Body = rdr
+
+		lr := io.NopCloser(bytes.NewBuffer(buf))
+		lBuf, _ := io.ReadAll(lr)
+
 		log.Info("HTTP Request",
-			zap.String("proto", r.Proto),
+			zap.String("stack_trace", traceId),
+			zap.String("protocol", r.Proto),
 			zap.String("method", r.Method),
 			zap.String("path", r.URL.Path),
-			zap.String("remote address", r.RemoteAddr),
+			zap.String("remote_address", r.RemoteAddr),
+			zap.String("body", string(lBuf)),
 		)
 
 		lrw := newLogResponseWriter(w)
 		next.ServeHTTP(lrw, r)
 
 		log.Info("HTTP Response",
+			zap.String("stack_trace", traceId),
 			zap.String("protocol", r.Proto),
 			zap.Int("status", lrw.statusCode),
 			zap.String("method", r.Method),
 			zap.String("path", r.URL.Path),
-			zap.String("remote address", r.RemoteAddr),
+			zap.String("remote_address", r.RemoteAddr),
 			zap.String("body", string(lrw.body)),
 		)
 	}

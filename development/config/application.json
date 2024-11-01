@@ -8,14 +8,13 @@
       "stdout",
       "/var/lib/atehere/logs/log.txt"
     ],
-    "errorOutputPaths": [
-      "stderr",
-      "stdout"
-    ],
     "encoderConfig": {
       "messageKey": "message",
       "levelKey": "level",
-      "levelEncoder": "lowercase"
+      "levelEncoder": "capital",
+      "timeKey": "timestamp",
+      "timeEncoder": "ISO8601",
+      "stacktraceKey": "stack_trace"
     }
   },
   "api": {
@@ -26,7 +25,11 @@
   },
   "db": {
     "driver": "postgres",
-    "dsn": "postgres://developer:postgres@db:5432/atehere?sslmode=disable",
+    "name": "",
+    "user": "",
+    "password": "",
+    "host": "db",
+    "port": "5432",
     "migrations": "file:///var/lib/atehere/migrations",
     "timeout": "2s",
     "tryCount": 5

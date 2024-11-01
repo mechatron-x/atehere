@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/mechatron-x/atehere/internal/cmdarg"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver"
@@ -12,25 +10,33 @@ import (
 	"github.com/mechatron-x/atehere/internal/sqldb"
 	"github.com/mechatron-x/atehere/internal/sqldb/repository"
 	"github.com/mechatron-x/atehere/internal/usermanagement/service"
-	"go.uber.org/zap"
 )
 
-func main() {
+var (
+	conf *config.App
+)
+
+func init() {
 	flags := cmdarg.Setup()
-	conf, err := config.Load(flags.ConfPath)
+	c, err := config.Load(flags.ConfPath)
 	if err != nil {
-		log.Fatal(err.Error())
+		panic(err)
 	}
 
-	log := logger.New(conf)
+	conf = c
+}
+
+func main() {
+	// Logger config
+	logger.Config(conf.Logger)
 
 	// DB Connection and Migrations
-	dm := sqldb.New(conf.DB, log)
-	if err = dm.Connect(); err != nil {
-		log.Fatal("Unable to connect to the db", logger.ErrorReason(err))
+	dm := sqldb.New(conf.DB)
+	if err := dm.Connect(); err != nil {
+		logger.Fatal("Unable to connect to the db", err)
 	}
-	if err = dm.MigrateUp(); err != nil {
-		log.Fatal("Unable to migrate the db", logger.ErrorReason(err))
+	if err := dm.MigrateUp(); err != nil {
+		logger.Fatal("Unable to migrate the db", err)
 	}
 
 	// Repositories
@@ -40,7 +46,7 @@ func main() {
 	// Infrastructure services
 	firebaseAuthenticator, err := infrastructure.NewFirebaseAuthenticator(conf.Firebase)
 	if err != nil {
-		log.Fatal("Firebase initialization error", logger.ErrorReason(err))
+		logger.Fatal("Firebase initialization error", err)
 	}
 
 	// Services
@@ -55,13 +61,12 @@ func main() {
 	// Start HTTP server
 	mux := httpserver.NewServeMux(
 		conf.Api,
-		log,
 		healthHandler,
 		customerHandler,
 		managerHandler,
 	)
-	err = httpserver.NewHTTP(conf.Api, mux, log)
+	err = httpserver.NewHTTP(conf.Api, mux)
 	if err != nil {
-		log.Fatal("Cannot start HTTP server", zap.String("reason", err.Error()))
+		logger.Fatal("Cannot start HTTP server", err)
 	}
 }

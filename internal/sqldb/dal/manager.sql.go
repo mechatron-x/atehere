@@ -29,13 +29,12 @@ func (q *Queries) GetManager(ctx context.Context, id string) (Manager, error) {
 	return i, err
 }
 
-const saveManager = `-- name: SaveManager :one
+const saveManager = `-- name: SaveManager :exec
 INSERT INTO managers (
     id, full_name, phone_number, created_at, updated_at, deleted_at
 ) VALUES (
     $1, $2, $3, $4, $5, $6
 ) ON CONFLICT (id) DO UPDATE SET full_name = $2, phone_number = $3, updated_at = NOW()
-RETURNING id, full_name, phone_number, created_at, updated_at, deleted_at
 `
 
 type SaveManagerParams struct {
@@ -47,8 +46,8 @@ type SaveManagerParams struct {
 	DeletedAt   sql.NullTime
 }
 
-func (q *Queries) SaveManager(ctx context.Context, arg SaveManagerParams) (Manager, error) {
-	row := q.db.QueryRowContext(ctx, saveManager,
+func (q *Queries) SaveManager(ctx context.Context, arg SaveManagerParams) error {
+	_, err := q.db.ExecContext(ctx, saveManager,
 		arg.ID,
 		arg.FullName,
 		arg.PhoneNumber,
@@ -56,14 +55,5 @@ func (q *Queries) SaveManager(ctx context.Context, arg SaveManagerParams) (Manag
 		arg.UpdatedAt,
 		arg.DeletedAt,
 	)
-	var i Manager
-	err := row.Scan(
-		&i.ID,
-		&i.FullName,
-		&i.PhoneNumber,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+	return err
 }

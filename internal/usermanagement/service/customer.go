@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/usermanagement/dto"
@@ -26,54 +27,40 @@ func NewCustomer(
 func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error) {
 	customer, err := cs.validateSignUpDto(customerDto)
 	if err != nil {
-		return nil, core.ErrValidation
+		logger.Error("Cannot map customer dto to aggregate", err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
-	portErr := cs.authenticator.CreateUser(
+	err = cs.authenticator.CreateUser(
 		customer.ID().String(),
 		customer.Email().String(),
 		customer.Password().String(),
 	)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
+	if err != nil {
+		logger.Error("Failed to authenticate customer", err)
+		return nil, core.NewPersistenceFailureError(err)
 	}
 
-	savedCustomer, portErr := cs.customerRepo.Save(customer)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
+	err = cs.customerRepo.Save(customer)
+	if err != nil {
+		logger.Error("Failed to save customer to db", err)
+		return nil, core.NewPersistenceFailureError(err)
 	}
-
-	savedCustomer.SetEmail(customer.Email())
 
 	return &dto.Customer{
-		Email:     savedCustomer.Email().String(),
-		FullName:  savedCustomer.FullName().String(),
-		Gender:    savedCustomer.Gender().String(),
-		BirthDate: savedCustomer.BirthDate().String(),
+		Email:     customer.Email().String(),
+		FullName:  customer.FullName().String(),
+		Gender:    customer.Gender().String(),
+		BirthDate: customer.BirthDate().String(),
 	}, nil
 }
 
 func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
-	uid, portErr := cs.authenticator.GetUserID(idToken)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	email, portErr := cs.authenticator.GetUserEmail(idToken)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	customer, portErr := cs.customerRepo.GetByID(uid)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	verifiedEmail, err := valueobject.NewEmail(email)
+	customer, err := cs.getCustomer(idToken)
 	if err != nil {
-		return nil, core.ErrValidation
+		logger.Error("Cannot get customer with id token", err)
+		return nil, err
 	}
-	customer.SetEmail(verifiedEmail)
 
 	return &dto.Customer{
 		Email:     customer.Email().String(),
@@ -84,24 +71,22 @@ func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
 }
 
 func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dto.Customer, error) {
-	id, portErr := cs.authenticator.GetUserID(idToken)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	customer, portErr := cs.customerRepo.GetByID(id)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
-	}
-
-	err := cs.updateCustomer(customerDto, customer)
+	customer, err := cs.getCustomer(idToken)
 	if err != nil {
-		return nil, core.ErrValidation
+		logger.Error("Cannot get customer with id token", err)
+		return nil, err
 	}
 
-	customer, portErr = cs.customerRepo.Save(customer)
-	if portErr != nil {
-		return nil, core.MapPortErrorToDomain(portErr)
+	err = cs.updateCustomer(customerDto, customer)
+	if err != nil {
+		logger.Error("Cannot map customer update dto to aggregate", err)
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	err = cs.customerRepo.Save(customer)
+	if err != nil {
+		logger.Error("Failed to save customer to db", err)
+		return nil, core.NewPersistenceFailureError(err)
 	}
 
 	return &dto.Customer{
@@ -166,6 +151,31 @@ func (cs *Customer) validateSignUpDto(signUpDto dto.CustomerSignUp) (*aggregate.
 	customer.SetFullName(verifiedFullName)
 	customer.SetGender(verifiedGender)
 	customer.SetBirthDate(verifiedBirthDate)
+
+	return customer, nil
+}
+
+func (cs *Customer) getCustomer(idToken string) (*aggregate.Customer, error) {
+	id, err := cs.authenticator.GetUserID(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	email, err := cs.authenticator.GetUserEmail(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	customer, err := cs.customerRepo.GetByID(id)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	verifiedEmail, err := valueobject.NewEmail(email)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+	customer.SetEmail(verifiedEmail)
 
 	return customer, nil
 }

@@ -2,17 +2,16 @@ package response
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
 )
 
 type (
 	ErrorResponse struct {
-		Code      int    `json:"code"`
+		Status    int    `json:"status"`
+		Code      string `json:"code"`
 		Message   string `json:"message"`
 		CreatedAt string `json:"created_at"`
 	}
@@ -27,29 +26,41 @@ func Encode(w http.ResponseWriter, v any, status int) {
 	}
 }
 
-func EncodeError(w http.ResponseWriter, err error) {
+func EncodeError(w http.ResponseWriter, err error, httpStatus ...int) {
+	status := http.StatusInternalServerError
+	code := "unhandled"
+	message := err.Error()
 	now := time.Now().String()
-	code := http.StatusInternalServerError
 
-	if errors.Is(err, core.ErrConflict) {
-		code = http.StatusConflict
-	} else if errors.Is(err, core.ErrNotFound) {
-		code = http.StatusNotFound
-	} else if errors.Is(err, core.ErrPersistence) {
-		code = http.StatusInternalServerError
-	} else if errors.Is(err, core.ErrUnauthorized) {
-		code = http.StatusUnauthorized
-	} else if errors.Is(err, core.ErrValidation) {
-		code = http.StatusBadRequest
-	} else if errors.Is(err, header.ErrInvalidBearerToken) {
-		code = http.StatusUnauthorized
+	if len(httpStatus) > 0 {
+		status = httpStatus[0]
+	}
+
+	if domainErr, ok := err.(core.DomainError); ok {
+		code = domainErr.Code()
+
+		switch domainErr.Code() {
+		case core.CodeUnauthorized:
+			status = http.StatusUnauthorized
+		case core.CodePersistenceFailure:
+			status = http.StatusInternalServerError
+		case core.CodeResourceNotFound:
+			status = http.StatusNotFound
+		case core.CodeDataConflict:
+			status = http.StatusConflict
+		case core.CodeValidationFailure:
+			status = http.StatusBadRequest
+		}
+	} else {
+		message = "internal server error"
 	}
 
 	errResp := ErrorResponse{
+		Status:    status,
 		Code:      code,
-		Message:   err.Error(),
+		Message:   message,
 		CreatedAt: now,
 	}
 
-	Encode(w, errResp, code)
+	Encode(w, errResp, status)
 }

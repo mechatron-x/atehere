@@ -1,16 +1,37 @@
 package logger
 
 import (
-	"github.com/mechatron-x/atehere/internal/config"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-func New(conf *config.App) *zap.Logger {
-	loggerConf := conf.Logger
-	return zap.Must(loggerConf.Build())
+var (
+	log *zap.Logger
+)
+
+func Config(conf zap.Config) {
+	log = zap.Must(conf.Build())
 }
 
-func ErrorReason(err error) zapcore.Field {
-	return zap.String("reason", err.Error())
+func Instance() *zap.Logger {
+	if log != nil {
+		return log
+	}
+
+	panic("logger is not initialized")
+}
+
+func Error(msg string, reason error) {
+	if log == nil {
+		return
+	}
+
+	log.Error(msg, zap.String("reason", reason.Error()))
+}
+
+func Fatal(msg string, reason error) {
+	if log == nil {
+		return
+	}
+
+	log.Fatal(msg, zap.String("reason", reason.Error()))
 }

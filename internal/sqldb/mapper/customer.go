@@ -4,14 +4,9 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
-)
-
-const (
-	pkgCustomer = "mapper.Customer"
 )
 
 type Customer struct{}
@@ -20,10 +15,10 @@ func NewCustomer() Customer {
 	return Customer{}
 }
 
-func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, core.PortError) {
+func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
 	id, err := uuid.Parse(model.ID)
 	if err != nil {
-		return nil, core.NewDataMappingError(pkgCustomer, err)
+		return nil, err
 	}
 
 	customer := aggregate.NewCustomer()
@@ -33,14 +28,14 @@ func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, core.PortE
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
-		return nil, core.NewDataMappingError(pkgCustomer, err)
+		return nil, err
 	}
 
 	gender := valueobject.ParseGender(model.Gender)
 
 	birthDate, err := valueobject.NewBirthDate(model.BirthDate.Time.Format(valueobject.BirthDateLayout))
 	if err != nil {
-		return nil, core.NewDataMappingError(pkgCustomer, err)
+		return nil, err
 	}
 
 	customer.SetFullName(fullName)

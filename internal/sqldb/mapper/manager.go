@@ -4,14 +4,9 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
-)
-
-const (
-	pkgManager = "mapper.Manager"
 )
 
 type Manager struct{}
@@ -20,10 +15,10 @@ func NewManager() Manager {
 	return Manager{}
 }
 
-func (m Manager) FromModel(model dal.Manager) (*aggregate.Manager, core.PortError) {
+func (m Manager) FromModel(model dal.Manager) (*aggregate.Manager, error) {
 	id, err := uuid.Parse(model.ID)
 	if err != nil {
-		return nil, core.NewDataMappingError(pkgManager, err)
+		return nil, err
 	}
 
 	manager := aggregate.NewManager()
@@ -33,12 +28,12 @@ func (m Manager) FromModel(model dal.Manager) (*aggregate.Manager, core.PortErro
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
-		return nil, core.NewDataMappingError(pkgManager, err)
+		return nil, err
 	}
 
 	phoneNumber, err := valueobject.NewPhoneNumber(model.PhoneNumber)
 	if err != nil {
-		return nil, core.NewDataMappingError(pkgManager, err)
+		return nil, err
 	}
 
 	manager.SetFullName(fullName)
