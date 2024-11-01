@@ -1,19 +1,21 @@
 package handler
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
+)
 
 type Health struct{}
 
-func NewHealth() Route {
-	return &Health{}
+func NewHealth() Health {
+	return Health{}
 }
 
-// Pattern implements Route.
-func (h *Health) Pattern() string {
-	return "GET /health"
-}
+func (hh Health) GetHealth(w http.ResponseWriter, r *http.Request) {
+	resp := response.Health{
+		Status: "Healthy",
+	}
 
-// ServeHTTP implements Route.
-func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte("Healthy"))
+	response.Encode(w, resp, http.StatusOK)
 }

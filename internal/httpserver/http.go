@@ -9,7 +9,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
 	"github.com/mechatron-x/atehere/internal/httpserver/middleware"
-	"go.uber.org/zap"
+	"github.com/mechatron-x/atehere/internal/logger"
 )
 
 type (
@@ -19,7 +19,8 @@ type (
 	}
 )
 
-func NewHTTP(apiConf config.Api, mux *http.ServeMux, log *zap.Logger) error {
+func NewHTTP(apiConf config.Api, mux *http.ServeMux) error {
+	log := logger.Instance()
 	url := fmt.Sprintf("%s:%s", apiConf.Host, apiConf.Port)
 	srv := &http.Server{
 		Addr:              url,
@@ -32,24 +33,37 @@ func NewHTTP(apiConf config.Api, mux *http.ServeMux, log *zap.Logger) error {
 		return err
 	}
 
-	log.Info("Starting HTTP server at", zap.String("address", srv.Addr))
+	log.Info(fmt.Sprintf("Starting HTTP server at: %s", srv.Addr))
 	return srv.Serve(ln)
 }
 
-func NewServeMux(routes []handler.Route, log *zap.Logger) *http.ServeMux {
+func NewServeMux(
+	conf config.Api,
+	hh handler.Health,
+	ch handler.Customer,
+	mh handler.Manager,
+) *http.ServeMux {
 	mux := http.NewServeMux()
+	apiMux := http.NewServeMux()
+	versionMux := http.NewServeMux()
 
-	for i := 0; i < len(routes); i++ {
-		route := routes[i]
-		mux.Handle(route.Pattern(),
-			middleware.Logger(
-				middleware.Header(
-					route,
-				),
-				log,
-			),
-		)
-	}
+	// Health endpoints
+	apiMux.HandleFunc("GET /api/health", hh.GetHealth)
+
+	// Customer endpoints
+	versionMux.HandleFunc("GET /customer/profile", ch.GetProfile)
+	versionMux.HandleFunc("PATCH /customer/profile", ch.UpdateProfile)
+	versionMux.HandleFunc("POST /customer/auth/signup", ch.SignUp)
+
+	// Manager endpoints
+	versionMux.HandleFunc("GET /manager/profile", mh.GetProfile)
+	versionMux.HandleFunc("PATCH /manager/profile", mh.UpdateProfile)
+	versionMux.HandleFunc("POST /manager/auth/signup", mh.SignUp)
+
+	// Routers
+	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))
+	apiMux.Handle("/api/", http.StripPrefix("/api", versionMux))
+	versionMux.Handle(fmt.Sprintf("/%s/", conf.Version), http.StripPrefix(fmt.Sprintf("/%s", conf.Version), versionMux))
 
 	return mux
 }

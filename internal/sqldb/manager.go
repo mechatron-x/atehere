@@ -1,18 +1,16 @@
 package sqldb
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/pgx"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mechatron-x/atehere/internal/config"
+	"github.com/mechatron-x/atehere/internal/logger"
 	"go.uber.org/zap"
 )
 
@@ -22,32 +20,34 @@ const (
 
 type DbManager struct {
 	conf    config.DB
-	log     *zap.Logger
-	pool    *pgxpool.Pool
+	db      *sql.DB
 	migrate *migrate.Migrate
 }
 
-func New(conf config.DB, log *zap.Logger) *DbManager {
+func New(conf config.DB) *DbManager {
 	return &DbManager{
 		conf: conf,
-		log:  log,
 	}
 }
 
 func (dm *DbManager) Connect() error {
-	log := dm.log
-	dbConf := dm.conf
+	log := logger.Instance()
+	dsn := dm.createDsn()
 
-	if err := dm.setupConnection(); err != nil {
+	if err := dm.setupConnection(dsn, log); err != nil {
 		return err
 	}
 
-	if err := dm.setupMigration(); err != nil {
+	if err := dm.setupMigration(dsn); err != nil {
 		return err
 	}
 
-	log.Info("DB connection established", zap.String("address", dbConf.DSN))
+	log.Info("DB connection established")
 	return nil
+}
+
+func (dm *DbManager) DB() *sql.DB {
+	return dm.db
 }
 
 func (dm *DbManager) MigrateUp() error {
@@ -63,9 +63,20 @@ func (dm *DbManager) MigrateDown() error {
 	return dm.migrate.Down()
 }
 
-func (dm *DbManager) setupConnection() error {
+func (dm *DbManager) createDsn() string {
 	dbConf := dm.conf
-	log := dm.log
+	return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable",
+		dbConf.Driver,
+		dbConf.User,
+		dbConf.Password,
+		dbConf.Host,
+		dbConf.Port,
+		dbConf.Name,
+	)
+}
+
+func (dm *DbManager) setupConnection(dsn string, log *zap.Logger) error {
+	dbConf := dm.conf
 
 	timeout, err := time.ParseDuration(dbConf.Timeout)
 	if err != nil {
@@ -73,24 +84,24 @@ func (dm *DbManager) setupConnection() error {
 		timeout = defaultConnTimeout
 	}
 
-	connPool, err := connect(dbConf.DSN, dbConf.TryCount, timeout)
+	db, err := connect(dsn, dbConf.TryCount, timeout)
 	if err != nil {
 		return err
 	}
 
-	dm.pool = connPool
+	dm.db = db
 	return nil
 }
 
-func (dm *DbManager) setupMigration() error {
+func (dm *DbManager) setupMigration(dsn string) error {
 	dbConf := dm.conf
 
-	db, err := sql.Open(dbConf.Driver, dbConf.DSN)
+	db, err := sql.Open(dbConf.Driver, dsn)
 	if err != nil {
 		return err
 	}
 
-	driver, err := pgx.WithInstance(db, &pgx.Config{})
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return err
 	}
@@ -108,38 +119,21 @@ func (dm *DbManager) setupMigration() error {
 	return nil
 }
 
-func Connect(dbConf config.DB, log *zap.Logger) (*pgxpool.Pool, error) {
-	timeout, err := time.ParseDuration(dbConf.Timeout)
-	if err != nil {
-		log.Warn(fmt.Sprintf("Using default timeout: %s", defaultConnTimeout), zap.String("reason", err.Error()))
-		timeout = defaultConnTimeout
-	}
-
-	connPool, err := connect(dbConf.DSN, dbConf.TryCount, timeout)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Info("DB connection established", zap.String("address", dbConf.DSN))
-
-	return connPool, nil
-}
-
-func connect(dsn string, tyrCount uint, timeout time.Duration) (*pgxpool.Pool, error) {
+func connect(dsn string, tyrCount uint, timeout time.Duration) (*sql.DB, error) {
 	if tyrCount <= 0 {
 		return nil, errors.New("connection failed, all retries exhausted")
 	}
 
-	connPool, err := pgxpool.New(context.Background(), dsn)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("unable to connect to database: %v\n", err)
+		return nil, fmt.Errorf("unable to connect to database: %v", err)
 	}
 
-	err = connPool.Ping(context.Background())
+	err = db.Ping()
 	if err != nil {
 		time.Sleep(timeout)
 		return connect(dsn, tyrCount-1, timeout)
 	}
 
-	return connPool, nil
+	return db, nil
 }

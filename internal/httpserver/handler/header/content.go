@@ -8,4 +8,5 @@ const (
 
 const (
 	AccessControlAllowOriginKey = "Access-Control-Allow-Origin"
+	AuthorizationKey            = "Authorization"
 )
