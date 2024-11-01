@@ -18,7 +18,7 @@ func (ek EnvKey) String() string {
 const (
 	FIREBASE_PRIVATE_KEY EnvKey = "FIREBASE_PRIVATE_KEY"
 	DB_USER              EnvKey = "POSTGRES_USER"
-	DB_PASSWD            EnvKey = "POSTGRES_PASSWORD"
+	DB_KEY               EnvKey = "POSTGRES_PASSWORD"
 	DB_NAME              EnvKey = "POSTGRES_DB"
 )
 
@@ -36,7 +36,7 @@ func Load(confPath string) (*App, error) {
 		return nil, fmt.Errorf("config.Load: %v", err)
 	}
 
-	envMap, err := loadEnv(FIREBASE_PRIVATE_KEY, DB_USER, DB_PASSWD, DB_NAME)
+	envMap, err := loadEnv(FIREBASE_PRIVATE_KEY, DB_USER, DB_KEY, DB_NAME)
 	if err != nil {
 		return nil, fmt.Errorf("config.Load: %v", err)
 	}
@@ -44,7 +44,7 @@ func Load(confPath string) (*App, error) {
 	conf.Firebase.PrivateKey = envMap[FIREBASE_PRIVATE_KEY]
 
 	conf.DB.User = envMap[DB_USER]
-	conf.DB.Password = envMap[DB_PASSWD]
+	conf.DB.Password = envMap[DB_KEY]
 	conf.DB.Name = envMap[DB_NAME]
 
 	return conf, nil
