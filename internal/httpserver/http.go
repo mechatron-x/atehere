@@ -39,6 +39,7 @@ func NewHTTP(apiConf config.Api, mux *http.ServeMux) error {
 
 func NewServeMux(
 	conf config.Api,
+	dh handler.Default,
 	hh handler.Health,
 	ch handler.Customer,
 	mh handler.Manager,
@@ -59,6 +60,10 @@ func NewServeMux(
 	versionMux.HandleFunc("GET /manager/profile", mh.GetProfile)
 	versionMux.HandleFunc("PATCH /manager/profile", mh.UpdateProfile)
 	versionMux.HandleFunc("POST /manager/auth/signup", mh.SignUp)
+
+	// Default handler
+	apiMux.HandleFunc("/", dh.NoHandler)
+	versionMux.HandleFunc("/", dh.NoHandler)
 
 	// Routers
 	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))

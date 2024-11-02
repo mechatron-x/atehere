@@ -54,6 +54,7 @@ func main() {
 	managerService := service.NewManager(managerRepository, firebaseAuthenticator)
 
 	// HTTP handlers
+	defaultHandler := handler.NewDefault()
 	healthHandler := handler.NewHealth()
 	customerHandler := handler.NewCustomerHandler(*customerService)
 	managerHandler := handler.NewManagerHandler(*managerService)
@@ -61,6 +62,7 @@ func main() {
 	// Start HTTP server
 	mux := httpserver.NewServeMux(
 		conf.Api,
+		defaultHandler,
 		healthHandler,
 		customerHandler,
 		managerHandler,
