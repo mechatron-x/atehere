@@ -64,6 +64,10 @@ func NewServeMux(
 	apiMux.HandleFunc("/", dh.NoHandler)
 	versionMux.HandleFunc("/", dh.NoHandler)
 
+	// Default handler
+	apiMux.HandleFunc("/", dh.NoHandler)
+	versionMux.HandleFunc("/", dh.NoHandler)
+
 	// Routers
 	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))
 	apiMux.Handle("/api/", http.StripPrefix("/api", versionMux))
