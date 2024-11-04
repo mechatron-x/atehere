@@ -10,17 +10,17 @@ import (
 )
 
 type Customer struct {
-	customerRepo  port.CustomerRepository
-	authenticator port.Authenticator
+	customerRepo port.CustomerRepository
+	authService  port.Authenticator
 }
 
 func NewCustomer(
 	customerRepository port.CustomerRepository,
-	authInfrastructure port.Authenticator,
+	authService port.Authenticator,
 ) *Customer {
 	return &Customer{
-		customerRepo:  customerRepository,
-		authenticator: authInfrastructure,
+		customerRepo: customerRepository,
+		authService:  authService,
 	}
 }
 
@@ -31,7 +31,7 @@ func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	err = cs.authenticator.CreateUser(
+	err = cs.authService.CreateUser(
 		customer.ID().String(),
 		customer.Email().String(),
 		customer.Password().String(),
@@ -156,12 +156,12 @@ func (cs *Customer) validateSignUpDto(signUpDto dto.CustomerSignUp) (*aggregate.
 }
 
 func (cs *Customer) getCustomer(idToken string) (*aggregate.Customer, error) {
-	id, err := cs.authenticator.GetUserID(idToken)
+	id, err := cs.authService.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	email, err := cs.authenticator.GetUserEmail(idToken)
+	email, err := cs.authService.GetUserEmail(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}

@@ -10,17 +10,17 @@ import (
 )
 
 type Manager struct {
-	managerRepo   port.ManagerRepository
-	authenticator port.Authenticator
+	managerRepo port.ManagerRepository
+	authService port.Authenticator
 }
 
 func NewManager(
 	managerRepository port.ManagerRepository,
-	authInfrastructure port.Authenticator,
+	authService port.Authenticator,
 ) *Manager {
 	return &Manager{
-		managerRepo:   managerRepository,
-		authenticator: authInfrastructure,
+		managerRepo: managerRepository,
+		authService: authService,
 	}
 }
 
@@ -31,7 +31,7 @@ func (ms *Manager) SignUp(signUpDto dto.ManagerSignUp) (*dto.Manager, error) {
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	err = ms.authenticator.CreateUser(
+	err = ms.authService.CreateUser(
 		manager.ID().String(),
 		manager.Email().String(),
 		manager.Password().String(),
@@ -147,12 +147,12 @@ func (ms *Manager) validateSignUpDto(signUpDto dto.ManagerSignUp) (*aggregate.Ma
 }
 
 func (ms *Manager) getManager(idToken string) (*aggregate.Manager, error) {
-	id, err := ms.authenticator.GetUserID(idToken)
+	id, err := ms.authService.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	email, err := ms.authenticator.GetUserEmail(idToken)
+	email, err := ms.authService.GetUserEmail(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}

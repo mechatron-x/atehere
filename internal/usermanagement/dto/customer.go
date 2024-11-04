@@ -2,17 +2,17 @@ package dto
 
 type (
 	Customer struct {
-		Email     string `json:"email,omitempty"`
-		FullName  string `json:"full_name,omitempty"`
+		Email     string `json:"email"`
+		FullName  string `json:"full_name"`
 		Gender    string `json:"gender,omitempty"`
-		BirthDate string `json:"birth_date,omitempty"`
+		BirthDate string `json:"birth_date"`
 	}
 
 	CustomerSignUp struct {
-		Email     string `json:"email,omitempty"`
-		Password  string `json:"password,omitempty"`
-		FullName  string `json:"full_name,omitempty"`
+		Email     string `json:"email"`
+		Password  string `json:"password"`
+		FullName  string `json:"full_name"`
 		Gender    string `json:"gender,omitempty"`
-		BirthDate string `json:"birth_date,omitempty"`
+		BirthDate string `json:"birth_date"`
 	}
 )

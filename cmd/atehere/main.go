@@ -7,9 +7,10 @@ import (
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
 	"github.com/mechatron-x/atehere/internal/infrastructure"
 	"github.com/mechatron-x/atehere/internal/logger"
+	restaurantsrv "github.com/mechatron-x/atehere/internal/restaurant/service"
 	"github.com/mechatron-x/atehere/internal/sqldb"
 	"github.com/mechatron-x/atehere/internal/sqldb/repository"
-	"github.com/mechatron-x/atehere/internal/usermanagement/service"
+	mngntsrv "github.com/mechatron-x/atehere/internal/usermanagement/service"
 )
 
 var (
@@ -50,13 +51,15 @@ func main() {
 	}
 
 	// Services
-	customerService := service.NewCustomer(customerRepository, firebaseAuthenticator)
-	managerService := service.NewManager(managerRepository, firebaseAuthenticator)
+	customerService := mngntsrv.NewCustomer(customerRepository, firebaseAuthenticator)
+	managerService := mngntsrv.NewManager(managerRepository, firebaseAuthenticator)
+	restaurantService := restaurantsrv.NewRestaurant(nil, firebaseAuthenticator)
 
 	// HTTP handlers
 	healthHandler := handler.NewHealth()
 	customerHandler := handler.NewCustomerHandler(*customerService)
 	managerHandler := handler.NewManagerHandler(*managerService)
+	restaurantHandler := handler.NewRestaurantHandler(*restaurantService)
 
 	// Start HTTP server
 	mux := httpserver.NewServeMux(
@@ -64,6 +67,7 @@ func main() {
 		healthHandler,
 		customerHandler,
 		managerHandler,
+		restaurantHandler,
 	)
 	err = httpserver.NewHTTP(conf.Api, mux)
 	if err != nil {

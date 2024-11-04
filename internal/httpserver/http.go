@@ -42,6 +42,7 @@ func NewServeMux(
 	hh handler.Health,
 	ch handler.Customer,
 	mh handler.Manager,
+	rh handler.Restaurant,
 ) *http.ServeMux {
 	mux := http.NewServeMux()
 	apiMux := http.NewServeMux()
@@ -59,6 +60,9 @@ func NewServeMux(
 	versionMux.HandleFunc("GET /manager/profile", mh.GetProfile)
 	versionMux.HandleFunc("PATCH /manager/profile", mh.UpdateProfile)
 	versionMux.HandleFunc("POST /manager/auth/signup", mh.SignUp)
+
+	// Manager restaurant endpoints
+	versionMux.HandleFunc("POST /manager/restaurant", rh.Create)
 
 	// Routers
 	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))
