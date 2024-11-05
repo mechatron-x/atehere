@@ -31,6 +31,7 @@ func New(apiConf config.Api, mux *http.ServeMux) (*http.Server, error) {
 
 func NewServeMux(
 	conf config.Api,
+	dh handler.Default,
 	hh handler.Health,
 	ch handler.Customer,
 	mh handler.Manager,
@@ -58,6 +59,10 @@ func NewServeMux(
 
 	// Restaurant endpoints
 	versionMux.HandleFunc("GET /restaurants", rh.List)
+  
+	// Default handler
+	apiMux.HandleFunc("/", dh.NoHandler)
+	versionMux.HandleFunc("/", dh.NoHandler)
 
 	// Routers
 	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))
