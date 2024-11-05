@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
@@ -157,7 +158,7 @@ func (ms *Manager) getManager(idToken string) (*aggregate.Manager, error) {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	manager, err := ms.managerRepo.GetByID(id)
+	manager, err := ms.managerRepo.GetByID(uuid.MustParse(id))
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}

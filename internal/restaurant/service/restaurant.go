@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
@@ -37,12 +38,7 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	owner, err := rs.restaurantRepo.GetOwnerByID(managerID)
-	if err != nil {
-		return nil, core.NewResourceNotFoundError(err)
-	}
-
-	restaurant.SetOwner(owner)
+	restaurant.SetOwner(uuid.MustParse(managerID))
 
 	err = rs.restaurantRepo.Save(restaurant)
 	if err != nil {
@@ -94,7 +90,7 @@ func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggreg
 
 	restaurant := aggregate.NewRestaurant()
 	restaurant.SetName(verifiedName)
-	restaurant.SetFoundationDate(verifiedFoundationYear)
+	restaurant.SetFoundationYear(verifiedFoundationYear)
 	restaurant.SetPhoneNumber(verifiedPhoneNumber)
 	restaurant.SetOpeningTime(verifiedOpeningTime)
 	restaurant.SetClosingTime(verifiedClosingTime)
@@ -104,21 +100,16 @@ func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggreg
 }
 
 func (rs *Restaurant) toDto(restaurant *aggregate.Restaurant) *dto.Restaurant {
-	owner := restaurant.Owner()
 	workingDays := make([]string, 0)
 	for _, wd := range restaurant.WorkingDays() {
 		workingDays = append(workingDays, wd.String())
 	}
 
 	return &dto.Restaurant{
-		ID: restaurant.ID().String(),
-		Owner: dto.Owner{
-			ID:       owner.ID().String(),
-			FullName: owner.FullName(),
-			Email:    owner.Email(),
-		},
+		ID:             restaurant.ID().String(),
+		OwnerID:        restaurant.OwnerID().String(),
 		Name:           restaurant.Name().String(),
-		FoundationYear: restaurant.FoundationDate().String(),
+		FoundationYear: restaurant.FoundationYear().String(),
 		PhoneNumber:    restaurant.PhoneNumber().String(),
 		OpeningTime:    restaurant.OpeningTime().String(),
 		ClosingTime:    restaurant.ClosingTime().String(),

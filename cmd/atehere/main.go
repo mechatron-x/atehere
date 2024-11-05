@@ -9,7 +9,8 @@ import (
 	"github.com/mechatron-x/atehere/internal/logger"
 	restaurantsrv "github.com/mechatron-x/atehere/internal/restaurant/service"
 	"github.com/mechatron-x/atehere/internal/sqldb"
-	"github.com/mechatron-x/atehere/internal/sqldb/repository"
+	restaurantRepo "github.com/mechatron-x/atehere/internal/sqldb/repository"
+	userRepo "github.com/mechatron-x/atehere/internal/sqldb/repository"
 	mngntsrv "github.com/mechatron-x/atehere/internal/usermanagement/service"
 )
 
@@ -41,8 +42,9 @@ func main() {
 	}
 
 	// Repositories
-	customerRepository := repository.NewCustomer(dm.DB())
-	managerRepository := repository.NewManager(dm.DB())
+	customerRepository := userRepo.NewCustomer(dm.DB())
+	managerRepository := userRepo.NewManager(dm.DB())
+	restaurantRepository := restaurantRepo.NewRestaurant(dm.DB())
 
 	// Infrastructure services
 	firebaseAuthenticator, err := infrastructure.NewFirebaseAuthenticator(conf.Firebase)
@@ -53,7 +55,7 @@ func main() {
 	// Services
 	customerService := mngntsrv.NewCustomer(customerRepository, firebaseAuthenticator)
 	managerService := mngntsrv.NewManager(managerRepository, firebaseAuthenticator)
-	restaurantService := restaurantsrv.NewRestaurant(nil, firebaseAuthenticator)
+	restaurantService := restaurantsrv.NewRestaurant(restaurantRepository, firebaseAuthenticator)
 
 	// HTTP handlers
 	healthHandler := handler.NewHealth()

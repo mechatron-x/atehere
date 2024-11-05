@@ -4,16 +4,16 @@ import (
 	"slices"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
 )
 
 type Restaurant struct {
 	core.Aggregate
-	owner          *entity.Owner
+	ownerID        uuid.UUID
 	name           valueobject.RestaurantName
-	foundationDate valueobject.FoundationYear
+	foundationYear valueobject.FoundationYear
 	phoneNumber    valueobject.PhoneNumber
 	openingTime    valueobject.WorkTime
 	closingTime    valueobject.WorkTime
@@ -26,16 +26,16 @@ func NewRestaurant() *Restaurant {
 	}
 }
 
-func (r *Restaurant) Owner() *entity.Owner {
-	return r.owner
+func (r *Restaurant) OwnerID() uuid.UUID {
+	return r.ownerID
 }
 
 func (r *Restaurant) Name() valueobject.RestaurantName {
 	return r.name
 }
 
-func (r *Restaurant) FoundationDate() valueobject.FoundationYear {
-	return r.foundationDate
+func (r *Restaurant) FoundationYear() valueobject.FoundationYear {
+	return r.foundationYear
 }
 
 func (r *Restaurant) PhoneNumber() valueobject.PhoneNumber {
@@ -54,16 +54,16 @@ func (r *Restaurant) WorkingDays() []time.Weekday {
 	return r.workingDays
 }
 
-func (r *Restaurant) SetOwner(owner *entity.Owner) {
-	r.owner = owner
+func (r *Restaurant) SetOwner(ownerID uuid.UUID) {
+	r.ownerID = ownerID
 }
 
 func (r *Restaurant) SetName(name valueobject.RestaurantName) {
 	r.name = name
 }
 
-func (r *Restaurant) SetFoundationDate(foundationDate valueobject.FoundationYear) {
-	r.foundationDate = foundationDate
+func (r *Restaurant) SetFoundationYear(foundationDate valueobject.FoundationYear) {
+	r.foundationYear = foundationDate
 }
 
 func (r *Restaurant) SetPhoneNumber(phoneNumber valueobject.PhoneNumber) {

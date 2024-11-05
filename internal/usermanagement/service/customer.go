@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
@@ -166,7 +167,7 @@ func (cs *Customer) getCustomer(idToken string) (*aggregate.Customer, error) {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	customer, err := cs.customerRepo.GetByID(id)
+	customer, err := cs.customerRepo.GetByID(uuid.MustParse(id))
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}

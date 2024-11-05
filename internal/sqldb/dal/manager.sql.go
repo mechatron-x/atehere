@@ -8,6 +8,9 @@ package dal
 import (
 	"context"
 	"database/sql"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 const getManager = `-- name: GetManager :one
@@ -15,7 +18,7 @@ SELECT id, full_name, phone_number, created_at, updated_at, deleted_at FROM mana
 WHERE id=$1
 `
 
-func (q *Queries) GetManager(ctx context.Context, id string) (Manager, error) {
+func (q *Queries) GetManager(ctx context.Context, id uuid.UUID) (Manager, error) {
 	row := q.db.QueryRowContext(ctx, getManager, id)
 	var i Manager
 	err := row.Scan(
@@ -38,11 +41,11 @@ INSERT INTO managers (
 `
 
 type SaveManagerParams struct {
-	ID          string
+	ID          uuid.UUID
 	FullName    string
 	PhoneNumber string
-	CreatedAt   sql.NullTime
-	UpdatedAt   sql.NullTime
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	DeletedAt   sql.NullTime
 }
 

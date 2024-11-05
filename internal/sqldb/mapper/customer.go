@@ -3,7 +3,6 @@ package mapper
 import (
 	"database/sql"
 
-	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
@@ -16,15 +15,7 @@ func NewCustomer() Customer {
 }
 
 func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
-	id, err := uuid.Parse(model.ID)
-	if err != nil {
-		return nil, err
-	}
-
 	customer := aggregate.NewCustomer()
-	customer.SetID(id)
-	customer.SetCreatedAt(model.CreatedAt.Time)
-	customer.SetUpdatedAt(model.UpdatedAt.Time)
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
@@ -38,33 +29,33 @@ func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
 		return nil, err
 	}
 
+	customer.SetID(model.ID)
 	customer.SetFullName(fullName)
 	customer.SetGender(gender)
 	customer.SetBirthDate(birthDate)
+	customer.SetCreatedAt(model.CreatedAt)
+	customer.SetUpdatedAt(model.UpdatedAt)
+	if model.DeletedAt.Valid {
+		customer.SetDeletedAt(model.DeletedAt.Time)
+	}
 
 	return customer, nil
 }
 
-func (c Customer) FromAggregate(user *aggregate.Customer) dal.Customer {
+func (c Customer) FromAggregate(customer *aggregate.Customer) dal.Customer {
 	return dal.Customer{
-		ID:       user.ID().String(),
-		FullName: user.FullName().String(),
-		Gender:   user.Gender().String(),
+		ID:       customer.ID(),
+		FullName: customer.FullName().String(),
+		Gender:   customer.Gender().String(),
 		BirthDate: sql.NullTime{
-			Time:  user.BirthDate().Date(),
+			Time:  customer.BirthDate().Date(),
 			Valid: true,
 		},
-		CreatedAt: sql.NullTime{
-			Time:  user.CreatedAt(),
-			Valid: true,
-		},
-		UpdatedAt: sql.NullTime{
-			Time:  user.UpdatedAt(),
-			Valid: true,
-		},
+		CreatedAt: customer.CreatedAt(),
+		UpdatedAt: customer.UpdatedAt(),
 		DeletedAt: sql.NullTime{
-			Time:  user.DeletedAt(),
-			Valid: user.IsDeleted(),
+			Time:  customer.DeletedAt(),
+			Valid: customer.IsDeleted(),
 		},
 	}
 }
