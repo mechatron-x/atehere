@@ -48,7 +48,7 @@ func Logger(next http.Handler, log *zap.Logger) http.Handler {
 		lBuf, _ := io.ReadAll(lr)
 
 		log.Info("HTTP Request",
-			zap.String("stack_trace", traceId),
+			zap.String("trace_id", traceId),
 			zap.String("protocol", r.Proto),
 			zap.String("method", r.Method),
 			zap.String("path", r.URL.Path),
@@ -60,7 +60,7 @@ func Logger(next http.Handler, log *zap.Logger) http.Handler {
 		next.ServeHTTP(lrw, r)
 
 		log.Info("HTTP Response",
-			zap.String("stack_trace", traceId),
+			zap.String("trace_id", traceId),
 			zap.String("protocol", r.Proto),
 			zap.Int("status", lrw.statusCode),
 			zap.String("method", r.Method),
