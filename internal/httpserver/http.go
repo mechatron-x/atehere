@@ -2,7 +2,6 @@ package httpserver
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -19,8 +18,7 @@ type (
 	}
 )
 
-func NewHTTP(apiConf config.Api, mux *http.ServeMux) error {
-	log := logger.Instance()
+func New(apiConf config.Api, mux *http.ServeMux) (*http.Server, error) {
 	url := fmt.Sprintf("%s:%s", apiConf.Host, apiConf.Port)
 	srv := &http.Server{
 		Addr:              url,
@@ -28,13 +26,7 @@ func NewHTTP(apiConf config.Api, mux *http.ServeMux) error {
 		ReadHeaderTimeout: time.Millisecond,
 	}
 
-	ln, err := net.Listen("tcp", srv.Addr)
-	if err != nil {
-		return err
-	}
-
-	log.Info(fmt.Sprintf("Starting HTTP server at: %s", srv.Addr))
-	return srv.Serve(ln)
+	return srv, nil
 }
 
 func NewServeMux(
