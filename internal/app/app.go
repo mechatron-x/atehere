@@ -7,6 +7,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/app/ctx"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler"
 	"github.com/mechatron-x/atehere/internal/infrastructure"
 	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/sqldb"
@@ -31,14 +32,14 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	healthCtx := ctx.NewHealth()
 	customerCtx := ctx.NewCustomer(dbManager.DB(), firebaseAuth)
 	managerCtx := ctx.NewManager(dbManager.DB(), firebaseAuth)
 	restaurantCtx := ctx.NewRestaurant(dbManager.DB(), firebaseAuth)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,
-		healthCtx.Handler(),
+		handler.NewDefault(),
+		handler.NewHealth(),
 		customerCtx.Handler(),
 		managerCtx.Handler(),
 		restaurantCtx.Handler(),
@@ -62,8 +63,8 @@ func (a *App) Start() error {
 	return a.httpServer.ListenAndServe()
 }
 
-func (a *App) Shutdown() {
-	a.dbManager.MigrateDown()
+func (a *App) Shutdown() error {
+	return a.dbManager.MigrateDown()
 }
 
 func newDBManager(dbConf config.DB) (*sqldb.DbManager, error) {
