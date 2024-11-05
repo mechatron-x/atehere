@@ -10,7 +10,8 @@ type WorkTime struct {
 }
 
 const (
-	WorkTimeLayout = "15:04" // hh-mm
+	WorkTimeLayout    = "15:04"
+	WorkingTimeFormat = "hh-mm"
 )
 
 func NewWorkTime(workTime string) (WorkTime, error) {

@@ -72,6 +72,10 @@ func (rs *Restaurant) FoundationYearFormat() string {
 	return valueobject.FoundationYearFormat
 }
 
+func (rs *Restaurant) WorkingTimeFormat() string {
+	return valueobject.WorkingTimeFormat
+}
+
 func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggregate.Restaurant, error) {
 	verifiedName, err := valueobject.NewRestaurantName(createDto.Name)
 	if err != nil {
