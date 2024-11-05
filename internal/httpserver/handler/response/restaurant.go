@@ -6,4 +6,8 @@ type (
 	RestaurantCreate struct {
 		*dto.Restaurant
 	}
+
+	RestaurantList struct {
+		Restaurants []dto.Restaurant `json:"restaurants"`
+	}
 )

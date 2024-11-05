@@ -64,6 +64,9 @@ func NewServeMux(
 	// Manager restaurant endpoints
 	versionMux.HandleFunc("POST /manager/restaurant", rh.Create)
 
+	// Restaurant endpoints
+	versionMux.HandleFunc("GET /restaurants", rh.List)
+
 	// Routers
 	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))
 	apiMux.Handle("/api/", http.StripPrefix("/api", versionMux))

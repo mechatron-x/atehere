@@ -38,3 +38,16 @@ func (rh Restaurant) Create(w http.ResponseWriter, r *http.Request) {
 	resp := response.RestaurantCreate{Restaurant: restaurant}
 	response.Encode(w, resp, http.StatusCreated)
 }
+
+func (rh Restaurant) List(w http.ResponseWriter, r *http.Request) {
+	page := r.URL.Query().Get("page")
+
+	restaurants, err := rh.rs.List(page)
+	if err != nil {
+		response.EncodeError(w, err)
+		return
+	}
+
+	resp := response.RestaurantList{Restaurants: restaurants}
+	response.Encode(w, resp, http.StatusOK)
+}

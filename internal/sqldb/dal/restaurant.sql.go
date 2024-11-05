@@ -14,48 +14,49 @@ import (
 	"github.com/lib/pq"
 )
 
-const getRestaurant = `-- name: GetRestaurant :one
+const getRestaurants = `-- name: GetRestaurants :many
 SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, created_at, updated_at, deleted_at FROM restaurants
-WHERE id=$1
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) GetRestaurant(ctx context.Context, id uuid.UUID) (Restaurant, error) {
-	row := q.db.QueryRowContext(ctx, getRestaurant, id)
-	var i Restaurant
-	err := row.Scan(
-		&i.ID,
-		&i.OwnerID,
-		&i.Name,
-		&i.FoundationYear,
-		&i.PhoneNumber,
-		&i.OpeningTime,
-		&i.ClosingTime,
-		pq.Array(&i.WorkingDays),
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+type GetRestaurantsParams struct {
+	Limit  int64
+	Offset int64
 }
 
-const getRestaurantOwner = `-- name: GetRestaurantOwner :one
-SELECT m.id, m.full_name, m.phone_number, m.created_at, m.updated_at, m.deleted_at FROM managers m
-INNER JOIN restaurants r on m.id=r.owner_id
-WHERE m.id=$1
-`
-
-func (q *Queries) GetRestaurantOwner(ctx context.Context, id uuid.UUID) (Manager, error) {
-	row := q.db.QueryRowContext(ctx, getRestaurantOwner, id)
-	var i Manager
-	err := row.Scan(
-		&i.ID,
-		&i.FullName,
-		&i.PhoneNumber,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) GetRestaurants(ctx context.Context, arg GetRestaurantsParams) ([]Restaurant, error) {
+	rows, err := q.db.QueryContext(ctx, getRestaurants, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Restaurant
+	for rows.Next() {
+		var i Restaurant
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.Name,
+			&i.FoundationYear,
+			&i.PhoneNumber,
+			&i.OpeningTime,
+			&i.ClosingTime,
+			pq.Array(&i.WorkingDays),
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const saveRestaurant = `-- name: SaveRestaurant :exec

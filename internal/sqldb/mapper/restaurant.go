@@ -79,6 +79,7 @@ func (rm Restaurant) FromAggregate(restaurant *aggregate.Restaurant) dal.Restaur
 	return dal.Restaurant{
 		ID:      restaurant.ID(),
 		OwnerID: restaurant.OwnerID(),
+		Name:    restaurant.Name().String(),
 		FoundationYear: sql.NullString{
 			String: restaurant.FoundationYear().String(),
 			Valid:  true,

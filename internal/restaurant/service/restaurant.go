@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,7 +46,22 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
-	return rs.toDto(restaurant), nil
+	restaurantDto := rs.toDto(restaurant)
+	return &restaurantDto, nil
+}
+
+func (rs *Restaurant) List(page string) ([]dto.Restaurant, error) {
+	p, err := strconv.Atoi(page)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	restaurants, err := rs.restaurantRepo.GetAll(p)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	return rs.toDtos(restaurants), nil
 }
 
 func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggregate.Restaurant, error) {
@@ -99,13 +115,13 @@ func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggreg
 	return restaurant, nil
 }
 
-func (rs *Restaurant) toDto(restaurant *aggregate.Restaurant) *dto.Restaurant {
+func (rs *Restaurant) toDto(restaurant *aggregate.Restaurant) dto.Restaurant {
 	workingDays := make([]string, 0)
 	for _, wd := range restaurant.WorkingDays() {
 		workingDays = append(workingDays, wd.String())
 	}
 
-	return &dto.Restaurant{
+	return dto.Restaurant{
 		ID:             restaurant.ID().String(),
 		OwnerID:        restaurant.OwnerID().String(),
 		Name:           restaurant.Name().String(),
@@ -115,4 +131,14 @@ func (rs *Restaurant) toDto(restaurant *aggregate.Restaurant) *dto.Restaurant {
 		ClosingTime:    restaurant.ClosingTime().String(),
 		WorkingDays:    workingDays,
 	}
+}
+
+func (rs *Restaurant) toDtos(restaurants []*aggregate.Restaurant) []dto.Restaurant {
+	restaurantDtos := make([]dto.Restaurant, 0)
+
+	for _, restaurant := range restaurants {
+		restaurantDtos = append(restaurantDtos, rs.toDto(restaurant))
+	}
+
+	return restaurantDtos
 }

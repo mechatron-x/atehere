@@ -25,6 +25,6 @@ UPDATE SET
     updated_at = NOW()
 ;
 
--- name: GetRestaurant :one
+-- name: GetRestaurants :many
 SELECT * FROM restaurants
-WHERE id=$1;
+LIMIT $1 OFFSET $2;
