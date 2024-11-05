@@ -27,4 +27,5 @@ UPDATE SET
 
 -- name: GetRestaurants :many
 SELECT * FROM restaurants
+ORDER BY created_at
 LIMIT $1 OFFSET $2;

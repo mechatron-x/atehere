@@ -48,6 +48,10 @@ func (rh Restaurant) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := response.RestaurantList{Restaurants: restaurants}
+	resp := response.RestaurantList{
+		AvailableWorkingDays: rh.rs.AvailableWorkingDays(),
+		FoundationYearFormat: rh.rs.FoundationYearFormat(),
+		Restaurants:          restaurants,
+	}
 	response.Encode(w, resp, http.StatusOK)
 }

@@ -39,6 +39,12 @@ func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 }
 
 func (r *Restaurant) GetAll(page int) ([]*aggregate.Restaurant, error) {
+	if page < 0 {
+		page = 0
+	} else {
+		page -= 1
+	}
+
 	getParams := dal.GetRestaurantsParams{
 		Limit:  int64(DefaultPageSize),
 		Offset: int64(page * DefaultPageSize),

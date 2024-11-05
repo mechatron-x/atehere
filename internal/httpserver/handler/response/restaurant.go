@@ -8,6 +8,8 @@ type (
 	}
 
 	RestaurantList struct {
-		Restaurants []dto.Restaurant `json:"restaurants"`
+		AvailableWorkingDays []string         `json:"available_working_days"`
+		FoundationYearFormat string           `json:"foundation_year_format"`
+		Restaurants          []dto.Restaurant `json:"restaurants"`
 	}
 )

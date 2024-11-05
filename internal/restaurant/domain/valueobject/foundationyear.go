@@ -10,7 +10,8 @@ type FoundationYear struct {
 }
 
 const (
-	FoundationYearLayout = "2006" // yyyy
+	FoundationYearLayout = "2006"
+	FoundationYearFormat = "yyyy"
 )
 
 func NewFoundationYear(year string) (FoundationYear, error) {

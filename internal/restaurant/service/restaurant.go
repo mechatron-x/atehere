@@ -64,6 +64,14 @@ func (rs *Restaurant) List(page string) ([]dto.Restaurant, error) {
 	return rs.toDtos(restaurants), nil
 }
 
+func (rs *Restaurant) AvailableWorkingDays() []string {
+	return valueobject.AvailableWeekdays()
+}
+
+func (rs *Restaurant) FoundationYearFormat() string {
+	return valueobject.FoundationYearFormat
+}
+
 func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggregate.Restaurant, error) {
 	verifiedName, err := valueobject.NewRestaurantName(createDto.Name)
 	if err != nil {
@@ -130,6 +138,7 @@ func (rs *Restaurant) toDto(restaurant *aggregate.Restaurant) dto.Restaurant {
 		OpeningTime:    restaurant.OpeningTime().String(),
 		ClosingTime:    restaurant.ClosingTime().String(),
 		WorkingDays:    workingDays,
+		CreatedAt:      restaurant.CreatedAt().Format(time.DateTime),
 	}
 }
 

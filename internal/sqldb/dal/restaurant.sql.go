@@ -16,6 +16,7 @@ import (
 
 const getRestaurants = `-- name: GetRestaurants :many
 SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, created_at, updated_at, deleted_at FROM restaurants
+ORDER BY created_at
 LIMIT $1 OFFSET $2
 `
 

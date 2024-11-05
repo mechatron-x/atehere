@@ -19,5 +19,6 @@ type (
 		OpeningTime    string   `json:"opening_time"`
 		ClosingTime    string   `json:"closing_time"`
 		WorkingDays    []string `json:"working_days"`
+		CreatedAt      string   `json:"created_at"`
 	}
 )

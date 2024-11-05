@@ -29,3 +29,15 @@ func ParseWeekday(weekday string) (time.Weekday, error) {
 
 	return -1, fmt.Errorf("invalid weekday %s", weekday)
 }
+
+func AvailableWeekdays() []string {
+	return []string{
+		time.Sunday.String(),
+		time.Monday.String(),
+		time.Tuesday.String(),
+		time.Wednesday.String(),
+		time.Thursday.String(),
+		time.Friday.String(),
+		time.Saturday.String(),
+	}
+}
