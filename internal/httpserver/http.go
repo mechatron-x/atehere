@@ -2,7 +2,6 @@ package httpserver
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -19,8 +18,7 @@ type (
 	}
 )
 
-func NewHTTP(apiConf config.Api, mux *http.ServeMux) error {
-	log := logger.Instance()
+func New(apiConf config.Api, mux *http.ServeMux) (*http.Server, error) {
 	url := fmt.Sprintf("%s:%s", apiConf.Host, apiConf.Port)
 	srv := &http.Server{
 		Addr:              url,
@@ -28,20 +26,16 @@ func NewHTTP(apiConf config.Api, mux *http.ServeMux) error {
 		ReadHeaderTimeout: time.Millisecond,
 	}
 
-	ln, err := net.Listen("tcp", srv.Addr)
-	if err != nil {
-		return err
-	}
-
-	log.Info(fmt.Sprintf("Starting HTTP server at: %s", srv.Addr))
-	return srv.Serve(ln)
+	return srv, nil
 }
 
 func NewServeMux(
 	conf config.Api,
+	dh handler.Default,
 	hh handler.Health,
 	ch handler.Customer,
 	mh handler.Manager,
+	rh handler.Restaurant,
 ) *http.ServeMux {
 	mux := http.NewServeMux()
 	apiMux := http.NewServeMux()
@@ -60,9 +54,20 @@ func NewServeMux(
 	versionMux.HandleFunc("PATCH /manager/profile", mh.UpdateProfile)
 	versionMux.HandleFunc("POST /manager/auth/signup", mh.SignUp)
 
+	// Manager restaurant endpoints
+	versionMux.HandleFunc("POST /manager/restaurant", rh.Create)
+
+	// Restaurant endpoints
+	versionMux.HandleFunc("GET /restaurants", rh.List)
+  
+	// Default handler
+	apiMux.HandleFunc("/", dh.NoHandler)
+	versionMux.HandleFunc("/", dh.NoHandler)
+
 	// Routers
 	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))
 	apiMux.Handle("/api/", http.StripPrefix("/api", versionMux))
+	apiMux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(conf.StaticRoot))))
 	versionMux.Handle(fmt.Sprintf("/%s/", conf.Version), http.StripPrefix(fmt.Sprintf("/%s", conf.Version), versionMux))
 
 	return mux

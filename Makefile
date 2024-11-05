@@ -3,6 +3,9 @@ COMPOSE_FILE="./development/compose.yaml"
 .PHONY: up
 
 up:
+	@docker compose -f ${COMPOSE_FILE} up
+
+up-dev:
 	@docker compose -f ${COMPOSE_FILE} up --watch
 
 down:

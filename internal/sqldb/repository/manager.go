@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
@@ -34,7 +35,7 @@ func (m *Manager) Save(manager *aggregate.Manager) error {
 	return nil
 }
 
-func (m *Manager) GetByID(id string) (*aggregate.Manager, error) {
+func (m *Manager) GetByID(id uuid.UUID) (*aggregate.Manager, error) {
 	managerModel, err := m.queries.GetManager(context.Background(), id)
 	if err != nil {
 		return nil, m.wrapError(err)

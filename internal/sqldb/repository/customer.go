@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
@@ -34,7 +35,7 @@ func (c *Customer) Save(customer *aggregate.Customer) error {
 	return nil
 }
 
-func (c *Customer) GetByID(id string) (*aggregate.Customer, error) {
+func (c *Customer) GetByID(id uuid.UUID) (*aggregate.Customer, error) {
 	customerModel, err := c.queries.GetCustomer(context.Background(), id)
 	if err != nil {
 		return nil, c.wrapError(err)
