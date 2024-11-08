@@ -2,13 +2,23 @@ package dto
 
 type (
 	RestaurantCreate struct {
-		Name           string   `json:"name"`
-		FoundationYear string   `json:"foundation_year"`
-		PhoneNumber    string   `json:"phone_number"`
-		OpeningTime    string   `json:"opening_time"`
-		ClosingTime    string   `json:"closing_time"`
-		WorkingDays    []string `json:"working_days"`
-		Image          string   `json:"image"`
+		Name           string        `json:"name"`
+		FoundationYear string        `json:"foundation_year"`
+		PhoneNumber    string        `json:"phone_number"`
+		OpeningTime    string        `json:"opening_time"`
+		ClosingTime    string        `json:"closing_time"`
+		WorkingDays    []string      `json:"working_days"`
+		Tables         []TableCreate `json:"tables"`
+		Image          string        `json:"image"`
+	}
+
+	RestaurantSummary struct {
+		ID          string   `json:"id"`
+		Name        string   `json:"name"`
+		PhoneNumber string   `json:"phone_number"`
+		OpeningTime string   `json:"opening_time"`
+		ClosingTime string   `json:"closing_time"`
+		WorkingDays []string `json:"working_days"`
 	}
 
 	Restaurant struct {
@@ -21,6 +31,6 @@ type (
 		ClosingTime    string   `json:"closing_time"`
 		WorkingDays    []string `json:"working_days"`
 		ImageURL       string   `json:"image_url"`
-		CreatedAt      string   `json:"created_at"`
+		Tables         []Table  `json:"tables"`
 	}
 )

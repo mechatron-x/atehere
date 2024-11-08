@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
+	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/restaurant/dto"
 	"github.com/mechatron-x/atehere/internal/restaurant/port"
@@ -36,7 +36,7 @@ func NewRestaurant(
 	}
 }
 
-func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*dto.Restaurant, error) {
+func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*dto.RestaurantSummary, error) {
 	restaurant, err := rs.validateCreateDto(createDto)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -60,12 +60,11 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
-	restaurantDto := rs.toDto(restaurant)
-
+	restaurantDto := rs.toSummaryDto(restaurant)
 	return &restaurantDto, nil
 }
 
-func (rs *Restaurant) List(page string) ([]dto.Restaurant, error) {
+func (rs *Restaurant) List(page string) ([]dto.RestaurantSummary, error) {
 	p, err := strconv.Atoi(page)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -76,7 +75,7 @@ func (rs *Restaurant) List(page string) ([]dto.Restaurant, error) {
 		return nil, core.NewResourceNotFoundError(err)
 	}
 
-	return rs.toDtos(restaurants), nil
+	return rs.toSummaryDtos(restaurants), nil
 }
 
 func (rs *Restaurant) AvailableWorkingDays() []string {
@@ -117,11 +116,6 @@ func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggreg
 	}
 
 	verifiedWorkingDays := make([]time.Weekday, 0)
-
-	if len(createDto.WorkingDays) == 0 {
-		return nil, errors.New("working days cannot be 0")
-	}
-
 	for _, workingDay := range createDto.WorkingDays {
 		verifiedWorkingDay, err := valueobject.ParseWeekday(workingDay)
 		if err != nil {
@@ -131,6 +125,19 @@ func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggreg
 		verifiedWorkingDays = append(verifiedWorkingDays, verifiedWorkingDay)
 	}
 
+	verifiedTables := make([]entity.Table, 0)
+	for _, table := range createDto.Tables {
+		verifiedName, err := valueobject.NewTableName(table.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		table := entity.NewTable()
+		table.SetName(verifiedName)
+
+		verifiedTables = append(verifiedTables, table)
+	}
+
 	restaurant := aggregate.NewRestaurant()
 	restaurant.SetName(verifiedName)
 	restaurant.SetFoundationYear(verifiedFoundationYear)
@@ -138,35 +145,33 @@ func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggreg
 	restaurant.SetOpeningTime(verifiedOpeningTime)
 	restaurant.SetClosingTime(verifiedClosingTime)
 	restaurant.AddWorkingDays(verifiedWorkingDays...)
+	restaurant.AddTables(verifiedTables...)
 
 	return restaurant, nil
 }
 
-func (rs *Restaurant) toDto(restaurant *aggregate.Restaurant) dto.Restaurant {
+func (rs *Restaurant) toSummaryDto(restaurant *aggregate.Restaurant) dto.RestaurantSummary {
 	workingDays := make([]string, 0)
 	for _, wd := range restaurant.WorkingDays() {
 		workingDays = append(workingDays, wd.String())
 	}
 
-	return dto.Restaurant{
-		ID:             restaurant.ID().String(),
-		OwnerID:        restaurant.OwnerID().String(),
-		Name:           restaurant.Name().String(),
-		FoundationYear: restaurant.FoundationYear().String(),
-		PhoneNumber:    restaurant.PhoneNumber().String(),
-		OpeningTime:    restaurant.OpeningTime().String(),
-		ClosingTime:    restaurant.ClosingTime().String(),
-		WorkingDays:    workingDays,
-		ImageURL:       rs.createImageURL(restaurant.ImageName().String()),
-		CreatedAt:      restaurant.CreatedAt().Format(time.DateTime),
+	return dto.RestaurantSummary{
+		ID:          restaurant.ID().String(),
+		Name:        restaurant.Name().String(),
+		PhoneNumber: restaurant.PhoneNumber().String(),
+		OpeningTime: restaurant.OpeningTime().String(),
+		ClosingTime: restaurant.ClosingTime().String(),
+		WorkingDays: workingDays,
+		ImageURL:    rs.createImageURL(restaurant.ImageName().String()),
 	}
 }
 
-func (rs *Restaurant) toDtos(restaurants []*aggregate.Restaurant) []dto.Restaurant {
-	restaurantDtos := make([]dto.Restaurant, 0)
+func (rs *Restaurant) toSummaryDtos(restaurants []*aggregate.Restaurant) []dto.RestaurantSummary {
+	restaurantDtos := make([]dto.RestaurantSummary, 0)
 
 	for _, restaurant := range restaurants {
-		restaurantDtos = append(restaurantDtos, rs.toDto(restaurant))
+		restaurantDtos = append(restaurantDtos, rs.toSummaryDto(restaurant))
 	}
 
 	return restaurantDtos

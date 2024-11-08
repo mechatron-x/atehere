@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
 )
 
@@ -19,11 +20,14 @@ type Restaurant struct {
 	closingTime    valueobject.WorkTime
 	workingDays    []time.Weekday
 	imageName      valueobject.ImageName
+	tables         []entity.Table
 }
 
 func NewRestaurant() *Restaurant {
 	return &Restaurant{
-		Aggregate: core.NewAggregate(),
+		Aggregate:   core.NewAggregate(),
+		workingDays: make([]time.Weekday, 0),
+		tables:      make([]entity.Table, 0),
 	}
 }
 
@@ -59,6 +63,10 @@ func (r *Restaurant) ImageName() valueobject.ImageName {
 	return r.imageName
 }
 
+func (r *Restaurant) Tables() []entity.Table {
+	return r.tables
+}
+
 func (r *Restaurant) SetOwner(ownerID uuid.UUID) {
 	r.ownerID = ownerID
 }
@@ -89,6 +97,16 @@ func (r *Restaurant) AddWorkingDays(workingDays ...time.Weekday) {
 	}
 }
 
+func (r *Restaurant) AddTables(tables ...entity.Table) {
+	for _, t := range tables {
+		r.addTable(t)
+	}
+}
+
+func (r *Restaurant) SetImageName(imageName valueobject.ImageName) {
+	r.imageName = imageName
+}
+
 func (r *Restaurant) addWorkingDay(workingDay time.Weekday) {
 	if slices.Contains(r.workingDays, workingDay) {
 		return
@@ -97,6 +115,12 @@ func (r *Restaurant) addWorkingDay(workingDay time.Weekday) {
 	r.workingDays = append(r.workingDays, workingDay)
 }
 
-func (r *Restaurant) SetImageName(imageName valueobject.ImageName) {
-	r.imageName = imageName
+func (r *Restaurant) addTable(table entity.Table) {
+	for _, t := range r.tables {
+		if t.ID() == table.ID() {
+			return
+		}
+	}
+
+	r.tables = append(r.tables, table)
 }
