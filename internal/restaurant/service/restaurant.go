@@ -1,15 +1,11 @@
 package service
 
 import (
-	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
-	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/restaurant/dto"
 	"github.com/mechatron-x/atehere/internal/restaurant/port"
@@ -37,7 +33,7 @@ func NewRestaurant(
 }
 
 func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*dto.RestaurantSummary, error) {
-	restaurant, err := rs.validateCreateDto(createDto)
+	restaurant, err := createDto.ToAggregate()
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
 	}
@@ -60,7 +56,7 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
-	restaurantDto := rs.toSummaryDto(restaurant)
+	restaurantDto := dto.ToRestaurantSummary(restaurant)
 	return &restaurantDto, nil
 }
 
@@ -75,7 +71,7 @@ func (rs *Restaurant) List(page string) ([]dto.RestaurantSummary, error) {
 		return nil, core.NewResourceNotFoundError(err)
 	}
 
-	return rs.toSummaryDtos(restaurants), nil
+	return dto.ToRestaurantSummaryList(restaurants), nil
 }
 
 func (rs *Restaurant) AvailableWorkingDays() []string {
@@ -88,95 +84,4 @@ func (rs *Restaurant) FoundationYearFormat() string {
 
 func (rs *Restaurant) WorkingTimeFormat() string {
 	return valueobject.WorkingTimeFormat
-}
-
-func (rs *Restaurant) validateCreateDto(createDto dto.RestaurantCreate) (*aggregate.Restaurant, error) {
-	verifiedName, err := valueobject.NewRestaurantName(createDto.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedFoundationYear, err := valueobject.NewFoundationYear(createDto.FoundationYear)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedPhoneNumber, err := valueobject.NewPhoneNumber(createDto.PhoneNumber)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedOpeningTime, err := valueobject.NewWorkTime(createDto.OpeningTime)
-	if err != nil {
-		return nil, err
-	}
-	verifiedClosingTime, err := valueobject.NewWorkTime(createDto.ClosingTime)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedWorkingDays := make([]time.Weekday, 0)
-	for _, workingDay := range createDto.WorkingDays {
-		verifiedWorkingDay, err := valueobject.ParseWeekday(workingDay)
-		if err != nil {
-			return nil, err
-		}
-
-		verifiedWorkingDays = append(verifiedWorkingDays, verifiedWorkingDay)
-	}
-
-	verifiedTables := make([]entity.Table, 0)
-	for _, table := range createDto.Tables {
-		verifiedName, err := valueobject.NewTableName(table.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		table := entity.NewTable()
-		table.SetName(verifiedName)
-
-		verifiedTables = append(verifiedTables, table)
-	}
-
-	restaurant := aggregate.NewRestaurant()
-	restaurant.SetName(verifiedName)
-	restaurant.SetFoundationYear(verifiedFoundationYear)
-	restaurant.SetPhoneNumber(verifiedPhoneNumber)
-	restaurant.SetOpeningTime(verifiedOpeningTime)
-	restaurant.SetClosingTime(verifiedClosingTime)
-	restaurant.AddWorkingDays(verifiedWorkingDays...)
-	restaurant.AddTables(verifiedTables...)
-
-	return restaurant, nil
-}
-
-func (rs *Restaurant) toSummaryDto(restaurant *aggregate.Restaurant) dto.RestaurantSummary {
-	workingDays := make([]string, 0)
-	for _, wd := range restaurant.WorkingDays() {
-		workingDays = append(workingDays, wd.String())
-	}
-
-	return dto.RestaurantSummary{
-		ID:          restaurant.ID().String(),
-		Name:        restaurant.Name().String(),
-		PhoneNumber: restaurant.PhoneNumber().String(),
-		OpeningTime: restaurant.OpeningTime().String(),
-		ClosingTime: restaurant.ClosingTime().String(),
-		WorkingDays: workingDays,
-		ImageURL:    rs.createImageURL(restaurant.ImageName().String()),
-	}
-}
-
-func (rs *Restaurant) toSummaryDtos(restaurants []*aggregate.Restaurant) []dto.RestaurantSummary {
-	restaurantDtos := make([]dto.RestaurantSummary, 0)
-
-	for _, restaurant := range restaurants {
-		restaurantDtos = append(restaurantDtos, rs.toSummaryDto(restaurant))
-	}
-
-	return restaurantDtos
-}
-
-func (rs *Restaurant) createImageURL(imageName string) string {
-	return fmt.Sprintf("%s/static/%s", rs.apiConf.URL, imageName)
 }

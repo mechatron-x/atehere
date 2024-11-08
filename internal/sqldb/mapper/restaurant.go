@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
+	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 )
@@ -16,7 +17,7 @@ func NewRestaurant() Restaurant {
 	return Restaurant{}
 }
 
-func (rm Restaurant) FromModel(model dal.Restaurant) (*aggregate.Restaurant, error) {
+func (rm Restaurant) FromModel(model dal.Restaurant, tables ...dal.RestaurantTable) (*aggregate.Restaurant, error) {
 	restaurant := aggregate.NewRestaurant()
 
 	verifiedName, err := valueobject.NewRestaurantName(model.Name)
@@ -51,6 +52,21 @@ func (rm Restaurant) FromModel(model dal.Restaurant) (*aggregate.Restaurant, err
 		}
 
 		restaurant.AddWorkingDays(verifiedWorkingDay)
+	}
+
+	for _, t := range tables {
+		verifiedTableName, err := valueobject.NewTableName(t.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		table := entity.NewTable()
+		table.SetID(model.ID)
+		table.SetName(verifiedTableName)
+		table.SetCreatedAt(model.CreatedAt)
+		table.SetUpdatedAt(model.UpdatedAt)
+
+		restaurant.AddTables(table)
 	}
 
 	restaurant.SetID(model.ID)

@@ -66,28 +66,7 @@ func (r *Restaurant) GetAll(page int) ([]*aggregate.Restaurant, error) {
 		page -= 1
 	}
 
-	getParams := dal.GetRestaurantsParams{
-		Limit:  int64(DefaultPageSize),
-		Offset: int64(page * DefaultPageSize),
-	}
-
-	restaurantModels, err := r.queries.GetRestaurants(context.Background(), getParams)
-	if err != nil {
-		return nil, r.wrapError(err)
-	}
-
-	restaurants := make([]*aggregate.Restaurant, 0)
-
-	for _, model := range restaurantModels {
-		restaurant, err := r.rMapper.FromModel(model)
-		if err != nil {
-			return nil, r.wrapError(err)
-		}
-
-		restaurants = append(restaurants, restaurant)
-	}
-
-	return restaurants, nil
+	return r.getRestaurants(r.queries, DefaultPageSize, page*DefaultPageSize)
 }
 
 func (r *Restaurant) saveRestaurant(queries *dal.Queries, restaurant *aggregate.Restaurant) error {
@@ -110,6 +89,40 @@ func (r *Restaurant) saveTables(queries *dal.Queries, restaurantID uuid.UUID, ta
 
 func (r *Restaurant) deleteTables(queries *dal.Queries, restaurantID uuid.UUID) error {
 	return queries.DeleteRestaurantTables(context.Background(), restaurantID)
+}
+
+func (r *Restaurant) getRestaurants(queries *dal.Queries, limit, offset int) ([]*aggregate.Restaurant, error) {
+	getParams := dal.GetRestaurantsParams{
+		Limit:  int64(limit),
+		Offset: int64(offset),
+	}
+
+	restaurantModels, err := queries.GetRestaurants(context.Background(), getParams)
+	if err != nil {
+		return nil, r.wrapError(err)
+	}
+
+	restaurants := make([]*aggregate.Restaurant, 0)
+
+	for _, model := range restaurantModels {
+		restaurantTables, err := r.getRestaurantTables(queries, model.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		restaurant, err := r.rMapper.FromModel(model, restaurantTables...)
+		if err != nil {
+			return nil, r.wrapError(err)
+		}
+
+		restaurants = append(restaurants, restaurant)
+	}
+
+	return restaurants, nil
+}
+
+func (r *Restaurant) getRestaurantTables(queries *dal.Queries, restaurantID uuid.UUID) ([]dal.RestaurantTable, error) {
+	return queries.GetRestaurantTables(context.Background(), restaurantID)
 }
 
 func (r *Restaurant) wrapError(err error) error {

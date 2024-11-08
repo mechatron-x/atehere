@@ -1,5 +1,13 @@
 package dto
 
+import (
+	"time"
+
+	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
+	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
+	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
+)
+
 type (
 	RestaurantCreate struct {
 		Name           string        `json:"name"`
@@ -23,7 +31,6 @@ type (
 
 	Restaurant struct {
 		ID             string   `json:"id"`
-		OwnerID        string   `json:"owner_id"`
 		Name           string   `json:"name"`
 		FoundationYear string   `json:"foundation_year"`
 		PhoneNumber    string   `json:"phone_number"`
@@ -34,3 +41,107 @@ type (
 		Tables         []Table  `json:"tables"`
 	}
 )
+
+func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
+	verifiedName, err := valueobject.NewRestaurantName(rc.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	verifiedFoundationYear, err := valueobject.NewFoundationYear(rc.FoundationYear)
+	if err != nil {
+		return nil, err
+	}
+
+	verifiedPhoneNumber, err := valueobject.NewPhoneNumber(rc.PhoneNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	verifiedOpeningTime, err := valueobject.NewWorkTime(rc.OpeningTime)
+	if err != nil {
+		return nil, err
+	}
+	verifiedClosingTime, err := valueobject.NewWorkTime(rc.ClosingTime)
+	if err != nil {
+		return nil, err
+	}
+
+	verifiedWorkingDays := make([]time.Weekday, 0)
+	for _, workingDay := range rc.WorkingDays {
+		verifiedWorkingDay, err := valueobject.ParseWeekday(workingDay)
+		if err != nil {
+			return nil, err
+		}
+
+		verifiedWorkingDays = append(verifiedWorkingDays, verifiedWorkingDay)
+	}
+
+	verifiedTables := make([]entity.Table, 0)
+	for _, table := range rc.Tables {
+		verifiedName, err := valueobject.NewTableName(table.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		table := entity.NewTable()
+		table.SetName(verifiedName)
+
+		verifiedTables = append(verifiedTables, table)
+	}
+
+	restaurant := aggregate.NewRestaurant()
+	restaurant.SetName(verifiedName)
+	restaurant.SetFoundationYear(verifiedFoundationYear)
+	restaurant.SetPhoneNumber(verifiedPhoneNumber)
+	restaurant.SetOpeningTime(verifiedOpeningTime)
+	restaurant.SetClosingTime(verifiedClosingTime)
+	restaurant.AddWorkingDays(verifiedWorkingDays...)
+	restaurant.AddTables(verifiedTables...)
+
+	return restaurant, nil
+}
+
+func ToRestaurantSummary(restaurant *aggregate.Restaurant) RestaurantSummary {
+	workingDays := make([]string, 0)
+	for _, wd := range restaurant.WorkingDays() {
+		workingDays = append(workingDays, wd.String())
+	}
+
+	return RestaurantSummary{
+		ID:          restaurant.ID().String(),
+		Name:        restaurant.Name().String(),
+		PhoneNumber: restaurant.PhoneNumber().String(),
+		OpeningTime: restaurant.OpeningTime().String(),
+		ClosingTime: restaurant.ClosingTime().String(),
+		WorkingDays: workingDays,
+	}
+}
+
+func ToRestaurantSummaryList(restaurants []*aggregate.Restaurant) []RestaurantSummary {
+	rs := make([]RestaurantSummary, 0)
+
+	for _, restaurant := range restaurants {
+		rs = append(rs, ToRestaurantSummary(restaurant))
+	}
+
+	return rs
+}
+
+func ToRestaurant(restaurant *aggregate.Restaurant) Restaurant {
+	workingDays := make([]string, 0)
+	for _, wd := range restaurant.WorkingDays() {
+		workingDays = append(workingDays, wd.String())
+	}
+
+	return Restaurant{
+		ID:             restaurant.ID().String(),
+		Name:           restaurant.Name().String(),
+		FoundationYear: restaurant.FoundationYear().String(),
+		PhoneNumber:    restaurant.PhoneNumber().String(),
+		OpeningTime:    restaurant.OpeningTime().String(),
+		ClosingTime:    restaurant.ClosingTime().String(),
+		WorkingDays:    workingDays,
+		Tables:         ToTableList(restaurant.Tables()),
+	}
+}
