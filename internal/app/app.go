@@ -32,7 +32,11 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	imageStorage := infrastructure.NewImageStorage(conf.Api)
+	diskFileSaver := infrastructure.NewDiskFileSaver()
+	imageStorage, err := infrastructure.NewImageStorage(diskFileSaver, conf.Api.StaticRoot)
+	if err != nil {
+		return nil, err
+	}
 
 	customerCtx := ctx.NewCustomer(dbManager.DB(), firebaseAuth)
 	managerCtx := ctx.NewManager(dbManager.DB(), firebaseAuth)

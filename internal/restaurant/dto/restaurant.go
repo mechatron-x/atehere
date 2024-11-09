@@ -42,7 +42,7 @@ type (
 		Tables         []Table  `json:"tables"`
 	}
 
-	ImageURLCreatorFunc func(imageName valueobject.ImageName) string
+	ImageURLCreatorFunc func(imageName valueobject.Image) string
 )
 
 func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {

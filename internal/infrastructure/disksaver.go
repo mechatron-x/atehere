@@ -5,17 +5,19 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/mechatron-x/atehere/internal/config"
 )
 
 type DiskFileSaver struct{}
 
-func (dfs DiskFileSaver) Save(filename string, data []byte, conf config.Api) error {
-	savePath := filepath.Join(conf.StaticRoot, filepath.Clean(filename))
+func NewDiskFileSaver() DiskFileSaver {
+	return DiskFileSaver{}
+}
+
+func (dfs DiskFileSaver) Save(filename string, data []byte, location string) error {
+	savePath := filepath.Join(location, filepath.Clean(filename))
 
 	savePath = filepath.Clean(savePath)
-	if !strings.HasPrefix(savePath, conf.StaticRoot) {
+	if !strings.HasPrefix(savePath, location) {
 		return fmt.Errorf("invalid static root")
 	}
 

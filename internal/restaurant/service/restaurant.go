@@ -49,8 +49,13 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
+	verifiedImage, err := valueobject.NewImage(imageName)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
 	restaurant.SetOwner(uuid.MustParse(managerID))
-	restaurant.SetImageName(valueobject.NewImageName(imageName))
+	restaurant.SetImageName(verifiedImage)
 
 	err = rs.restaurantRepo.Save(restaurant)
 	if err != nil {
@@ -87,7 +92,7 @@ func (rs *Restaurant) WorkingTimeFormat() string {
 	return valueobject.WorkingTimeFormat
 }
 
-func (rs *Restaurant) createImageURL(imageName valueobject.ImageName) string {
+func (rs *Restaurant) createImageURL(imageName valueobject.Image) string {
 	if core.IsEmptyString(imageName.String()) {
 		return ""
 	}

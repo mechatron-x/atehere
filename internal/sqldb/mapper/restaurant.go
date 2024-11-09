@@ -45,6 +45,11 @@ func (rm Restaurant) FromModel(model dal.Restaurant, tables ...dal.RestaurantTab
 		return nil, err
 	}
 
+	verifiedImageName, err := valueobject.NewImage(model.ImageName.String)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, workingDay := range model.WorkingDays {
 		verifiedWorkingDay, err := valueobject.ParseWeekday(workingDay)
 		if err != nil {
@@ -76,9 +81,7 @@ func (rm Restaurant) FromModel(model dal.Restaurant, tables ...dal.RestaurantTab
 	restaurant.SetPhoneNumber(verifiedPhoneNumber)
 	restaurant.SetOpeningTime(verifiedOpeningTime)
 	restaurant.SetClosingTime(verifiedClosingTime)
-	if model.ImageName.Valid {
-		restaurant.SetImageName(valueobject.NewImageName(model.ImageName.String))
-	}
+	restaurant.SetImageName(verifiedImageName)
 	restaurant.SetCreatedAt(model.CreatedAt)
 	restaurant.SetUpdatedAt(model.UpdatedAt)
 	if model.DeletedAt.Valid {

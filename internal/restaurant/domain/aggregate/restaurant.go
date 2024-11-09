@@ -19,7 +19,7 @@ type Restaurant struct {
 	openingTime    valueobject.WorkTime
 	closingTime    valueobject.WorkTime
 	workingDays    []time.Weekday
-	imageName      valueobject.ImageName
+	imageName      valueobject.Image
 	tables         []entity.Table
 }
 
@@ -59,7 +59,7 @@ func (r *Restaurant) WorkingDays() []time.Weekday {
 	return r.workingDays
 }
 
-func (r *Restaurant) ImageName() valueobject.ImageName {
+func (r *Restaurant) ImageName() valueobject.Image {
 	return r.imageName
 }
 
@@ -103,7 +103,7 @@ func (r *Restaurant) AddTables(tables ...entity.Table) {
 	}
 }
 
-func (r *Restaurant) SetImageName(imageName valueobject.ImageName) {
+func (r *Restaurant) SetImageName(imageName valueobject.Image) {
 	r.imageName = imageName
 }
 
