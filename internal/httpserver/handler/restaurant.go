@@ -35,7 +35,7 @@ func (rh Restaurant) Create(w http.ResponseWriter, r *http.Request) {
 		response.EncodeError(w, err)
 	}
 
-	resp := response.RestaurantCreate{RestaurantSummary: restaurant}
+	resp := response.RestaurantCreate{Restaurant: restaurant}
 	response.Encode(w, resp, http.StatusCreated)
 }
 

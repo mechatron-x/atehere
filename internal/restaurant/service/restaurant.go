@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -32,7 +33,7 @@ func NewRestaurant(
 	}
 }
 
-func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*dto.RestaurantSummary, error) {
+func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*dto.Restaurant, error) {
 	restaurant, err := createDto.ToAggregate()
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -56,7 +57,7 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
-	restaurantDto := dto.ToRestaurantSummary(restaurant)
+	restaurantDto := dto.ToRestaurant(restaurant, rs.createImageURL)
 	return &restaurantDto, nil
 }
 
@@ -71,7 +72,7 @@ func (rs *Restaurant) List(page string) ([]dto.RestaurantSummary, error) {
 		return nil, core.NewResourceNotFoundError(err)
 	}
 
-	return dto.ToRestaurantSummaryList(restaurants), nil
+	return dto.ToRestaurantSummaryList(restaurants, rs.createImageURL), nil
 }
 
 func (rs *Restaurant) AvailableWorkingDays() []string {
@@ -84,4 +85,12 @@ func (rs *Restaurant) FoundationYearFormat() string {
 
 func (rs *Restaurant) WorkingTimeFormat() string {
 	return valueobject.WorkingTimeFormat
+}
+
+func (rs *Restaurant) createImageURL(imageName valueobject.ImageName) string {
+	if core.IsEmptyString(imageName.String()) {
+		return ""
+	}
+
+	return fmt.Sprintf("%s/static/%s", rs.apiConf.URL, imageName.String())
 }

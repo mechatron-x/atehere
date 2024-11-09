@@ -4,7 +4,7 @@ import "github.com/mechatron-x/atehere/internal/restaurant/dto"
 
 type (
 	RestaurantCreate struct {
-		*dto.RestaurantSummary
+		*dto.Restaurant
 	}
 
 	RestaurantList struct {

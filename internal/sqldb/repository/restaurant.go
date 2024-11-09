@@ -42,17 +42,17 @@ func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 	queries := r.queries.WithTx(tx)
 
 	if err := r.saveRestaurant(queries, restaurant); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 
 	if err := r.deleteTables(queries, restaurant.ID()); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 
 	if err := r.saveTables(queries, restaurant.ID(), restaurant.Tables()); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 

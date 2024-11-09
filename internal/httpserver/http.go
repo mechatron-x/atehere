@@ -59,10 +59,6 @@ func NewServeMux(
 
 	// Restaurant endpoints
 	versionMux.HandleFunc("GET /restaurants", rh.List)
-  
-	// Default handler
-	apiMux.HandleFunc("/", dh.NoHandler)
-	versionMux.HandleFunc("/", dh.NoHandler)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

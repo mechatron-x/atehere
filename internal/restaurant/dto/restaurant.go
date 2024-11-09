@@ -27,6 +27,7 @@ type (
 		OpeningTime string   `json:"opening_time"`
 		ClosingTime string   `json:"closing_time"`
 		WorkingDays []string `json:"working_days"`
+		ImageURL    string   `json:"image_url"`
 	}
 
 	Restaurant struct {
@@ -40,6 +41,8 @@ type (
 		ImageURL       string   `json:"image_url"`
 		Tables         []Table  `json:"tables"`
 	}
+
+	ImageURLCreatorFunc func(imageName valueobject.ImageName) string
 )
 
 func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
@@ -62,6 +65,7 @@ func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	verifiedClosingTime, err := valueobject.NewWorkTime(rc.ClosingTime)
 	if err != nil {
 		return nil, err
@@ -102,7 +106,7 @@ func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
 	return restaurant, nil
 }
 
-func ToRestaurantSummary(restaurant *aggregate.Restaurant) RestaurantSummary {
+func ToRestaurantSummary(restaurant *aggregate.Restaurant, imageConverter ImageURLCreatorFunc) RestaurantSummary {
 	workingDays := make([]string, 0)
 	for _, wd := range restaurant.WorkingDays() {
 		workingDays = append(workingDays, wd.String())
@@ -115,20 +119,21 @@ func ToRestaurantSummary(restaurant *aggregate.Restaurant) RestaurantSummary {
 		OpeningTime: restaurant.OpeningTime().String(),
 		ClosingTime: restaurant.ClosingTime().String(),
 		WorkingDays: workingDays,
+		ImageURL:    imageConverter(restaurant.ImageName()),
 	}
 }
 
-func ToRestaurantSummaryList(restaurants []*aggregate.Restaurant) []RestaurantSummary {
+func ToRestaurantSummaryList(restaurants []*aggregate.Restaurant, imageConverter ImageURLCreatorFunc) []RestaurantSummary {
 	rs := make([]RestaurantSummary, 0)
 
 	for _, restaurant := range restaurants {
-		rs = append(rs, ToRestaurantSummary(restaurant))
+		rs = append(rs, ToRestaurantSummary(restaurant, imageConverter))
 	}
 
 	return rs
 }
 
-func ToRestaurant(restaurant *aggregate.Restaurant) Restaurant {
+func ToRestaurant(restaurant *aggregate.Restaurant, imageConvertor ImageURLCreatorFunc) Restaurant {
 	workingDays := make([]string, 0)
 	for _, wd := range restaurant.WorkingDays() {
 		workingDays = append(workingDays, wd.String())
@@ -142,6 +147,7 @@ func ToRestaurant(restaurant *aggregate.Restaurant) Restaurant {
 		OpeningTime:    restaurant.OpeningTime().String(),
 		ClosingTime:    restaurant.ClosingTime().String(),
 		WorkingDays:    workingDays,
+		ImageURL:       imageConvertor(restaurant.ImageName()),
 		Tables:         ToTableList(restaurant.Tables()),
 	}
 }
