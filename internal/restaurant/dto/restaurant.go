@@ -15,9 +15,9 @@ type (
 		PhoneNumber    string        `json:"phone_number"`
 		OpeningTime    string        `json:"opening_time"`
 		ClosingTime    string        `json:"closing_time"`
+		Image          string        `json:"image"`
 		WorkingDays    []string      `json:"working_days"`
 		Tables         []TableCreate `json:"tables"`
-		Image          string        `json:"image"`
 	}
 
 	RestaurantSummary struct {
@@ -26,8 +26,8 @@ type (
 		PhoneNumber string   `json:"phone_number"`
 		OpeningTime string   `json:"opening_time"`
 		ClosingTime string   `json:"closing_time"`
-		WorkingDays []string `json:"working_days"`
 		ImageURL    string   `json:"image_url"`
+		WorkingDays []string `json:"working_days"`
 	}
 
 	Restaurant struct {
@@ -37,8 +37,8 @@ type (
 		PhoneNumber    string   `json:"phone_number"`
 		OpeningTime    string   `json:"opening_time"`
 		ClosingTime    string   `json:"closing_time"`
-		WorkingDays    []string `json:"working_days"`
 		ImageURL       string   `json:"image_url"`
+		WorkingDays    []string `json:"working_days"`
 		Tables         []Table  `json:"tables"`
 	}
 
