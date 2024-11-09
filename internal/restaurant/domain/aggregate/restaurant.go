@@ -18,6 +18,7 @@ type Restaurant struct {
 	openingTime    valueobject.WorkTime
 	closingTime    valueobject.WorkTime
 	workingDays    []time.Weekday
+	imageName      string
 }
 
 func NewRestaurant() *Restaurant {
@@ -52,6 +53,10 @@ func (r *Restaurant) ClosingTime() valueobject.WorkTime {
 
 func (r *Restaurant) WorkingDays() []time.Weekday {
 	return r.workingDays
+}
+
+func (r *Restaurant) ImageName() string {
+	return r.imageName
 }
 
 func (r *Restaurant) SetOwner(ownerID uuid.UUID) {
@@ -90,4 +95,8 @@ func (r *Restaurant) addWorkingDay(workingDay time.Weekday) {
 	}
 
 	r.workingDays = append(r.workingDays, workingDay)
+}
+
+func (r *Restaurant) SetImageName(imageName string) {
+	r.imageName = imageName
 }

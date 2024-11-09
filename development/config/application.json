@@ -22,7 +22,8 @@
     "name": "atehere",
     "host": "0.0.0.0",
     "port": "8080",
-    "staticRoot": "/var/lib/atehere/static"
+    "staticRoot": "/var/lib/atehere/static",
+    "url": "http://127.0.0.1:8080"
   },
   "db": {
     "driver": "postgres",

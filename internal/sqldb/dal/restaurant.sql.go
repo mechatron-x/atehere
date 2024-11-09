@@ -15,7 +15,7 @@ import (
 )
 
 const getRestaurants = `-- name: GetRestaurants :many
-SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, created_at, updated_at, deleted_at FROM restaurants
+SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
 ORDER BY created_at
 LIMIT $1 OFFSET $2
 `
@@ -43,6 +43,7 @@ func (q *Queries) GetRestaurants(ctx context.Context, arg GetRestaurantsParams) 
 			&i.OpeningTime,
 			&i.ClosingTime,
 			pq.Array(&i.WorkingDays),
+			&i.ImageName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -70,11 +71,12 @@ INSERT INTO restaurants (
     opening_time, 
     closing_time,
     working_days,
+    image_name,
     created_at,
     updated_at,
     deleted_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 ) ON CONFLICT (id) DO 
 UPDATE SET
     owner_id = $2,
@@ -84,6 +86,7 @@ UPDATE SET
     opening_time = $6,
     closing_time = $7,
     working_days = $8,
+    image_name = $9,
     updated_at = NOW()
 `
 
@@ -96,6 +99,7 @@ type SaveRestaurantParams struct {
 	OpeningTime    string
 	ClosingTime    string
 	WorkingDays    []string
+	ImageName      sql.NullString
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      sql.NullTime
@@ -111,6 +115,7 @@ func (q *Queries) SaveRestaurant(ctx context.Context, arg SaveRestaurantParams) 
 		arg.OpeningTime,
 		arg.ClosingTime,
 		pq.Array(arg.WorkingDays),
+		arg.ImageName,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 		arg.DeletedAt,

@@ -32,9 +32,11 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
+	imageStorage := infrastructure.NewImageService(conf.Api)
+
 	customerCtx := ctx.NewCustomer(dbManager.DB(), firebaseAuth)
 	managerCtx := ctx.NewManager(dbManager.DB(), firebaseAuth)
-	restaurantCtx := ctx.NewRestaurant(dbManager.DB(), firebaseAuth)
+	restaurantCtx := ctx.NewRestaurant(dbManager.DB(), firebaseAuth, imageStorage, conf.Api)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,

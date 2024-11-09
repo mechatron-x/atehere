@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
     opening_time CHAR(5) NOT NULL,
     closing_time CHAR(5) NOT NULL,
     working_days VARCHAR(10)[],
+    image_name VARCHAR(50),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMP,

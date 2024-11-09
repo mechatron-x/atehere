@@ -6,4 +6,5 @@ type Api struct {
 	Host       string `json:"host"`
 	Port       string `json:"port"`
 	StaticRoot string `json:"staticRoot"`
+	URL        string `json:"url"`
 }
