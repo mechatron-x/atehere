@@ -4,10 +4,10 @@ type ImageName struct {
 	name string
 }
 
-func NewImageName(name string) (ImageName, error) {
-	return ImageName{name}, nil
+func NewImageName(name string) ImageName {
+	return ImageName{name}
 }
 
-func (i ImageName) Name() string {
+func (i ImageName) String() string {
 	return i.name
 }

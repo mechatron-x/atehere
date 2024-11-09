@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	ImageSaver struct {
+	ImageStorage struct {
 		conf config.Api
 		fs   FileSaver
 	}
@@ -19,14 +19,14 @@ type (
 	}
 )
 
-func NewImageService(conf config.Api) *ImageSaver {
-	return &ImageSaver{
+func NewImageStorage(conf config.Api) *ImageStorage {
+	return &ImageStorage{
 		conf: conf,
 		fs:   DiskFileSaver{},
 	}
 }
 
-func (is *ImageSaver) Save(fileName string, data string) (string, error) {
+func (is *ImageStorage) Save(fileName string, data string) (string, error) {
 	imageDecoded, imageType, err := decodeBase64Image(data)
 	if err != nil {
 		return "", err

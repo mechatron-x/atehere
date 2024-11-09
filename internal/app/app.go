@@ -32,7 +32,7 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	imageStorage := infrastructure.NewImageService(conf.Api)
+	imageStorage := infrastructure.NewImageStorage(conf.Api)
 
 	customerCtx := ctx.NewCustomer(dbManager.DB(), firebaseAuth)
 	managerCtx := ctx.NewManager(dbManager.DB(), firebaseAuth)

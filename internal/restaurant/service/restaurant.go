@@ -53,17 +53,14 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 	}
 
 	restaurant.SetOwner(uuid.MustParse(managerID))
-	restaurant.SetImageName(imageName)
+	restaurant.SetImageName(valueobject.NewImageName(imageName))
 
 	err = rs.restaurantRepo.Save(restaurant)
 	if err != nil {
 		return nil, core.NewPersistenceFailureError(err)
 	}
 
-	imageURL := rs.createImageURL(restaurant.ImageName())
-
 	restaurantDto := rs.toDto(restaurant)
-	restaurantDto.ImageURL = imageURL
 
 	return &restaurantDto, nil
 }
@@ -160,6 +157,7 @@ func (rs *Restaurant) toDto(restaurant *aggregate.Restaurant) dto.Restaurant {
 		OpeningTime:    restaurant.OpeningTime().String(),
 		ClosingTime:    restaurant.ClosingTime().String(),
 		WorkingDays:    workingDays,
+		ImageURL:       rs.createImageURL(restaurant.ImageName().String()),
 		CreatedAt:      restaurant.CreatedAt().Format(time.DateTime),
 	}
 }

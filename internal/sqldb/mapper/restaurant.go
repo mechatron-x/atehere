@@ -61,7 +61,7 @@ func (rm Restaurant) FromModel(model dal.Restaurant) (*aggregate.Restaurant, err
 	restaurant.SetOpeningTime(verifiedOpeningTime)
 	restaurant.SetClosingTime(verifiedClosingTime)
 	if model.ImageName.Valid {
-		restaurant.SetImageName(model.ImageName.String)
+		restaurant.SetImageName(valueobject.NewImageName(model.ImageName.String))
 	}
 	restaurant.SetCreatedAt(model.CreatedAt)
 	restaurant.SetUpdatedAt(model.UpdatedAt)
@@ -95,7 +95,7 @@ func (rm Restaurant) FromAggregate(restaurant *aggregate.Restaurant) dal.Restaur
 		ClosingTime: restaurant.ClosingTime().String(),
 		WorkingDays: workingDays,
 		ImageName: sql.NullString{
-			String: restaurant.ImageName(),
+			String: restaurant.ImageName().String(),
 			Valid:  true,
 		},
 		CreatedAt: restaurant.CreatedAt(),
