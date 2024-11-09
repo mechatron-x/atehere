@@ -14,6 +14,31 @@ import (
 	"github.com/lib/pq"
 )
 
+const getRestaurant = `-- name: GetRestaurant :one
+SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
+WHERE id=$1
+`
+
+func (q *Queries) GetRestaurant(ctx context.Context, id uuid.UUID) (Restaurant, error) {
+	row := q.db.QueryRowContext(ctx, getRestaurant, id)
+	var i Restaurant
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Name,
+		&i.FoundationYear,
+		&i.PhoneNumber,
+		&i.OpeningTime,
+		&i.ClosingTime,
+		pq.Array(&i.WorkingDays),
+		&i.ImageName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getRestaurants = `-- name: GetRestaurants :many
 SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
 ORDER BY created_at

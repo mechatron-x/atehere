@@ -35,7 +35,7 @@ func NewRestaurant(db *sql.DB) *Restaurant {
 func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 	tx, err := r.db.BeginTx(context.Background(), nil)
 	if err != nil {
-		return err
+		return r.wrapError(err)
 	}
 	defer tx.Commit()
 
@@ -43,20 +43,39 @@ func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 
 	if err := r.saveRestaurant(queries, restaurant); err != nil {
 		_ = tx.Rollback()
-		return err
+		return r.wrapError(err)
 	}
 
 	if err := r.deleteTables(queries, restaurant.ID()); err != nil {
 		_ = tx.Rollback()
-		return err
+		return r.wrapError(err)
 	}
 
 	if err := r.saveTables(queries, restaurant.ID(), restaurant.Tables()); err != nil {
 		_ = tx.Rollback()
-		return err
+		return r.wrapError(err)
 	}
 
 	return nil
+}
+
+func (r *Restaurant) GetByID(id uuid.UUID) (*aggregate.Restaurant, error) {
+	restaurantModel, err := r.queries.GetRestaurant(context.Background(), id)
+	if err != nil {
+		return nil, r.wrapError(err)
+	}
+
+	restaurantTables, err := r.getRestaurantTables(r.queries, id)
+	if err != nil {
+		return nil, r.wrapError(err)
+	}
+
+	restaurant, err := r.rMapper.FromModel(restaurantModel, restaurantTables...)
+	if err != nil {
+		return nil, r.wrapError(err)
+	}
+
+	return restaurant, nil
 }
 
 func (r *Restaurant) GetAll(page int) ([]*aggregate.Restaurant, error) {
@@ -66,7 +85,33 @@ func (r *Restaurant) GetAll(page int) ([]*aggregate.Restaurant, error) {
 		page -= 1
 	}
 
-	return r.getRestaurants(r.queries, DefaultPageSize, page*DefaultPageSize)
+	getParams := dal.GetRestaurantsParams{
+		Limit:  int64(DefaultPageSize),
+		Offset: int64(page * DefaultPageSize),
+	}
+
+	restaurantModels, err := r.queries.GetRestaurants(context.Background(), getParams)
+	if err != nil {
+		return nil, r.wrapError(err)
+	}
+
+	restaurants := make([]*aggregate.Restaurant, 0)
+
+	for _, model := range restaurantModels {
+		restaurantTables, err := r.getRestaurantTables(r.queries, model.ID)
+		if err != nil {
+			return nil, r.wrapError(err)
+		}
+
+		restaurant, err := r.rMapper.FromModel(model, restaurantTables...)
+		if err != nil {
+			return nil, r.wrapError(err)
+		}
+
+		restaurants = append(restaurants, restaurant)
+	}
+
+	return restaurants, nil
 }
 
 func (r *Restaurant) saveRestaurant(queries *dal.Queries, restaurant *aggregate.Restaurant) error {
@@ -89,36 +134,6 @@ func (r *Restaurant) saveTables(queries *dal.Queries, restaurantID uuid.UUID, ta
 
 func (r *Restaurant) deleteTables(queries *dal.Queries, restaurantID uuid.UUID) error {
 	return queries.DeleteRestaurantTables(context.Background(), restaurantID)
-}
-
-func (r *Restaurant) getRestaurants(queries *dal.Queries, limit, offset int) ([]*aggregate.Restaurant, error) {
-	getParams := dal.GetRestaurantsParams{
-		Limit:  int64(limit),
-		Offset: int64(offset),
-	}
-
-	restaurantModels, err := queries.GetRestaurants(context.Background(), getParams)
-	if err != nil {
-		return nil, r.wrapError(err)
-	}
-
-	restaurants := make([]*aggregate.Restaurant, 0)
-
-	for _, model := range restaurantModels {
-		restaurantTables, err := r.getRestaurantTables(queries, model.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		restaurant, err := r.rMapper.FromModel(model, restaurantTables...)
-		if err != nil {
-			return nil, r.wrapError(err)
-		}
-
-		restaurants = append(restaurants, restaurant)
-	}
-
-	return restaurants, nil
 }
 
 func (r *Restaurant) getRestaurantTables(queries *dal.Queries, restaurantID uuid.UUID) ([]dal.RestaurantTable, error) {

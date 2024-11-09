@@ -27,6 +27,10 @@ UPDATE SET
     updated_at = NOW()
 ;
 
+-- name: GetRestaurant :one
+SELECT * FROM restaurants
+WHERE id=$1;
+
 -- name: GetRestaurants :many
 SELECT * FROM restaurants
 ORDER BY created_at

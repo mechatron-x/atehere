@@ -39,10 +39,32 @@ func (rh Restaurant) Create(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, resp, http.StatusCreated)
 }
 
-func (rh Restaurant) List(w http.ResponseWriter, r *http.Request) {
-	page := r.URL.Query().Get("page")
+func (rh Restaurant) GetByID(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
 
-	restaurants, err := rh.rs.List(page)
+	restaurantSummary, err := rh.rs.GetByID(id)
+	if err != nil {
+		response.EncodeError(w, err)
+		return
+	}
+
+	resp := response.RestaurantFilter{
+		AvailableWorkingDays: rh.rs.AvailableWorkingDays(),
+		FoundationYearFormat: rh.rs.FoundationYearFormat(),
+		WorkingTimeFormat:    rh.rs.WorkingTimeFormat(),
+		Restaurant:           restaurantSummary,
+	}
+	response.Encode(w, resp, http.StatusOK)
+}
+
+func (rh Restaurant) List(w http.ResponseWriter, r *http.Request) {
+	reqBody := &request.RestaurantFilter{}
+	err := request.Decode(r, w, reqBody)
+	if err != nil {
+		return
+	}
+
+	restaurants, err := rh.rs.List(reqBody.Page, reqBody.RestaurantFilter)
 	if err != nil {
 		response.EncodeError(w, err)
 		return

@@ -6,4 +6,9 @@ type (
 	RestaurantCreate struct {
 		dto.RestaurantCreate
 	}
+
+	RestaurantFilter struct {
+		Page int `json:"page"`
+		dto.RestaurantFilter
+	}
 )

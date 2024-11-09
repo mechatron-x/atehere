@@ -58,7 +58,8 @@ func NewServeMux(
 	versionMux.HandleFunc("POST /manager/restaurant", rh.Create)
 
 	// Restaurant endpoints
-	versionMux.HandleFunc("GET /restaurants", rh.List)
+	versionMux.HandleFunc("POST /restaurants", rh.List)
+	versionMux.HandleFunc("GET /restaurants/{id}", rh.GetByID)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

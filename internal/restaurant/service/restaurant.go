@@ -2,11 +2,11 @@ package service
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/restaurant/dto"
 	"github.com/mechatron-x/atehere/internal/restaurant/port"
@@ -66,18 +66,35 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 	return &restaurantDto, nil
 }
 
-func (rs *Restaurant) List(page string) ([]dto.RestaurantSummary, error) {
-	p, err := strconv.Atoi(page)
+func (rs *Restaurant) GetByID(id string) (*dto.RestaurantSummary, error) {
+	verifiedID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	restaurants, err := rs.restaurantRepo.GetAll(p)
+	restaurant, err := rs.restaurantRepo.GetByID(verifiedID)
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}
 
-	return dto.ToRestaurantSummaryList(restaurants, rs.createImageURL), nil
+	summaryDto := dto.ToRestaurantSummary(restaurant, rs.createImageURL)
+	return &summaryDto, nil
+}
+
+func (rs *Restaurant) List(page int, filterDto dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
+	restaurants, err := rs.restaurantRepo.GetAll(page)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	filteredRestaurants := make([]*aggregate.Restaurant, 0)
+	for _, restaurant := range restaurants {
+		if filterDto.ApplyFilter(restaurant) {
+			filteredRestaurants = append(filteredRestaurants, restaurant)
+		}
+	}
+
+	return dto.ToRestaurantSummaryList(filteredRestaurants, rs.createImageURL), nil
 }
 
 func (rs *Restaurant) AvailableWorkingDays() []string {

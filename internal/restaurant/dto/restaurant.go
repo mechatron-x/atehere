@@ -1,8 +1,10 @@
 package dto
 
 import (
+	"strings"
 	"time"
 
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
@@ -18,6 +20,11 @@ type (
 		Image          string        `json:"image"`
 		WorkingDays    []string      `json:"working_days"`
 		Tables         []TableCreate `json:"tables"`
+	}
+
+	RestaurantFilter struct {
+		Name           string `json:"name"`
+		FoundationYear string `json:"foundation_year"`
 	}
 
 	RestaurantSummary struct {
@@ -104,6 +111,22 @@ func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
 	restaurant.AddTables(verifiedTables...)
 
 	return restaurant, nil
+}
+
+func (rf RestaurantFilter) ApplyFilter(restaurant *aggregate.Restaurant) bool {
+	if !core.IsEmptyString(rf.Name) {
+		if strings.Compare(rf.Name, restaurant.Name().String()) != 0 {
+			return false
+		}
+	}
+
+	if !core.IsEmptyString(rf.FoundationYear) {
+		if strings.Compare(rf.FoundationYear, restaurant.FoundationYear().String()) != 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 func ToRestaurantSummary(restaurant *aggregate.Restaurant, imageConverter ImageURLCreatorFunc) RestaurantSummary {
