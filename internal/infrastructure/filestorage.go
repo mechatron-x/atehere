@@ -11,7 +11,7 @@ import (
 type DiskFileSaver struct{}
 
 func (dfs DiskFileSaver) Save(filename string, data []byte, conf config.Api) error {
-	savePath := filepath.Join(conf.StaticRoot, filename)
+	savePath := filepath.Join(conf.StaticRoot, filepath.Clean(filename))
 
 	imageFile, err := os.Create(savePath)
 	if err != nil {
@@ -19,7 +19,7 @@ func (dfs DiskFileSaver) Save(filename string, data []byte, conf config.Api) err
 	}
 	defer imageFile.Close()
 
-	err = os.WriteFile(savePath, data, 0644)
+	err = os.WriteFile(savePath, data, 0600)
 	if err != nil {
 		return core.NewPersistenceFailureError(err)
 	}
