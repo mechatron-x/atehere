@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"slices"
 	"strings"
 	"time"
 
@@ -23,8 +24,9 @@ type (
 	}
 
 	RestaurantFilter struct {
-		Name           string `json:"name"`
-		FoundationYear string `json:"foundation_year"`
+		Name           string   `json:"name"`
+		FoundationYear string   `json:"foundation_year"`
+		WorkingDays    []string `json:"working_days"`
 	}
 
 	RestaurantSummary struct {
@@ -113,35 +115,42 @@ func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
 	return restaurant, nil
 }
 
-func (rf RestaurantFilter) ApplyFilter(restaurant *aggregate.Restaurant) bool {
-	if !core.IsEmptyString(rf.Name) {
-		if strings.Compare(rf.Name, restaurant.Name().String()) != 0 {
-			return false
+func (rf RestaurantFilter) ApplyFilter(restaurants []*aggregate.Restaurant) []*aggregate.Restaurant {
+	filteredRestaurants := make([]*aggregate.Restaurant, 0)
+
+	for _, restaurant := range restaurants {
+		if !core.IsEmptyString(rf.Name) {
+			if !strings.Contains(restaurant.Name().String(), rf.Name) {
+				continue
+			}
 		}
+
+		if !core.IsEmptyString(rf.FoundationYear) {
+			if strings.Compare(rf.FoundationYear, restaurant.FoundationYear().String()) != 0 {
+				continue
+			}
+		}
+
+		isMatchingWorkingDays := isMatchingWorkingDays(restaurant.WorkingDays(), rf.WorkingDays)
+
+		if !isMatchingWorkingDays {
+			continue
+		}
+
+		filteredRestaurants = append(filteredRestaurants, restaurant)
 	}
 
-	if !core.IsEmptyString(rf.FoundationYear) {
-		if strings.Compare(rf.FoundationYear, restaurant.FoundationYear().String()) != 0 {
-			return false
-		}
-	}
-
-	return true
+	return filteredRestaurants
 }
 
 func ToRestaurantSummary(restaurant *aggregate.Restaurant, imageConverter ImageURLCreatorFunc) RestaurantSummary {
-	workingDays := make([]string, 0)
-	for _, wd := range restaurant.WorkingDays() {
-		workingDays = append(workingDays, wd.String())
-	}
-
 	return RestaurantSummary{
 		ID:          restaurant.ID().String(),
 		Name:        restaurant.Name().String(),
 		PhoneNumber: restaurant.PhoneNumber().String(),
 		OpeningTime: restaurant.OpeningTime().String(),
 		ClosingTime: restaurant.ClosingTime().String(),
-		WorkingDays: workingDays,
+		WorkingDays: toWorkingDays(restaurant.WorkingDays()),
 		ImageURL:    imageConverter(restaurant.ImageName()),
 	}
 }
@@ -157,11 +166,6 @@ func ToRestaurantSummaryList(restaurants []*aggregate.Restaurant, imageConverter
 }
 
 func ToRestaurant(restaurant *aggregate.Restaurant, imageConvertor ImageURLCreatorFunc) Restaurant {
-	workingDays := make([]string, 0)
-	for _, wd := range restaurant.WorkingDays() {
-		workingDays = append(workingDays, wd.String())
-	}
-
 	return Restaurant{
 		ID:             restaurant.ID().String(),
 		Name:           restaurant.Name().String(),
@@ -169,8 +173,32 @@ func ToRestaurant(restaurant *aggregate.Restaurant, imageConvertor ImageURLCreat
 		PhoneNumber:    restaurant.PhoneNumber().String(),
 		OpeningTime:    restaurant.OpeningTime().String(),
 		ClosingTime:    restaurant.ClosingTime().String(),
-		WorkingDays:    workingDays,
+		WorkingDays:    toWorkingDays(restaurant.WorkingDays()),
 		ImageURL:       imageConvertor(restaurant.ImageName()),
 		Tables:         ToTableList(restaurant.Tables()),
 	}
+}
+
+func toWorkingDays(workingDays []time.Weekday) []string {
+	wds := make([]string, 0)
+	for _, wd := range workingDays {
+		wds = append(wds, wd.String())
+	}
+
+	return wds
+}
+
+func isMatchingWorkingDays(src []time.Weekday, filter []string) bool {
+	for _, workingDay := range filter {
+		verifiedWeekday, err := valueobject.ParseWeekday(workingDay)
+		if err != nil {
+			return false
+		}
+
+		if !slices.Contains(src, verifiedWeekday) {
+			return false
+		}
+	}
+
+	return true
 }

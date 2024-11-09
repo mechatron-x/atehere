@@ -12,10 +12,6 @@ import (
 	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
 )
 
-const (
-	DefaultPageSize int = 10
-)
-
 type Restaurant struct {
 	db      *sql.DB
 	queries *dal.Queries
@@ -78,19 +74,8 @@ func (r *Restaurant) GetByID(id uuid.UUID) (*aggregate.Restaurant, error) {
 	return restaurant, nil
 }
 
-func (r *Restaurant) GetAll(page int) ([]*aggregate.Restaurant, error) {
-	if page < 0 {
-		page = 0
-	} else {
-		page -= 1
-	}
-
-	getParams := dal.GetRestaurantsParams{
-		Limit:  int64(DefaultPageSize),
-		Offset: int64(page * DefaultPageSize),
-	}
-
-	restaurantModels, err := r.queries.GetRestaurants(context.Background(), getParams)
+func (r *Restaurant) GetAll() ([]*aggregate.Restaurant, error) {
+	restaurantModels, err := r.queries.GetRestaurants(context.Background())
 	if err != nil {
 		return nil, r.wrapError(err)
 	}

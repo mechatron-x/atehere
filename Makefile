@@ -15,3 +15,6 @@ down:
 
 prune:
 	@docker system prune -af
+
+prune-volume:
+	@docker volume prune -af

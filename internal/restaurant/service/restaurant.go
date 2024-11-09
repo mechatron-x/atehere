@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/restaurant/dto"
 	"github.com/mechatron-x/atehere/internal/restaurant/port"
@@ -18,6 +17,10 @@ type Restaurant struct {
 	imageStorage   port.ImageStorage
 	apiConf        config.Api
 }
+
+const (
+	defaultPageSize int = 20
+)
 
 func NewRestaurant(
 	restaurantRepo port.RestaurantRepository,
@@ -82,17 +85,12 @@ func (rs *Restaurant) GetByID(id string) (*dto.RestaurantSummary, error) {
 }
 
 func (rs *Restaurant) List(page int, filterDto dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
-	restaurants, err := rs.restaurantRepo.GetAll(page)
+	restaurants, err := rs.restaurantRepo.GetAll()
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}
 
-	filteredRestaurants := make([]*aggregate.Restaurant, 0)
-	for _, restaurant := range restaurants {
-		if filterDto.ApplyFilter(restaurant) {
-			filteredRestaurants = append(filteredRestaurants, restaurant)
-		}
-	}
+	filteredRestaurants := filterDto.ApplyFilter(restaurants)
 
 	return dto.ToRestaurantSummaryList(filteredRestaurants, rs.createImageURL), nil
 }

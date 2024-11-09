@@ -42,16 +42,10 @@ func (q *Queries) GetRestaurant(ctx context.Context, id uuid.UUID) (Restaurant, 
 const getRestaurants = `-- name: GetRestaurants :many
 SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
 ORDER BY created_at
-LIMIT $1 OFFSET $2
 `
 
-type GetRestaurantsParams struct {
-	Limit  int64
-	Offset int64
-}
-
-func (q *Queries) GetRestaurants(ctx context.Context, arg GetRestaurantsParams) ([]Restaurant, error) {
-	rows, err := q.db.QueryContext(ctx, getRestaurants, arg.Limit, arg.Offset)
+func (q *Queries) GetRestaurants(ctx context.Context) ([]Restaurant, error) {
+	rows, err := q.db.QueryContext(ctx, getRestaurants)
 	if err != nil {
 		return nil, err
 	}

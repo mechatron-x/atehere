@@ -33,5 +33,4 @@ WHERE id=$1;
 
 -- name: GetRestaurants :many
 SELECT * FROM restaurants
-ORDER BY created_at
-LIMIT $1 OFFSET $2;
+ORDER BY created_at;

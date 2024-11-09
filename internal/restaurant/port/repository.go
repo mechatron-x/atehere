@@ -8,5 +8,5 @@ import (
 type RestaurantRepository interface {
 	Save(restaurant *aggregate.Restaurant) error
 	GetByID(id uuid.UUID) (*aggregate.Restaurant, error)
-	GetAll(page int) ([]*aggregate.Restaurant, error)
+	GetAll() ([]*aggregate.Restaurant, error)
 }
