@@ -8,6 +8,7 @@ type (
 		OpeningTime    string   `json:"opening_time"`
 		ClosingTime    string   `json:"closing_time"`
 		WorkingDays    []string `json:"working_days"`
+		Image          string   `json:"image"`
 	}
 
 	Restaurant struct {
@@ -19,6 +20,7 @@ type (
 		OpeningTime    string   `json:"opening_time"`
 		ClosingTime    string   `json:"closing_time"`
 		WorkingDays    []string `json:"working_days"`
+		ImageURL       string   `json:"image_url"`
 		CreatedAt      string   `json:"created_at"`
 	}
 )

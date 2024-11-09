@@ -8,11 +8,12 @@ INSERT INTO restaurants (
     opening_time, 
     closing_time,
     working_days,
+    image_name,
     created_at,
     updated_at,
     deleted_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 ) ON CONFLICT (id) DO 
 UPDATE SET
     owner_id = $2,
@@ -22,6 +23,7 @@ UPDATE SET
     opening_time = $6,
     closing_time = $7,
     working_days = $8,
+    image_name = $9,
     updated_at = NOW()
 ;
 

@@ -39,6 +39,7 @@ type Restaurant struct {
 	OpeningTime    string
 	ClosingTime    string
 	WorkingDays    []string
+	ImageName      sql.NullString
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      sql.NullTime

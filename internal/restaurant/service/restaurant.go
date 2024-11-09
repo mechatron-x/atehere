@@ -2,10 +2,12 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
@@ -16,15 +18,21 @@ import (
 type Restaurant struct {
 	restaurantRepo port.RestaurantRepository
 	authService    port.Authenticator
+	imageStorage   port.ImageStorage
+	apiConf        config.Api
 }
 
 func NewRestaurant(
 	restaurantRepo port.RestaurantRepository,
 	authService port.Authenticator,
+	fileService port.ImageStorage,
+	apiConf config.Api,
 ) *Restaurant {
 	return &Restaurant{
 		restaurantRepo: restaurantRepo,
 		authService:    authService,
+		imageStorage:   fileService,
+		apiConf:        apiConf,
 	}
 }
 
@@ -39,7 +47,13 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 		return nil, core.NewUnauthorizedError(err)
 	}
 
+	imageName, err := rs.imageStorage.Save(restaurant.ID().String(), createDto.Image)
+	if err != nil {
+		return nil, core.NewPersistenceFailureError(err)
+	}
+
 	restaurant.SetOwner(uuid.MustParse(managerID))
+	restaurant.SetImageName(valueobject.NewImageName(imageName))
 
 	err = rs.restaurantRepo.Save(restaurant)
 	if err != nil {
@@ -47,6 +61,7 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 	}
 
 	restaurantDto := rs.toDto(restaurant)
+
 	return &restaurantDto, nil
 }
 
@@ -142,6 +157,7 @@ func (rs *Restaurant) toDto(restaurant *aggregate.Restaurant) dto.Restaurant {
 		OpeningTime:    restaurant.OpeningTime().String(),
 		ClosingTime:    restaurant.ClosingTime().String(),
 		WorkingDays:    workingDays,
+		ImageURL:       rs.createImageURL(restaurant.ImageName().String()),
 		CreatedAt:      restaurant.CreatedAt().Format(time.DateTime),
 	}
 }
@@ -154,4 +170,8 @@ func (rs *Restaurant) toDtos(restaurants []*aggregate.Restaurant) []dto.Restaura
 	}
 
 	return restaurantDtos
+}
+
+func (rs *Restaurant) createImageURL(imageName string) string {
+	return fmt.Sprintf("%s/static/%s", rs.apiConf.URL, imageName)
 }
