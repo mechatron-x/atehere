@@ -8,6 +8,9 @@ package dal
 import (
 	"context"
 	"database/sql"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 const getCustomer = `-- name: GetCustomer :one
@@ -15,7 +18,7 @@ SELECT id, full_name, gender, birth_date, created_at, updated_at, deleted_at FRO
 WHERE id=$1
 `
 
-func (q *Queries) GetCustomer(ctx context.Context, id string) (Customer, error) {
+func (q *Queries) GetCustomer(ctx context.Context, id uuid.UUID) (Customer, error) {
 	row := q.db.QueryRowContext(ctx, getCustomer, id)
 	var i Customer
 	err := row.Scan(
@@ -39,12 +42,12 @@ INSERT INTO customers (
 `
 
 type SaveCustomerParams struct {
-	ID        string
+	ID        uuid.UUID
 	FullName  string
 	Gender    string
 	BirthDate sql.NullTime
-	CreatedAt sql.NullTime
-	UpdatedAt sql.NullTime
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	DeletedAt sql.NullTime
 }
 

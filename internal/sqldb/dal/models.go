@@ -6,23 +6,49 @@ package dal
 
 import (
 	"database/sql"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type Customer struct {
-	ID        string
+	ID        uuid.UUID
 	FullName  string
 	Gender    string
 	BirthDate sql.NullTime
-	CreatedAt sql.NullTime
-	UpdatedAt sql.NullTime
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	DeletedAt sql.NullTime
 }
 
 type Manager struct {
-	ID          string
+	ID          uuid.UUID
 	FullName    string
 	PhoneNumber string
-	CreatedAt   sql.NullTime
-	UpdatedAt   sql.NullTime
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	DeletedAt   sql.NullTime
+}
+
+type Restaurant struct {
+	ID             uuid.UUID
+	OwnerID        uuid.UUID
+	Name           string
+	FoundationYear sql.NullString
+	PhoneNumber    sql.NullString
+	OpeningTime    string
+	ClosingTime    string
+	WorkingDays    []string
+	ImageName      sql.NullString
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      sql.NullTime
+}
+
+type RestaurantTable struct {
+	ID           uuid.UUID
+	RestaurantID uuid.UUID
+	Name         string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }

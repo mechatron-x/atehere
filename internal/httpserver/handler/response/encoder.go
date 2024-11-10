@@ -51,8 +51,6 @@ func EncodeError(w http.ResponseWriter, err error, httpStatus ...int) {
 		case core.CodeValidationFailure:
 			status = http.StatusBadRequest
 		}
-	} else {
-		message = "internal server error"
 	}
 
 	errResp := ErrorResponse{

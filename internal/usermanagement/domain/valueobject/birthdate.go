@@ -27,7 +27,7 @@ func NewBirthDate(date string) (BirthDate, error) {
 	return BirthDate{birthDate}, nil
 }
 
-func (b BirthDate) CalculateAge() int {
+func (b BirthDate) Age() int {
 	birthDate := b.date
 	return time.Now().Year() - birthDate.Year()
 }

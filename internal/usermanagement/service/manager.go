@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
@@ -10,28 +11,28 @@ import (
 )
 
 type Manager struct {
-	managerRepo   port.ManagerRepository
-	authenticator port.Authenticator
+	managerRepo port.ManagerRepository
+	authService port.Authenticator
 }
 
 func NewManager(
 	managerRepository port.ManagerRepository,
-	authInfrastructure port.Authenticator,
+	authService port.Authenticator,
 ) *Manager {
 	return &Manager{
-		managerRepo:   managerRepository,
-		authenticator: authInfrastructure,
+		managerRepo: managerRepository,
+		authService: authService,
 	}
 }
 
 func (ms *Manager) SignUp(signUpDto dto.ManagerSignUp) (*dto.Manager, error) {
-	manager, err := ms.validateSignUpDto(signUpDto)
+	manager, err := signUpDto.Validate()
 	if err != nil {
 		logger.Error("Cannot map manager dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	err = ms.authenticator.CreateUser(
+	err = ms.authService.CreateUser(
 		manager.ID().String(),
 		manager.Email().String(),
 		manager.Password().String(),
@@ -77,7 +78,7 @@ func (ms *Manager) UpdateProfile(idToken string, updateDto dto.Manager) (*dto.Ma
 		return nil, err
 	}
 
-	err = ms.updateManager(updateDto, manager)
+	err = updateDto.Update(manager)
 	if err != nil {
 		logger.Error("Cannot map manager update dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
@@ -96,68 +97,18 @@ func (ms *Manager) UpdateProfile(idToken string, updateDto dto.Manager) (*dto.Ma
 	}, nil
 }
 
-func (ms *Manager) updateManager(updateDto dto.Manager, manager *aggregate.Manager) error {
-	if !core.IsEmptyString(updateDto.FullName) {
-		verifiedFullName, err := valueobject.NewFullName(updateDto.FullName)
-		if err != nil {
-			return err
-		}
-		manager.SetFullName(verifiedFullName)
-	}
-
-	if !core.IsEmptyString(updateDto.PhoneNumber) {
-		verifiedPhoneNumber, err := valueobject.NewPhoneNumber(updateDto.PhoneNumber)
-		if err != nil {
-			return err
-		}
-		manager.SetPhoneNumber(verifiedPhoneNumber)
-	}
-
-	return nil
-}
-
-func (ms *Manager) validateSignUpDto(signUpDto dto.ManagerSignUp) (*aggregate.Manager, error) {
-	verifiedEmail, err := valueobject.NewEmail(signUpDto.Email)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedPassword, err := valueobject.NewPassword(signUpDto.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedFullName, err := valueobject.NewFullName(signUpDto.FullName)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedPhoneNumber, err := valueobject.NewPhoneNumber(signUpDto.PhoneNumber)
-	if err != nil {
-		return nil, err
-	}
-
-	manager := aggregate.NewManager()
-	manager.SetEmail(verifiedEmail)
-	manager.SetPassword(verifiedPassword)
-	manager.SetFullName(verifiedFullName)
-	manager.SetPhoneNumber(verifiedPhoneNumber)
-
-	return manager, nil
-}
-
 func (ms *Manager) getManager(idToken string) (*aggregate.Manager, error) {
-	id, err := ms.authenticator.GetUserID(idToken)
+	id, err := ms.authService.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	email, err := ms.authenticator.GetUserEmail(idToken)
+	email, err := ms.authService.GetUserEmail(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	manager, err := ms.managerRepo.GetByID(id)
+	manager, err := ms.managerRepo.GetByID(uuid.MustParse(id))
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}

@@ -1,8 +1,13 @@
 version: "2"
+servers:
+  - engine: postgresql
+    uri: "postgres://developer:postgres@127.0.0.1:5432/atehere?sslmode=disable"
 sql:
   - engine: "postgresql"
     schema: "./migrations"
     queries: "./queries"
+    database:
+      managed: true
     gen:
       go:
         package: "dal"

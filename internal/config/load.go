@@ -28,17 +28,17 @@ func Load(confPath string) (*App, error) {
 	confPath = filepath.Clean(confPath)
 	bytes, err := os.ReadFile(confPath)
 	if err != nil {
-		return nil, fmt.Errorf("config.Load: %v", err)
+		return nil, fmt.Errorf("config: %v", err)
 	}
 
 	err = json.Unmarshal(bytes, conf)
 	if err != nil {
-		return nil, fmt.Errorf("config.Load: %v", err)
+		return nil, fmt.Errorf("config: %v", err)
 	}
 
 	envMap, err := loadEnv(FIREBASE_PRIVATE_KEY, DB_USER, DB_KEY, DB_NAME)
 	if err != nil {
-		return nil, fmt.Errorf("config.Load: %v", err)
+		return nil, fmt.Errorf("config: %v", err)
 	}
 
 	conf.Firebase.PrivateKey = envMap[FIREBASE_PRIVATE_KEY]

@@ -35,6 +35,7 @@ services:
     volumes:
       - ./config:/etc/atehere
       - ./logs:/var/lib/atehere/logs
+      - ./static:/var/lib/atehere/static
 
   db:
     image: postgres:16-bookworm

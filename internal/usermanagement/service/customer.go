@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
@@ -10,28 +11,28 @@ import (
 )
 
 type Customer struct {
-	customerRepo  port.CustomerRepository
-	authenticator port.Authenticator
+	customerRepo port.CustomerRepository
+	authService  port.Authenticator
 }
 
 func NewCustomer(
 	customerRepository port.CustomerRepository,
-	authInfrastructure port.Authenticator,
+	authService port.Authenticator,
 ) *Customer {
 	return &Customer{
-		customerRepo:  customerRepository,
-		authenticator: authInfrastructure,
+		customerRepo: customerRepository,
+		authService:  authService,
 	}
 }
 
 func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error) {
-	customer, err := cs.validateSignUpDto(customerDto)
+	customer, err := customerDto.Validate()
 	if err != nil {
 		logger.Error("Cannot map customer dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	err = cs.authenticator.CreateUser(
+	err = cs.authService.CreateUser(
 		customer.ID().String(),
 		customer.Email().String(),
 		customer.Password().String(),
@@ -77,7 +78,7 @@ func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dt
 		return nil, err
 	}
 
-	err = cs.updateCustomer(customerDto, customer)
+	err = customerDto.Update(customer)
 	if err != nil {
 		logger.Error("Cannot map customer update dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
@@ -97,76 +98,18 @@ func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dt
 	}, nil
 }
 
-func (cs *Customer) updateCustomer(customerDto dto.Customer, customer *aggregate.Customer) error {
-	if !core.IsEmptyString(customerDto.FullName) {
-		verifiedFullName, err := valueobject.NewFullName(customerDto.FullName)
-		if err != nil {
-			return err
-		}
-		customer.SetFullName(verifiedFullName)
-	}
-
-	if !core.IsEmptyString(customerDto.BirthDate) {
-		verifiedBirthDate, err := valueobject.NewBirthDate(customerDto.BirthDate)
-		if err != nil {
-			return err
-		}
-		customer.SetBirthDate(verifiedBirthDate)
-	}
-
-	if !core.IsEmptyString(customerDto.Gender) {
-		verifiedGender := valueobject.ParseGender(customerDto.Gender)
-		customer.SetGender(verifiedGender)
-	}
-
-	return nil
-}
-
-func (cs *Customer) validateSignUpDto(signUpDto dto.CustomerSignUp) (*aggregate.Customer, error) {
-	verifiedEmail, err := valueobject.NewEmail(signUpDto.Email)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedPassword, err := valueobject.NewPassword(signUpDto.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedFullName, err := valueobject.NewFullName(signUpDto.FullName)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedGender := valueobject.ParseGender(signUpDto.Gender)
-
-	verifiedBirthDate, err := valueobject.NewBirthDate(signUpDto.BirthDate)
-	if err != nil {
-		return nil, err
-	}
-
-	customer := aggregate.NewCustomer()
-	customer.SetEmail(verifiedEmail)
-	customer.SetPassword(verifiedPassword)
-	customer.SetFullName(verifiedFullName)
-	customer.SetGender(verifiedGender)
-	customer.SetBirthDate(verifiedBirthDate)
-
-	return customer, nil
-}
-
 func (cs *Customer) getCustomer(idToken string) (*aggregate.Customer, error) {
-	id, err := cs.authenticator.GetUserID(idToken)
+	id, err := cs.authService.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	email, err := cs.authenticator.GetUserEmail(idToken)
+	email, err := cs.authService.GetUserEmail(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	customer, err := cs.customerRepo.GetByID(id)
+	customer, err := cs.customerRepo.GetByID(uuid.MustParse(id))
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}
