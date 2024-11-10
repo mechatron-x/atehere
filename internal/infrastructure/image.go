@@ -4,26 +4,30 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-
-	"github.com/mechatron-x/atehere/internal/config"
+	"os"
 )
 
 type (
 	ImageStorage struct {
-		conf config.Api
-		fs   FileSaver
+		location string
+		fs       FileSaver
 	}
 
 	FileSaver interface {
-		Save(filename string, data []byte, conf config.Api) error
+		Save(filename string, data []byte, location string) error
 	}
 )
 
-func NewImageStorage(conf config.Api) *ImageStorage {
-	return &ImageStorage{
-		conf: conf,
-		fs:   DiskFileSaver{},
+func NewImageStorage(fileSaver FileSaver, location string) (*ImageStorage, error) {
+	_, err := os.ReadDir(location)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read image storage location, reason: %v", err)
 	}
+
+	return &ImageStorage{
+		location: location,
+		fs:       fileSaver,
+	}, nil
 }
 
 func (is *ImageStorage) Save(fileName string, data string) (string, error) {
@@ -34,7 +38,7 @@ func (is *ImageStorage) Save(fileName string, data string) (string, error) {
 
 	imageName := fmt.Sprintf("%s.%s", fileName, imageType)
 
-	err = is.fs.Save(imageName, imageDecoded, is.conf)
+	err = is.fs.Save(imageName, imageDecoded, is.location)
 	if err != nil {
 		return "", err
 	}

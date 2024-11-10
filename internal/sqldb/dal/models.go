@@ -44,3 +44,11 @@ type Restaurant struct {
 	UpdatedAt      time.Time
 	DeletedAt      sql.NullTime
 }
+
+type RestaurantTable struct {
+	ID           uuid.UUID
+	RestaurantID uuid.UUID
+	Name         string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}

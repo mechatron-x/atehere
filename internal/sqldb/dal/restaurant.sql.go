@@ -14,19 +14,80 @@ import (
 	"github.com/lib/pq"
 )
 
+const getRestaurant = `-- name: GetRestaurant :one
+SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
+WHERE id=$1
+`
+
+func (q *Queries) GetRestaurant(ctx context.Context, id uuid.UUID) (Restaurant, error) {
+	row := q.db.QueryRowContext(ctx, getRestaurant, id)
+	var i Restaurant
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Name,
+		&i.FoundationYear,
+		&i.PhoneNumber,
+		&i.OpeningTime,
+		&i.ClosingTime,
+		pq.Array(&i.WorkingDays),
+		&i.ImageName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getRestaurants = `-- name: GetRestaurants :many
 SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
 ORDER BY created_at
-LIMIT $1 OFFSET $2
 `
 
-type GetRestaurantsParams struct {
-	Limit  int64
-	Offset int64
+func (q *Queries) GetRestaurants(ctx context.Context) ([]Restaurant, error) {
+	rows, err := q.db.QueryContext(ctx, getRestaurants)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Restaurant
+	for rows.Next() {
+		var i Restaurant
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.Name,
+			&i.FoundationYear,
+			&i.PhoneNumber,
+			&i.OpeningTime,
+			&i.ClosingTime,
+			pq.Array(&i.WorkingDays),
+			&i.ImageName,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-func (q *Queries) GetRestaurants(ctx context.Context, arg GetRestaurantsParams) ([]Restaurant, error) {
-	rows, err := q.db.QueryContext(ctx, getRestaurants, arg.Limit, arg.Offset)
+const getRestaurantsByOwner = `-- name: GetRestaurantsByOwner :many
+SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
+WHERE owner_id=$1
+ORDER BY created_at
+`
+
+func (q *Queries) GetRestaurantsByOwner(ctx context.Context, ownerID uuid.UUID) ([]Restaurant, error) {
+	rows, err := q.db.QueryContext(ctx, getRestaurantsByOwner, ownerID)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
+	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 )
@@ -16,7 +17,7 @@ func NewRestaurant() Restaurant {
 	return Restaurant{}
 }
 
-func (rm Restaurant) FromModel(model dal.Restaurant) (*aggregate.Restaurant, error) {
+func (rm Restaurant) FromModel(model dal.Restaurant, tables ...dal.RestaurantTable) (*aggregate.Restaurant, error) {
 	restaurant := aggregate.NewRestaurant()
 
 	verifiedName, err := valueobject.NewRestaurantName(model.Name)
@@ -44,6 +45,11 @@ func (rm Restaurant) FromModel(model dal.Restaurant) (*aggregate.Restaurant, err
 		return nil, err
 	}
 
+	verifiedImageName, err := valueobject.NewImage(model.ImageName.String)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, workingDay := range model.WorkingDays {
 		verifiedWorkingDay, err := valueobject.ParseWeekday(workingDay)
 		if err != nil {
@@ -53,6 +59,20 @@ func (rm Restaurant) FromModel(model dal.Restaurant) (*aggregate.Restaurant, err
 		restaurant.AddWorkingDays(verifiedWorkingDay)
 	}
 
+	for _, t := range tables {
+		verifiedTableName, err := valueobject.NewTableName(t.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		table := entity.NewTable()
+		table.SetID(t.ID)
+		table.SetName(verifiedTableName)
+		table.SetCreatedAt(t.CreatedAt)
+		table.SetUpdatedAt(t.UpdatedAt)
+		restaurant.AddTables(table)
+	}
+
 	restaurant.SetID(model.ID)
 	restaurant.SetOwner(model.OwnerID)
 	restaurant.SetName(verifiedName)
@@ -60,9 +80,7 @@ func (rm Restaurant) FromModel(model dal.Restaurant) (*aggregate.Restaurant, err
 	restaurant.SetPhoneNumber(verifiedPhoneNumber)
 	restaurant.SetOpeningTime(verifiedOpeningTime)
 	restaurant.SetClosingTime(verifiedClosingTime)
-	if model.ImageName.Valid {
-		restaurant.SetImageName(valueobject.NewImageName(model.ImageName.String))
-	}
+	restaurant.SetImageName(verifiedImageName)
 	restaurant.SetCreatedAt(model.CreatedAt)
 	restaurant.SetUpdatedAt(model.UpdatedAt)
 	if model.DeletedAt.Valid {

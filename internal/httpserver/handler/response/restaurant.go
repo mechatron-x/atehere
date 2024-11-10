@@ -7,10 +7,17 @@ type (
 		*dto.Restaurant
 	}
 
-	RestaurantList struct {
-		AvailableWorkingDays []string         `json:"available_working_days"`
-		FoundationYearFormat string           `json:"foundation_year_format"`
-		WorkingTimeFormat    string           `json:"working_time_format"`
-		Restaurants          []dto.Restaurant `json:"restaurants"`
+	Restaurant[TDTO any] struct {
+		AvailableWorkingDays []string `json:"available_working_days"`
+		FoundationYearFormat string   `json:"foundation_year_format"`
+		WorkingTimeFormat    string   `json:"working_time_format"`
+		Restaurant           TDTO     `json:"restaurant"`
+	}
+
+	RestaurantList[TDTO any] struct {
+		AvailableWorkingDays []string `json:"available_working_days"`
+		FoundationYearFormat string   `json:"foundation_year_format"`
+		WorkingTimeFormat    string   `json:"working_time_format"`
+		Restaurants          []TDTO   `json:"restaurants"`
 	}
 )

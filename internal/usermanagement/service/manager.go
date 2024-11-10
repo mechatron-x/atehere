@@ -26,7 +26,7 @@ func NewManager(
 }
 
 func (ms *Manager) SignUp(signUpDto dto.ManagerSignUp) (*dto.Manager, error) {
-	manager, err := ms.validateSignUpDto(signUpDto)
+	manager, err := signUpDto.Validate()
 	if err != nil {
 		logger.Error("Cannot map manager dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
@@ -78,7 +78,7 @@ func (ms *Manager) UpdateProfile(idToken string, updateDto dto.Manager) (*dto.Ma
 		return nil, err
 	}
 
-	err = ms.updateManager(updateDto, manager)
+	err = updateDto.Update(manager)
 	if err != nil {
 		logger.Error("Cannot map manager update dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
@@ -95,56 +95,6 @@ func (ms *Manager) UpdateProfile(idToken string, updateDto dto.Manager) (*dto.Ma
 		FullName:    manager.FullName().String(),
 		PhoneNumber: manager.PhoneNumber().String(),
 	}, nil
-}
-
-func (ms *Manager) updateManager(updateDto dto.Manager, manager *aggregate.Manager) error {
-	if !core.IsEmptyString(updateDto.FullName) {
-		verifiedFullName, err := valueobject.NewFullName(updateDto.FullName)
-		if err != nil {
-			return err
-		}
-		manager.SetFullName(verifiedFullName)
-	}
-
-	if !core.IsEmptyString(updateDto.PhoneNumber) {
-		verifiedPhoneNumber, err := valueobject.NewPhoneNumber(updateDto.PhoneNumber)
-		if err != nil {
-			return err
-		}
-		manager.SetPhoneNumber(verifiedPhoneNumber)
-	}
-
-	return nil
-}
-
-func (ms *Manager) validateSignUpDto(signUpDto dto.ManagerSignUp) (*aggregate.Manager, error) {
-	verifiedEmail, err := valueobject.NewEmail(signUpDto.Email)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedPassword, err := valueobject.NewPassword(signUpDto.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedFullName, err := valueobject.NewFullName(signUpDto.FullName)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedPhoneNumber, err := valueobject.NewPhoneNumber(signUpDto.PhoneNumber)
-	if err != nil {
-		return nil, err
-	}
-
-	manager := aggregate.NewManager()
-	manager.SetEmail(verifiedEmail)
-	manager.SetPassword(verifiedPassword)
-	manager.SetFullName(verifiedFullName)
-	manager.SetPhoneNumber(verifiedPhoneNumber)
-
-	return manager, nil
 }
 
 func (ms *Manager) getManager(idToken string) (*aggregate.Manager, error) {
