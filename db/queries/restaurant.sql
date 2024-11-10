@@ -34,3 +34,8 @@ WHERE id=$1;
 -- name: GetRestaurants :many
 SELECT * FROM restaurants
 ORDER BY created_at;
+
+-- name: GetRestaurantsByOwner :many
+SELECT * FROM restaurants
+WHERE owner_id=$1
+ORDER BY created_at;

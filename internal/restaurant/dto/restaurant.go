@@ -131,9 +131,7 @@ func (rf RestaurantFilter) ApplyFilter(restaurants []*aggregate.Restaurant) []*a
 			}
 		}
 
-		isMatchingWorkingDays := isMatchingWorkingDays(restaurant.WorkingDays(), rf.WorkingDays)
-
-		if !isMatchingWorkingDays {
+		if !isMatchingWorkingDays(restaurant.WorkingDays(), rf.WorkingDays) {
 			continue
 		}
 
@@ -175,8 +173,18 @@ func ToRestaurant(restaurant *aggregate.Restaurant, imageConvertor ImageURLCreat
 		ClosingTime:    restaurant.ClosingTime().String(),
 		WorkingDays:    toWorkingDays(restaurant.WorkingDays()),
 		ImageURL:       imageConvertor(restaurant.ImageName()),
-		Tables:         ToTableList(restaurant.Tables()),
+		Tables:         toTableList(restaurant.Tables()),
 	}
+}
+
+func ToRestaurantList(restaurants []*aggregate.Restaurant, imageConverter ImageURLCreatorFunc) []Restaurant {
+	r := make([]Restaurant, 0)
+
+	for _, restaurant := range restaurants {
+		r = append(r, ToRestaurant(restaurant, imageConverter))
+	}
+
+	return r
 }
 
 func toWorkingDays(workingDays []time.Weekday) []string {

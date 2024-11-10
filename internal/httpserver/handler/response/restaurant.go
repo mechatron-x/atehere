@@ -7,17 +7,17 @@ type (
 		*dto.Restaurant
 	}
 
-	RestaurantFilter struct {
-		AvailableWorkingDays []string               `json:"available_working_days"`
-		FoundationYearFormat string                 `json:"foundation_year_format"`
-		WorkingTimeFormat    string                 `json:"working_time_format"`
-		Restaurant           *dto.RestaurantSummary `json:"restaurant"`
+	Restaurant[TDTO any] struct {
+		AvailableWorkingDays []string `json:"available_working_days"`
+		FoundationYearFormat string   `json:"foundation_year_format"`
+		WorkingTimeFormat    string   `json:"working_time_format"`
+		Restaurant           TDTO     `json:"restaurant"`
 	}
 
-	RestaurantList struct {
-		AvailableWorkingDays []string                `json:"available_working_days"`
-		FoundationYearFormat string                  `json:"foundation_year_format"`
-		WorkingTimeFormat    string                  `json:"working_time_format"`
-		Restaurants          []dto.RestaurantSummary `json:"restaurants"`
+	RestaurantList[TDTO any] struct {
+		AvailableWorkingDays []string `json:"available_working_days"`
+		FoundationYearFormat string   `json:"foundation_year_format"`
+		WorkingTimeFormat    string   `json:"working_time_format"`
+		Restaurants          []TDTO   `json:"restaurants"`
 	}
 )

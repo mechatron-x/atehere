@@ -13,17 +13,17 @@ type (
 	}
 )
 
-func ToTable(table entity.Table) Table {
+func toTable(table entity.Table) Table {
 	return Table{
 		ID:   table.ID().String(),
 		Name: table.Name().String(),
 	}
 }
 
-func ToTableList(tables []entity.Table) []Table {
+func toTableList(tables []entity.Table) []Table {
 	tableDtos := make([]Table, 0)
 	for _, t := range tables {
-		tableDtos = append(tableDtos, ToTable(t))
+		tableDtos = append(tableDtos, toTable(t))
 	}
 
 	return tableDtos

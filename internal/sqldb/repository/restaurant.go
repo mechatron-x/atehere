@@ -99,6 +99,31 @@ func (r *Restaurant) GetAll() ([]*aggregate.Restaurant, error) {
 	return restaurants, nil
 }
 
+func (r *Restaurant) GetByOwnerID(ownerID uuid.UUID) ([]*aggregate.Restaurant, error) {
+	restaurantModels, err := r.queries.GetRestaurantsByOwner(context.Background(), ownerID)
+	if err != nil {
+		return nil, r.wrapError(err)
+	}
+
+	restaurants := make([]*aggregate.Restaurant, 0)
+
+	for _, model := range restaurantModels {
+		restaurantTables, err := r.getRestaurantTables(r.queries, model.ID)
+		if err != nil {
+			return nil, r.wrapError(err)
+		}
+
+		restaurant, err := r.rMapper.FromModel(model, restaurantTables...)
+		if err != nil {
+			return nil, r.wrapError(err)
+		}
+
+		restaurants = append(restaurants, restaurant)
+	}
+
+	return restaurants, nil
+}
+
 func (r *Restaurant) saveRestaurant(queries *dal.Queries, restaurant *aggregate.Restaurant) error {
 	restaurantModel := r.rMapper.FromAggregate(restaurant)
 	saveParams := dal.SaveRestaurantParams(restaurantModel)

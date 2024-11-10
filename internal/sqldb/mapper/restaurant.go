@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
@@ -66,11 +67,11 @@ func (rm Restaurant) FromModel(model dal.Restaurant, tables ...dal.RestaurantTab
 		}
 
 		table := entity.NewTable()
-		table.SetID(model.ID)
+		table.SetID(t.ID)
 		table.SetName(verifiedTableName)
-		table.SetCreatedAt(model.CreatedAt)
-		table.SetUpdatedAt(model.UpdatedAt)
-
+		table.SetCreatedAt(t.CreatedAt)
+		table.SetUpdatedAt(t.UpdatedAt)
+		fmt.Println(table.ID())
 		restaurant.AddTables(table)
 	}
 

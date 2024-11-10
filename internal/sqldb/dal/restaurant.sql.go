@@ -80,6 +80,48 @@ func (q *Queries) GetRestaurants(ctx context.Context) ([]Restaurant, error) {
 	return items, nil
 }
 
+const getRestaurantsByOwner = `-- name: GetRestaurantsByOwner :many
+SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
+WHERE owner_id=$1
+ORDER BY created_at
+`
+
+func (q *Queries) GetRestaurantsByOwner(ctx context.Context, ownerID uuid.UUID) ([]Restaurant, error) {
+	rows, err := q.db.QueryContext(ctx, getRestaurantsByOwner, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Restaurant
+	for rows.Next() {
+		var i Restaurant
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.Name,
+			&i.FoundationYear,
+			&i.PhoneNumber,
+			&i.OpeningTime,
+			&i.ClosingTime,
+			pq.Array(&i.WorkingDays),
+			&i.ImageName,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const saveRestaurant = `-- name: SaveRestaurant :exec
 INSERT INTO restaurants (
     id, 

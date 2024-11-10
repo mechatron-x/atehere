@@ -26,7 +26,7 @@ func NewCustomer(
 }
 
 func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error) {
-	customer, err := cs.validateSignUpDto(customerDto)
+	customer, err := customerDto.Validate()
 	if err != nil {
 		logger.Error("Cannot map customer dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
@@ -78,7 +78,7 @@ func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dt
 		return nil, err
 	}
 
-	err = cs.updateCustomer(customerDto, customer)
+	err = customerDto.Update(customer)
 	if err != nil {
 		logger.Error("Cannot map customer update dto to aggregate", err)
 		return nil, core.NewValidationFailureError(err)
@@ -96,64 +96,6 @@ func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dt
 		Gender:    customer.Gender().String(),
 		BirthDate: customer.BirthDate().String(),
 	}, nil
-}
-
-func (cs *Customer) updateCustomer(customerDto dto.Customer, customer *aggregate.Customer) error {
-	if !core.IsEmptyString(customerDto.FullName) {
-		verifiedFullName, err := valueobject.NewFullName(customerDto.FullName)
-		if err != nil {
-			return err
-		}
-		customer.SetFullName(verifiedFullName)
-	}
-
-	if !core.IsEmptyString(customerDto.BirthDate) {
-		verifiedBirthDate, err := valueobject.NewBirthDate(customerDto.BirthDate)
-		if err != nil {
-			return err
-		}
-		customer.SetBirthDate(verifiedBirthDate)
-	}
-
-	if !core.IsEmptyString(customerDto.Gender) {
-		verifiedGender := valueobject.ParseGender(customerDto.Gender)
-		customer.SetGender(verifiedGender)
-	}
-
-	return nil
-}
-
-func (cs *Customer) validateSignUpDto(signUpDto dto.CustomerSignUp) (*aggregate.Customer, error) {
-	verifiedEmail, err := valueobject.NewEmail(signUpDto.Email)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedPassword, err := valueobject.NewPassword(signUpDto.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedFullName, err := valueobject.NewFullName(signUpDto.FullName)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedGender := valueobject.ParseGender(signUpDto.Gender)
-
-	verifiedBirthDate, err := valueobject.NewBirthDate(signUpDto.BirthDate)
-	if err != nil {
-		return nil, err
-	}
-
-	customer := aggregate.NewCustomer()
-	customer.SetEmail(verifiedEmail)
-	customer.SetPassword(verifiedPassword)
-	customer.SetFullName(verifiedFullName)
-	customer.SetGender(verifiedGender)
-	customer.SetBirthDate(verifiedBirthDate)
-
-	return customer, nil
 }
 
 func (cs *Customer) getCustomer(idToken string) (*aggregate.Customer, error) {

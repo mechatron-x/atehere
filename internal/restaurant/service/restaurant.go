@@ -12,10 +12,10 @@ import (
 )
 
 type Restaurant struct {
-	restaurantRepo port.RestaurantRepository
-	authService    port.Authenticator
-	imageStorage   port.ImageStorage
-	apiConf        config.Api
+	repository   port.RestaurantRepository
+	authService  port.Authenticator
+	imageStorage port.ImageStorage
+	apiConf      config.Api
 }
 
 const (
@@ -23,16 +23,16 @@ const (
 )
 
 func NewRestaurant(
-	restaurantRepo port.RestaurantRepository,
+	repository port.RestaurantRepository,
 	authService port.Authenticator,
 	fileService port.ImageStorage,
 	apiConf config.Api,
 ) *Restaurant {
 	return &Restaurant{
-		restaurantRepo: restaurantRepo,
-		authService:    authService,
-		imageStorage:   fileService,
-		apiConf:        apiConf,
+		repository:   repository,
+		authService:  authService,
+		imageStorage: fileService,
+		apiConf:      apiConf,
 	}
 }
 
@@ -60,7 +60,7 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 	restaurant.SetOwner(uuid.MustParse(managerID))
 	restaurant.SetImageName(verifiedImage)
 
-	err = rs.restaurantRepo.Save(restaurant)
+	err = rs.repository.Save(restaurant)
 	if err != nil {
 		return nil, core.NewPersistenceFailureError(err)
 	}
@@ -69,13 +69,13 @@ func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*d
 	return &restaurantDto, nil
 }
 
-func (rs *Restaurant) GetByID(id string) (*dto.RestaurantSummary, error) {
+func (rs *Restaurant) GetOneForCustomer(id string) (*dto.RestaurantSummary, error) {
 	verifiedID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	restaurant, err := rs.restaurantRepo.GetByID(verifiedID)
+	restaurant, err := rs.repository.GetByID(verifiedID)
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}
@@ -84,8 +84,27 @@ func (rs *Restaurant) GetByID(id string) (*dto.RestaurantSummary, error) {
 	return &summaryDto, nil
 }
 
-func (rs *Restaurant) List(page int, filterDto dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
-	restaurants, err := rs.restaurantRepo.GetAll()
+func (rs *Restaurant) ListForManager(idToken string) ([]dto.Restaurant, error) {
+	managerID, err := rs.authService.GetUserID(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	verifiedManagerID, err := uuid.Parse(managerID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	restaurants, err := rs.repository.GetByOwnerID(verifiedManagerID)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	return dto.ToRestaurantList(restaurants, rs.createImageURL), nil
+}
+
+func (rs *Restaurant) ListForCustomer(page int, filterDto dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
+	restaurants, err := rs.repository.GetAll()
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}
