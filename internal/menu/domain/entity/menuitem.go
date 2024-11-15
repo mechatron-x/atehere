@@ -11,7 +11,7 @@ type MenuItem struct {
 	core.Entity
 	name               valueobject.MenuItemName
 	description        string
-	image              valueobject.Image
+	imageName          valueobject.Image
 	price              valueobject.Price
 	discountPercentage valueobject.Percentage
 	ingredients        []string
@@ -40,12 +40,12 @@ func (m *MenuItem) SetDescription(description string) {
 	m.description = description
 }
 
-func (m *MenuItem) Image() valueobject.Image {
-	return m.image
+func (m *MenuItem) ImageName() valueobject.Image {
+	return m.imageName
 }
 
-func (m *MenuItem) SetImage(image valueobject.Image) {
-	m.image = image
+func (m *MenuItem) SetImageName(image valueobject.Image) {
+	m.imageName = image
 }
 
 func (m *MenuItem) DiscountedPrice() valueobject.Price {
