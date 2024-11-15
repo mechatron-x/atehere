@@ -18,10 +18,6 @@ type Restaurant struct {
 	apiConf      config.Api
 }
 
-const (
-	defaultPageSize int = 20
-)
-
 func NewRestaurant(
 	repository port.RestaurantRepository,
 	authService port.Authenticator,
@@ -36,7 +32,7 @@ func NewRestaurant(
 	}
 }
 
-func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*dto.Restaurant, error) {
+func (rs *Restaurant) Create(idToken string, createDto *dto.RestaurantCreate) (*dto.Restaurant, error) {
 	restaurant, err := createDto.ToAggregate()
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -103,7 +99,7 @@ func (rs *Restaurant) ListForManager(idToken string) ([]dto.Restaurant, error) {
 	return dto.ToRestaurantList(restaurants, rs.createImageURL), nil
 }
 
-func (rs *Restaurant) ListForCustomer(page int, filterDto dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
+func (rs *Restaurant) ListForCustomer(filterDto *dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
 	restaurants, err := rs.repository.GetAll()
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)

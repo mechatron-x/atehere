@@ -25,7 +25,7 @@ func NewManager(
 	}
 }
 
-func (ms *Manager) SignUp(signUpDto dto.ManagerSignUp) (*dto.Manager, error) {
+func (ms *Manager) SignUp(signUpDto *dto.ManagerSignUp) (*dto.Manager, error) {
 	manager, err := signUpDto.Validate()
 	if err != nil {
 		logger.Error("Cannot map manager dto to aggregate", err)
@@ -71,7 +71,7 @@ func (ms *Manager) GetProfile(idToken string) (*dto.Manager, error) {
 	}, nil
 }
 
-func (ms *Manager) UpdateProfile(idToken string, updateDto dto.Manager) (*dto.Manager, error) {
+func (ms *Manager) UpdateProfile(idToken string, updateDto *dto.Manager) (*dto.Manager, error) {
 	manager, err := ms.getManager(idToken)
 	if err != nil {
 		logger.Error("Cannot get manager with id token", err)

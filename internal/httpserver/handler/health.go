@@ -13,9 +13,9 @@ func NewHealth() Health {
 }
 
 func (hh Health) GetHealth(w http.ResponseWriter, r *http.Request) {
-	resp := response.Health{
+	resp := &response.Health{
 		Status: "Healthy",
 	}
 
-	response.Encode(w, resp, http.StatusOK)
+	response.Encode(w, resp, nil)
 }
