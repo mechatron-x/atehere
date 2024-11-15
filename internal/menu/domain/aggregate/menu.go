@@ -1,6 +1,9 @@
 package aggregate
 
 import (
+	"fmt"
+	"slices"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/menu/domain/entity"
@@ -45,6 +48,17 @@ func (m *Menu) AddMenuItems(menuItems ...entity.MenuItem) {
 	for _, mi := range menuItems {
 		m.addMenuItem(mi)
 	}
+}
+
+func (m *Menu) DeleteMenuItem(id uuid.UUID) error {
+	for i, mi := range m.menuItems {
+		if mi.ID() == id {
+			m.menuItems = slices.Delete(m.menuItems, i, i)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("menu item with id: %s not found", id)
 }
 
 func (m *Menu) addMenuItem(menuItem entity.MenuItem) {

@@ -3,15 +3,13 @@ package dto
 import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/menu/domain/aggregate"
-	"github.com/mechatron-x/atehere/internal/menu/domain/entity"
 	"github.com/mechatron-x/atehere/internal/menu/domain/valueobject"
 )
 
 type (
 	MenuCreate struct {
-		RestaurantID string           `json:"restaurant_id"`
-		Category     string           `json:"category"`
-		MenuItems    []MenuItemCreate `json:"menu_items"`
+		RestaurantID string `json:"restaurant_id"`
+		Category     string `json:"category"`
 	}
 
 	Menu struct {
@@ -27,16 +25,6 @@ func (mc MenuCreate) ToAggregate() (*aggregate.Menu, error) {
 		return nil, err
 	}
 
-	verifiedMenuItems := make([]entity.MenuItem, 0)
-	for _, menuItem := range mc.MenuItems {
-		verifiedMenuItem, err := menuItem.ToEntity()
-		if err != nil {
-			return nil, err
-		}
-
-		verifiedMenuItems = append(verifiedMenuItems, *verifiedMenuItem)
-	}
-
 	verifiedRestaurantID, err := uuid.Parse(mc.RestaurantID)
 	if err != nil {
 		return nil, err
@@ -45,7 +33,6 @@ func (mc MenuCreate) ToAggregate() (*aggregate.Menu, error) {
 	menu := aggregate.NewMenu()
 	menu.SetRestaurantID(verifiedRestaurantID)
 	menu.SetCategory(verifiedCategory)
-	menu.AddMenuItems(verifiedMenuItems...)
 
 	return menu, nil
 }

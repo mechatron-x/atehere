@@ -40,17 +40,11 @@ func (mh Menu) Create(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, menu, nil, http.StatusCreated)
 }
 
-func (mh Menu) GetMenu(w http.ResponseWriter, r *http.Request) {
+func (mh Menu) GetCustomerMenu(w http.ResponseWriter, r *http.Request) {
 	restaurantID := r.PathValue("id")
 	category := r.PathValue("category")
 
-	token, err := header.GetBearerToken(r.Header)
-	if err != nil {
-		response.Encode(w, nil, err, http.StatusUnauthorized)
-		return
-	}
-
-	menu, err := mh.ms.GetMenuByCategory(token, restaurantID, category)
+	menu, err := mh.ms.GetCustomerMenuByCategory(restaurantID, category)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return

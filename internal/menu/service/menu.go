@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -39,14 +38,8 @@ func (ms *Menu) Create(idToken string, createDto *dto.MenuCreate) (*dto.Menu, er
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	managerID, err := ms.authService.GetUserID(idToken)
-	if err != nil {
+	if err := ms.verifyOwnership(idToken, createDto.RestaurantID); err != nil {
 		return nil, core.NewUnauthorizedError(err)
-	}
-	verifiedManagerID := uuid.MustParse(managerID)
-
-	if !ms.repository.IsRestaurantOwner(menu.RestaurantID(), verifiedManagerID) {
-		return nil, core.NewUnauthorizedError(errors.New("manager does not own the restaurant"))
 	}
 
 	if err := ms.repository.Save(menu); err != nil {
@@ -57,19 +50,8 @@ func (ms *Menu) Create(idToken string, createDto *dto.MenuCreate) (*dto.Menu, er
 }
 
 func (ms *Menu) AddMenuItem(idToken string, createDto dto.MenuItemCreate) (*dto.Menu, error) {
-	verifiedRestaurantID, err := uuid.Parse(createDto.RestaurantID)
-	if err != nil {
-		return nil, core.NewValidationFailureError(err)
-	}
-
-	managerID, err := ms.authService.GetUserID(idToken)
-	if err != nil {
+	if err := ms.verifyOwnership(idToken, createDto.RestaurantID); err != nil {
 		return nil, core.NewUnauthorizedError(err)
-	}
-	verifiedManagerID := uuid.MustParse(managerID)
-
-	if !ms.repository.IsRestaurantOwner(verifiedRestaurantID, verifiedManagerID) {
-		return nil, core.NewUnauthorizedError(errors.New("manager does not own the restaurant"))
 	}
 
 	verifiedMenuID, err := uuid.Parse(createDto.MenuID)
@@ -107,8 +89,20 @@ func (ms *Menu) AddMenuItem(idToken string, createDto dto.MenuItemCreate) (*dto.
 	return dto.ToMenu(menu, ms.createImageURL), nil
 }
 
-func (ms *Menu) GetMenuByCategory(idToken, restaurantID, category string) (*dto.Menu, error) {
-	return nil, nil
+// TODO: Add menu item delete method
+
+func (ms *Menu) GetCustomerMenuByCategory(restaurantID, category string) (*dto.Menu, error) {
+	verifiedRestaurantID, err := uuid.Parse(restaurantID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	menu, err := ms.repository.GetByCategory(verifiedRestaurantID, category)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	return dto.ToMenu(menu, ms.createImageURL), nil
 }
 
 func (ms *Menu) createImageURL(imageName valueobject.Image) string {
@@ -117,4 +111,27 @@ func (ms *Menu) createImageURL(imageName valueobject.Image) string {
 	}
 
 	return fmt.Sprintf("%s/static/%s", ms.apiConf.URL, imageName.String())
+}
+
+func (ms *Menu) verifyOwnership(idToken, restaurantID string) error {
+	verifiedRestaurantID, err := uuid.Parse(restaurantID)
+	if err != nil {
+		return err
+	}
+
+	managerID, err := ms.authService.GetUserID(idToken)
+	if err != nil {
+		return err
+	}
+
+	verifiedManagerID, err := uuid.Parse(managerID)
+	if err != nil {
+		return err
+	}
+
+	if !ms.repository.IsRestaurantOwner(verifiedRestaurantID, verifiedManagerID) {
+		return err
+	}
+
+	return nil
 }
