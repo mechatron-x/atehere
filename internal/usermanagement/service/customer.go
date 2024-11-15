@@ -25,7 +25,7 @@ func NewCustomer(
 	}
 }
 
-func (cs *Customer) SignUp(customerDto dto.CustomerSignUp) (*dto.Customer, error) {
+func (cs *Customer) SignUp(customerDto *dto.CustomerSignUp) (*dto.Customer, error) {
 	customer, err := customerDto.Validate()
 	if err != nil {
 		logger.Error("Cannot map customer dto to aggregate", err)
@@ -71,7 +71,7 @@ func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
 	}, nil
 }
 
-func (cs *Customer) UpdateProfile(idToken string, customerDto dto.Customer) (*dto.Customer, error) {
+func (cs *Customer) UpdateProfile(idToken string, customerDto *dto.Customer) (*dto.Customer, error) {
 	customer, err := cs.getCustomer(idToken)
 	if err != nil {
 		logger.Error("Cannot get customer with id token", err)

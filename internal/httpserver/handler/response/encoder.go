@@ -3,30 +3,34 @@ package response
 import (
 	"encoding/json"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/core"
 )
 
-type (
-	ErrorResponse struct {
-		Status    int    `json:"status"`
-		Code      string `json:"code"`
-		Message   string `json:"message"`
-		CreatedAt string `json:"created_at"`
-	}
-)
+func Encode(w http.ResponseWriter, data any, err error, status ...int) {
+	resp := Payload[any]{}
 
-func Encode(w http.ResponseWriter, v any, status int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	err := json.NewEncoder(w).Encode(v)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+	w.WriteHeader(http.StatusOK)
+
+	if len(status) > 0 {
+		w.WriteHeader(status[0])
 	}
+
+	if err != nil {
+		resp.Error = newErrorData(err)
+	} else if reflect.TypeOf(data).Kind() == reflect.Pointer && data != nil {
+		resp.Data = data
+	} else {
+		return
+	}
+
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
-func EncodeError(w http.ResponseWriter, err error, httpStatus ...int) {
+func newErrorData(err error, httpStatus ...int) *ErrorData {
 	status := http.StatusInternalServerError
 	code := "unhandled"
 	message := err.Error()
@@ -53,12 +57,10 @@ func EncodeError(w http.ResponseWriter, err error, httpStatus ...int) {
 		}
 	}
 
-	errResp := ErrorResponse{
+	return &ErrorData{
 		Status:    status,
 		Code:      code,
 		Message:   message,
 		CreatedAt: now,
 	}
-
-	Encode(w, errResp, status)
 }
