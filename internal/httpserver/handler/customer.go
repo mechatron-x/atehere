@@ -21,6 +21,7 @@ func (ch Customer) SignUp(w http.ResponseWriter, r *http.Request) {
 	reqBody := &request.CustomerSignUp{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
+		response.EncodeError(w, err, http.StatusBadRequest)
 		return
 	}
 

@@ -22,6 +22,7 @@ func (rh Restaurant) Create(w http.ResponseWriter, r *http.Request) {
 	reqBody := &request.RestaurantCreate{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
+		response.EncodeError(w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -34,6 +35,7 @@ func (rh Restaurant) Create(w http.ResponseWriter, r *http.Request) {
 	restaurant, err := rh.rs.Create(token, reqBody.RestaurantCreate)
 	if err != nil {
 		response.EncodeError(w, err)
+		return
 	}
 
 	resp := response.RestaurantCreate{Restaurant: restaurant}
