@@ -21,9 +21,10 @@ func Encode(w http.ResponseWriter, data any, err error, status ...int) {
 
 	if err != nil {
 		resp.Error = newErrorData(err)
-	}
-	if data != nil && reflect.TypeOf(data).Kind() == reflect.Pointer {
+	} else if reflect.TypeOf(data).Kind() == reflect.Pointer && data != nil {
 		resp.Data = data
+	} else {
+		return
 	}
 
 	_ = json.NewEncoder(w).Encode(resp)
