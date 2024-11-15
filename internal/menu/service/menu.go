@@ -33,7 +33,7 @@ func NewMenu(
 	}
 }
 
-func (ms *Menu) Create(idToken string, createDto dto.MenuCreate) (*dto.Menu, error) {
+func (ms *Menu) Create(idToken string, createDto *dto.MenuCreate) (*dto.Menu, error) {
 	menu, err := createDto.ToAggregate()
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)

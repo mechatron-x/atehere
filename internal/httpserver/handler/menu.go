@@ -6,6 +6,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/request"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
+	"github.com/mechatron-x/atehere/internal/menu/dto"
 	"github.com/mechatron-x/atehere/internal/menu/service"
 )
 
@@ -18,7 +19,7 @@ func NewMenuHandler(ms service.Menu) Menu {
 }
 
 func (mh Menu) Create(w http.ResponseWriter, r *http.Request) {
-	reqBody := &request.MenuCreate{}
+	reqBody := &dto.MenuCreate{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
 		return
@@ -26,17 +27,17 @@ func (mh Menu) Create(w http.ResponseWriter, r *http.Request) {
 
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err, http.StatusUnauthorized)
 		return
 	}
 
-	menu, err := mh.ms.Create(token, reqBody.MenuCreate)
+	menu, err := mh.ms.Create(token, reqBody)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err)
+		return
 	}
 
-	resp := response.MenuCreate{Menu: menu}
-	response.Encode(w, resp, http.StatusCreated)
+	response.Encode(w, menu, nil, http.StatusCreated)
 }
 
 func (mh Menu) GetMenu(w http.ResponseWriter, r *http.Request) {
@@ -45,18 +46,15 @@ func (mh Menu) GetMenu(w http.ResponseWriter, r *http.Request) {
 
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err, http.StatusUnauthorized)
 		return
 	}
 
 	menu, err := mh.ms.GetMenuByCategory(token, restaurantID, category)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err)
 		return
 	}
 
-	resp := response.Menu{
-		Menu: *menu,
-	}
-	response.Encode(w, resp, http.StatusOK)
+	response.Encode(w, menu, nil)
 }
