@@ -21,6 +21,7 @@ func (mh Manager) SignUp(w http.ResponseWriter, r *http.Request) {
 	reqBody := &request.ManagerSignUp{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
+		response.EncodeError(w, err, http.StatusBadRequest)
 		return
 	}
 
