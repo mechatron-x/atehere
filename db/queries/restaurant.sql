@@ -39,3 +39,8 @@ ORDER BY created_at;
 SELECT * FROM restaurants
 WHERE owner_id=$1
 ORDER BY created_at;
+
+-- name: CheckRestaurantOwnership :one
+SELECT COUNT(*) FROM restaurants
+WHERE id=$1
+AND owner_id=$2;

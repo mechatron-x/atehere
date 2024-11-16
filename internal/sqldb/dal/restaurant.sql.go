@@ -14,6 +14,24 @@ import (
 	"github.com/lib/pq"
 )
 
+const checkRestaurantOwnership = `-- name: CheckRestaurantOwnership :one
+SELECT COUNT(*) FROM restaurants
+WHERE id=$1
+AND owner_id=$2
+`
+
+type CheckRestaurantOwnershipParams struct {
+	ID      uuid.UUID
+	OwnerID uuid.UUID
+}
+
+func (q *Queries) CheckRestaurantOwnership(ctx context.Context, arg CheckRestaurantOwnershipParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, checkRestaurantOwnership, arg.ID, arg.OwnerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getRestaurant = `-- name: GetRestaurant :one
 SELECT id, owner_id, name, foundation_year, phone_number, opening_time, closing_time, working_days, image_name, created_at, updated_at, deleted_at FROM restaurants
 WHERE id=$1
