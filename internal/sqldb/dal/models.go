@@ -30,6 +30,29 @@ type Manager struct {
 	DeletedAt   sql.NullTime
 }
 
+type Menu struct {
+	ID           uuid.UUID
+	RestaurantID uuid.UUID
+	Category     string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    sql.NullTime
+}
+
+type MenuItem struct {
+	ID                 uuid.UUID
+	MenuID             uuid.UUID
+	Name               string
+	Description        string
+	ImageName          sql.NullString
+	PriceAmount        float64
+	PriceCurrency      string
+	DiscountPercentage int16
+	Ingredients        []string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
 type Restaurant struct {
 	ID             uuid.UUID
 	OwnerID        uuid.UUID
