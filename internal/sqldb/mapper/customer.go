@@ -1,11 +1,11 @@
 package mapper
 
 import (
-	"database/sql"
-
-	"github.com/mechatron-x/atehere/internal/sqldb/dal"
+	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
+	"gorm.io/gorm"
 )
 
 type Customer struct{}
@@ -14,8 +14,13 @@ func NewCustomer() Customer {
 	return Customer{}
 }
 
-func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
+func (c Customer) FromModel(model *model.Customer) (*aggregate.Customer, error) {
 	customer := aggregate.NewCustomer()
+
+	id, err := uuid.Parse(model.ID)
+	if err != nil {
+		return nil, err
+	}
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
@@ -24,12 +29,12 @@ func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
 
 	gender := valueobject.ParseGender(model.Gender)
 
-	birthDate, err := valueobject.NewBirthDate(model.BirthDate.Time.Format(valueobject.BirthDateLayout))
+	birthDate, err := valueobject.NewBirthDate(model.BirthDate)
 	if err != nil {
 		return nil, err
 	}
 
-	customer.SetID(model.ID)
+	customer.SetID(id)
 	customer.SetFullName(fullName)
 	customer.SetGender(gender)
 	customer.SetBirthDate(birthDate)
@@ -42,20 +47,19 @@ func (c Customer) FromModel(model dal.Customer) (*aggregate.Customer, error) {
 	return customer, nil
 }
 
-func (c Customer) FromAggregate(customer *aggregate.Customer) dal.Customer {
-	return dal.Customer{
-		ID:       customer.ID(),
-		FullName: customer.FullName().String(),
-		Gender:   customer.Gender().String(),
-		BirthDate: sql.NullTime{
-			Time:  customer.BirthDate().Date(),
-			Valid: true,
-		},
-		CreatedAt: customer.CreatedAt(),
-		UpdatedAt: customer.UpdatedAt(),
-		DeletedAt: sql.NullTime{
-			Time:  customer.DeletedAt(),
-			Valid: customer.IsDeleted(),
+func (c Customer) FromAggregate(customer *aggregate.Customer) *model.Customer {
+	return &model.Customer{
+		ID:        customer.ID().String(),
+		FullName:  customer.FullName().String(),
+		Gender:    customer.Gender().String(),
+		BirthDate: customer.BirthDate().Date().Format(valueobject.BirthDateLayout),
+		Model: gorm.Model{
+			CreatedAt: customer.CreatedAt(),
+			UpdatedAt: customer.UpdatedAt(),
+			DeletedAt: gorm.DeletedAt{
+				Time:  customer.DeletedAt(),
+				Valid: customer.IsDeleted(),
+			},
 		},
 	}
 }

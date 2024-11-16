@@ -11,18 +11,23 @@ import (
 	"github.com/mechatron-x/atehere/internal/infrastructure"
 	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/sqldb"
+	"github.com/mechatron-x/atehere/internal/sqldb/model"
 )
 
 type App struct {
 	conf       *config.App
-	dbManager  *sqldb.DbManager
 	httpServer *http.Server
 }
 
 func New(conf *config.App) (*App, error) {
 	logger.Config(conf.Logger)
 
-	dbManager, err := newDBManager(conf.DB)
+	db, err := sqldb.Connect(conf.DB)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sqldb.Migrate(db, &model.Customer{})
 	if err != nil {
 		return nil, err
 	}
@@ -38,9 +43,9 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	customerCtx := ctx.NewCustomer(dbManager.DB(), firebaseAuth)
-	managerCtx := ctx.NewManager(dbManager.DB(), firebaseAuth)
-	restaurantCtx := ctx.NewRestaurant(dbManager.DB(), firebaseAuth, imageStorage, conf.Api)
+	customerCtx := ctx.NewCustomer(db, firebaseAuth)
+	managerCtx := ctx.NewManager(db, firebaseAuth)
+	restaurantCtx := ctx.NewRestaurant(db, firebaseAuth, imageStorage, conf.Api)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,
@@ -58,7 +63,6 @@ func New(conf *config.App) (*App, error) {
 
 	return &App{
 		conf:       conf,
-		dbManager:  dbManager,
 		httpServer: httpServer,
 	}, nil
 }
@@ -67,20 +71,4 @@ func (a *App) Start() error {
 	log := logger.Instance()
 	log.Info(fmt.Sprintf("Starting HTTP server at: %s", a.httpServer.Addr))
 	return a.httpServer.ListenAndServe()
-}
-
-func (a *App) Shutdown() error {
-	return a.dbManager.MigrateDown()
-}
-
-func newDBManager(dbConf config.DB) (*sqldb.DbManager, error) {
-	dm := sqldb.New(dbConf)
-	if err := dm.Connect(); err != nil {
-		return nil, err
-	}
-	if err := dm.MigrateUp(); err != nil {
-		return nil, err
-	}
-
-	return dm, nil
 }
