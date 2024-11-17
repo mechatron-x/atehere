@@ -49,7 +49,8 @@ func (m *MenuItem) SetImageName(image valueobject.Image) {
 }
 
 func (m *MenuItem) DiscountedPrice() valueobject.Price {
-	discountedPrice := (m.price.Quantity() * float64(m.discountPercentage.Amount())) / 100
+	discountAmount := (m.price.Amount() * float64(m.discountPercentage.Amount())) / 100
+	discountedPrice := (m.price.Amount() - discountAmount)
 
 	return valueobject.NewPrice(
 		discountedPrice,

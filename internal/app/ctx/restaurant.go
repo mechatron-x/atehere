@@ -13,7 +13,12 @@ type Restaurant struct {
 	handler handler.Restaurant
 }
 
-func NewRestaurant(db *gorm.DB, authenticator port.Authenticator, imageStorage port.ImageStorage, apiConf config.Api) Restaurant {
+func NewRestaurant(
+	db *gorm.DB,
+	authenticator port.Authenticator,
+	imageStorage port.ImageStorage,
+	apiConf config.Api,
+) Restaurant {
 	repo := repository.NewRestaurant(db)
 	service := service.NewRestaurant(repo, authenticator, imageStorage, apiConf)
 	handler := handler.NewRestaurantHandler(*service)

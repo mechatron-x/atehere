@@ -34,6 +34,9 @@ func New(conf *config.App) (*App, error) {
 		&model.Restaurant{},
 		&model.RestaurantTable{},
 		&model.RestaurantWorkingDay{},
+		&model.Menu{},
+		&model.MenuItem{},
+		&model.MenuItemIngredient{},
 	)
 	if err != nil {
 		return nil, err
@@ -53,6 +56,7 @@ func New(conf *config.App) (*App, error) {
 	customerCtx := ctx.NewCustomer(db, firebaseAuth)
 	managerCtx := ctx.NewManager(db, firebaseAuth)
 	restaurantCtx := ctx.NewRestaurant(db, firebaseAuth, imageStorage, conf.Api)
+	menuCtx := ctx.NewMenu(db, firebaseAuth, imageStorage, conf.Api)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,
@@ -61,6 +65,7 @@ func New(conf *config.App) (*App, error) {
 		customerCtx.Handler(),
 		managerCtx.Handler(),
 		restaurantCtx.Handler(),
+		menuCtx.Handler(),
 	)
 
 	httpServer, err := httpserver.New(conf.Api, mux)

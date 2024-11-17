@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/menu/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/menu/domain/valueobject"
@@ -25,19 +27,25 @@ func (m Menu) FromModel(model *model.Menu) (*aggregate.Menu, error) {
 		return nil, err
 	}
 
-	verifiedCategory, err := valueobject.NewCategoryName(model.Category)
+	restaurantID, err := uuid.Parse(model.RestaurantID)
 	if err != nil {
 		return nil, err
 	}
 
-	verifiedMenuItems, err := m.mi.FromModels(model.MenuItems)
+	category, err := valueobject.NewCategoryName(model.Category)
+	if err != nil {
+		return nil, err
+	}
+
+	menuItems, err := m.mi.FromModels(model.MenuItems)
 	if err != nil {
 		return nil, err
 	}
 
 	menu.SetID(id)
-	menu.SetCategory(verifiedCategory)
-	for _, mi := range verifiedMenuItems {
+	menu.SetRestaurantID(restaurantID)
+	menu.SetCategory(category)
+	for _, mi := range menuItems {
 		menu.AddMenuItems(*mi)
 	}
 
@@ -67,6 +75,7 @@ func (m Menu) FromAggregate(aggregate *aggregate.Menu) *model.Menu {
 		menuItems = append(menuItems, *menuItem)
 	}
 
+	fmt.Println(aggregate.RestaurantID())
 	return &model.Menu{
 		ID:           aggregate.ID().String(),
 		RestaurantID: aggregate.RestaurantID().String(),

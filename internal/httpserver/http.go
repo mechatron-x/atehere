@@ -36,6 +36,7 @@ func NewServeMux(
 	ch handler.Customer,
 	mh handler.Manager,
 	rh handler.Restaurant,
+	rmh handler.Menu,
 ) *http.ServeMux {
 	mux := http.NewServeMux()
 	apiMux := http.NewServeMux()
@@ -61,6 +62,11 @@ func NewServeMux(
 	// Restaurant endpoints
 	versionMux.HandleFunc("POST /restaurants", rh.ListForCustomer)
 	versionMux.HandleFunc("GET /restaurants/{id}", rh.GetOneForCustomer)
+
+	// Menu endpoints
+	versionMux.HandleFunc("POST /menu", rmh.Create)
+	versionMux.HandleFunc("PATCH /menu/item", rmh.AddMenuItem)
+	versionMux.HandleFunc("GET /restaurants/{id}/menus/{category}", rmh.GetCustomerMenu)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

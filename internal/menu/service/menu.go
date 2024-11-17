@@ -49,12 +49,12 @@ func (ms *Menu) Create(idToken string, createDto *dto.MenuCreate) (*dto.Menu, er
 	return dto.ToMenu(menu, ms.createImageURL), nil
 }
 
-func (ms *Menu) AddMenuItem(idToken string, createDto dto.MenuItemCreate) (*dto.Menu, error) {
+func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto.Menu, error) {
 	if err := ms.verifyOwnership(idToken, createDto.RestaurantID); err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	verifiedMenuID, err := uuid.Parse(createDto.MenuID)
+	menuID, err := uuid.Parse(createDto.MenuID)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
 	}
@@ -64,7 +64,7 @@ func (ms *Menu) AddMenuItem(idToken string, createDto dto.MenuItemCreate) (*dto.
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	menu, err := ms.repository.GetByID(verifiedMenuID)
+	menu, err := ms.repository.GetByID(menuID)
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}
@@ -80,8 +80,8 @@ func (ms *Menu) AddMenuItem(idToken string, createDto dto.MenuItemCreate) (*dto.
 	}
 
 	menuItem.SetImageName(verifiedImage)
-
 	menu.AddMenuItems(*menuItem)
+
 	if err := ms.repository.Save(menu); err != nil {
 		return nil, core.NewPersistenceFailureError(err)
 	}
