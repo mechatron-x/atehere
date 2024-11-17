@@ -2,24 +2,36 @@ package repository
 
 import (
 	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
+	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"gorm.io/gorm"
 )
 
 type Manager struct {
-	db *gorm.DB
+	db     *gorm.DB
+	mapper mapper.Manager
 }
 
 func NewManager(db *gorm.DB) *Manager {
 	return &Manager{
-		db: db,
+		db:     db,
+		mapper: mapper.NewManager(),
 	}
 }
 
 func (m *Manager) Save(manager *aggregate.Manager) error {
-	panic("not implemented")
+	model := m.mapper.FromAggregate(manager)
+
+	result := m.db.Save(model)
+
+	return result.Error
 }
 
 func (m *Manager) GetByID(id uuid.UUID) (*aggregate.Manager, error) {
-	panic("not implemented")
+	var result model.Manager
+
+	m.db.Model(model.Manager{ID: id.String()}).First(&result)
+
+	return m.mapper.FromModel(&result)
 }
