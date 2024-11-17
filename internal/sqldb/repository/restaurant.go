@@ -23,7 +23,7 @@ func NewRestaurant(db *gorm.DB) *Restaurant {
 func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 	restaurantModel := r.mapper.FromAggregate(restaurant)
 
-	result := r.db.Save(restaurantModel)
+	result := r.db.Create(restaurantModel)
 
 	return result.Error
 }

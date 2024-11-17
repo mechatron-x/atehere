@@ -17,7 +17,7 @@ func NewMenuItem() MenuItem {
 func (mi MenuItem) FromModel(model *model.MenuItem) (*entity.MenuItem, error) {
 	menuItem := entity.NewMenuItem()
 
-	id, err := uuid.Parse(model.ID)
+	verifiedID, err := uuid.Parse(model.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,14 +44,14 @@ func (mi MenuItem) FromModel(model *model.MenuItem) (*entity.MenuItem, error) {
 		return nil, err
 	}
 
-	menuItem.SetID(id)
+	menuItem.SetID(verifiedID)
 	menuItem.SetName(verifiedName)
 	menuItem.SetDescription(model.Description)
 	menuItem.SetImageName(verifiedImageName)
 	menuItem.SetPrice(verifiedPrice)
 	menuItem.SetDiscountPercentage(verifiedDiscountPercentage)
 	for _, i := range model.Ingredients {
-		menuItem.AddIngredients(i)
+		menuItem.AddIngredients(i.Ingredient)
 	}
 
 	return &menuItem, nil
@@ -71,17 +71,26 @@ func (mi MenuItem) FromModels(models []model.MenuItem) ([]*entity.MenuItem, erro
 }
 
 func (mi MenuItem) FromEntity(menuID uuid.UUID, entity *entity.MenuItem) *model.MenuItem {
-	verifiedMenuID := menuID.String()
+
+	ingredients := make([]model.MenuItemIngredient, 0)
+	for _, i := range entity.Ingredients() {
+		menuItemIngredient := model.MenuItemIngredient{
+			MenuItemID: entity.ID().String(),
+			Ingredient: i,
+		}
+
+		ingredients = append(ingredients, menuItemIngredient)
+	}
 
 	return &model.MenuItem{
 		ID:            entity.ID().String(),
-		MenuID:        verifiedMenuID,
+		MenuID:        menuID.String(),
 		Name:          entity.Name().String(),
 		Description:   entity.Description(),
 		ImageName:     entity.ImageName().String(),
-		PriceAmount:   entity.Price().Quantity(),
+		PriceAmount:   entity.Price().Amount(),
 		PriceCurrency: entity.Price().Currency().String(),
-		Ingredients:   entity.Ingredients(),
+		Ingredients:   ingredients,
 		Model: gorm.Model{
 			CreatedAt: entity.CreatedAt(),
 			UpdatedAt: entity.UpdatedAt(),

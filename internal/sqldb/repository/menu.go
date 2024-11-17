@@ -74,3 +74,17 @@ func (m *Menu) GetByCategory(restaurantID uuid.UUID, category string) (*aggregat
 
 	return m.menuMapper.FromModel(&menuModel)
 }
+
+func (m *Menu) IsRestaurantOwner(restaurantID, ownerID uuid.UUID) bool {
+	restaurantModel := &model.Restaurant{
+		ID:      restaurantID.String(),
+		OwnerID: ownerID.String(),
+	}
+
+	result := m.db.First(restaurantModel)
+	if result.Error != nil {
+		return false
+	}
+
+	return result.RowsAffected != 0
+}
