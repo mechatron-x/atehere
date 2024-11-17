@@ -10,10 +10,6 @@ import (
 
 type Customer struct{}
 
-func NewCustomer() Customer {
-	return Customer{}
-}
-
 func (c Customer) FromModel(model *model.Customer) (*aggregate.Customer, error) {
 	customer := aggregate.NewCustomer()
 

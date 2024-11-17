@@ -27,7 +27,14 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	err = sqldb.Migrate(db, &model.Customer{})
+	err = sqldb.Migrate(
+		db,
+		&model.Customer{},
+		&model.Manager{},
+		&model.Restaurant{},
+		&model.RestaurantTable{},
+		&model.RestaurantWorkingDay{},
+	)
 	if err != nil {
 		return nil, err
 	}

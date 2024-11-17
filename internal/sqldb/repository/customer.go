@@ -16,7 +16,7 @@ type Customer struct {
 func NewCustomer(db *gorm.DB) *Customer {
 	return &Customer{
 		db:     db,
-		mapper: mapper.NewCustomer(),
+		mapper: mapper.Customer{},
 	}
 }
 
@@ -29,9 +29,12 @@ func (c *Customer) Save(customer *aggregate.Customer) error {
 }
 
 func (c *Customer) GetByID(id uuid.UUID) (*aggregate.Customer, error) {
-	var result model.Customer
+	var model model.Customer
 
-	c.db.Model(model.Customer{ID: id.String()}).First(&result)
+	result := c.db.First(&model, "id = ?", id.String())
+	if result.Error != nil {
+		return nil, result.Error
+	}
 
-	return c.mapper.FromModel(&result)
+	return c.mapper.FromModel(&model)
 }
