@@ -29,6 +29,5 @@ RUN apk update && \
 RUN mkdir -p /usr/local/bin /var/lib/atehere/logs /var/lib/atehere/static
 
 COPY --from=build /app/bin /usr/local/bin
-COPY --from=build /app/db/queries /var/lib/atehere/queries
 
 CMD [ "atehere" ]
