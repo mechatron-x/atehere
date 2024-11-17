@@ -10,7 +10,8 @@ type (
 	Restaurant struct {
 		gorm.Model
 		ID             string `gorm:"primarykey"`
-		OwnerID        string `gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:ManagerID"`
+		OwnerID        string
+		Owner          Manager `gorm:"foreignKey:OwnerID"`
 		Name           string
 		FoundationYear string
 		PhoneNumber    string
