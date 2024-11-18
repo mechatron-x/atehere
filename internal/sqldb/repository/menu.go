@@ -23,16 +23,32 @@ func NewMenu(db *gorm.DB) *Menu {
 func (m *Menu) Save(menu *aggregate.Menu) error {
 	menuModel := m.mapper.FromAggregate(menu)
 
-	result := m.db.First(&model.Menu{ID: menuModel.ID})
-	if result.Error == gorm.ErrRecordNotFound {
-		result = m.db.Create(menuModel)
-	} else {
-		m.db.Model(menuModel).
-			Association("MenuItems").
-			Unscoped().
-			Replace(menuModel.MenuItems)
+	tx := m.db.Begin()
+	defer tx.Commit()
 
-		result = m.db.Updates(menuModel)
+	result := tx.First(&model.Menu{ID: menuModel.ID})
+	if result.RowsAffected == 0 {
+		result = tx.Create(menuModel)
+
+		if result.Error != nil {
+			tx.Rollback()
+		}
+
+		return result.Error
+	}
+
+	err := tx.Model(menuModel).
+		Association("MenuItems").
+		Unscoped().
+		Replace(menuModel.MenuItems)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	result = tx.Updates(menuModel)
+	if result.Error != nil {
+		tx.Rollback()
 	}
 
 	return result.Error

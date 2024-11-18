@@ -44,6 +44,7 @@ func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 		Replace(restaurantModel.Tables)
 	if err != nil {
 		tx.Rollback()
+		return err
 	}
 
 	result = tx.Updates(restaurantModel)
