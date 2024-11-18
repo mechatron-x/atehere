@@ -97,6 +97,11 @@ func (r Restaurant) FromModel(model *model.Restaurant) (*aggregate.Restaurant, e
 	restaurant.AddWorkingDays(workingDays...)
 	restaurant.SetImageName(imageName)
 	restaurant.AddTables(tables...)
+	restaurant.SetCreatedAt(model.CreatedAt)
+	restaurant.SetUpdatedAt(model.UpdatedAt)
+	if model.DeletedAt.Valid {
+		restaurant.SetDeletedAt(model.DeletedAt.Time)
+	}
 
 	return restaurant, nil
 }

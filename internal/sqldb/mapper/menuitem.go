@@ -2,10 +2,10 @@ package mapper
 
 import (
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/mechatron-x/atehere/internal/menu/domain/entity"
 	"github.com/mechatron-x/atehere/internal/menu/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/sqldb/model"
-	"gorm.io/gorm"
 )
 
 type MenuItem struct{}
@@ -50,9 +50,9 @@ func (mi MenuItem) FromModel(model *model.MenuItem) (*entity.MenuItem, error) {
 	menuItem.SetImageName(verifiedImageName)
 	menuItem.SetPrice(verifiedPrice)
 	menuItem.SetDiscountPercentage(verifiedDiscountPercentage)
-	for _, i := range model.Ingredients {
-		menuItem.AddIngredients(i.Ingredient)
-	}
+	menuItem.AddIngredients(model.Ingredients...)
+	menuItem.SetCreatedAt(model.CreatedAt)
+	menuItem.SetUpdatedAt(model.UpdatedAt)
 
 	return &menuItem, nil
 }
@@ -71,17 +71,6 @@ func (mi MenuItem) FromModels(models []model.MenuItem) ([]*entity.MenuItem, erro
 }
 
 func (mi MenuItem) FromEntity(menuID uuid.UUID, entity *entity.MenuItem) *model.MenuItem {
-
-	ingredients := make([]model.MenuItemIngredient, 0)
-	for _, i := range entity.Ingredients() {
-		menuItemIngredient := model.MenuItemIngredient{
-			MenuItemID: entity.ID().String(),
-			Ingredient: i,
-		}
-
-		ingredients = append(ingredients, menuItemIngredient)
-	}
-
 	return &model.MenuItem{
 		ID:            entity.ID().String(),
 		MenuID:        menuID.String(),
@@ -90,11 +79,9 @@ func (mi MenuItem) FromEntity(menuID uuid.UUID, entity *entity.MenuItem) *model.
 		ImageName:     entity.ImageName().String(),
 		PriceAmount:   entity.Price().Amount(),
 		PriceCurrency: entity.Price().Currency().String(),
-		Ingredients:   ingredients,
-		Model: gorm.Model{
-			CreatedAt: entity.CreatedAt(),
-			UpdatedAt: entity.UpdatedAt(),
-		},
+		Ingredients:   pq.StringArray(entity.Ingredients()),
+		CreatedAt:     entity.CreatedAt(),
+		UpdatedAt:     entity.UpdatedAt(),
 	}
 }
 

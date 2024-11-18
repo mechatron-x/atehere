@@ -62,15 +62,20 @@ func (mh Menu) AddMenuItem(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, menu, nil)
 }
 
-func (mh Menu) GetCustomerMenu(w http.ResponseWriter, r *http.Request) {
-	restaurantID := r.PathValue("id")
-	category := r.PathValue("category")
+func (mh Menu) ListForCustomer(w http.ResponseWriter, r *http.Request) {
+	restaurantID := r.PathValue("restaurant_id")
+	menuFilter := &dto.MenuFilter{
+		RestaurantID: restaurantID,
+	}
 
-	menu, err := mh.ms.GetCustomerMenuByCategory(restaurantID, category)
+	menus, err := mh.ms.ListForCustomer(menuFilter)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return
 	}
 
-	response.Encode(w, menu, nil)
+	resp := &response.MenuList[dto.Menu]{
+		Menus: menus,
+	}
+	response.Encode(w, resp, nil)
 }

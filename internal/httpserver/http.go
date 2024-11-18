@@ -57,16 +57,17 @@ func NewServeMux(
 
 	// Manager restaurant endpoints
 	versionMux.HandleFunc("GET /manager/restaurants", rh.ListForManager)
-	versionMux.HandleFunc("POST /manager/restaurant", rh.Create)
+	versionMux.HandleFunc("POST /manager/restaurants", rh.Create)
+	versionMux.HandleFunc("DELETE /manager/restaurants/{restaurant_id}", rh.Delete)
 
 	// Restaurant endpoints
 	versionMux.HandleFunc("POST /restaurants", rh.ListForCustomer)
-	versionMux.HandleFunc("GET /restaurants/{id}", rh.GetOneForCustomer)
+	versionMux.HandleFunc("GET /restaurants/{restaurant_id}", rh.GetOneForCustomer)
 
 	// Menu endpoints
 	versionMux.HandleFunc("POST /menu", rmh.Create)
 	versionMux.HandleFunc("PATCH /menu/item", rmh.AddMenuItem)
-	versionMux.HandleFunc("GET /restaurants/{id}/menus/{category}", rmh.GetCustomerMenu)
+	versionMux.HandleFunc("GET /restaurants/{restaurant_id}/menus", rmh.ListForCustomer)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

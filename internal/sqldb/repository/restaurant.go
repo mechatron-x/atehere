@@ -23,7 +23,21 @@ func NewRestaurant(db *gorm.DB) *Restaurant {
 func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 	restaurantModel := r.mapper.FromAggregate(restaurant)
 
-	result := r.db.Create(restaurantModel)
+	result := r.db.First(&model.Restaurant{ID: restaurantModel.ID})
+	if result.Error == gorm.ErrRecordNotFound {
+		result = r.db.Create(restaurantModel)
+	} else {
+		r.db.Model(restaurantModel).
+			Association("WorkingDays").
+			Unscoped().
+			Replace(restaurantModel.WorkingDays)
+		r.db.Model(restaurantModel).
+			Association("Tables").
+			Unscoped().
+			Replace(restaurantModel.Tables)
+
+		result = r.db.Updates(restaurantModel)
+	}
 
 	return result.Error
 }
@@ -32,10 +46,12 @@ func (r *Restaurant) GetByID(id uuid.UUID) (*aggregate.Restaurant, error) {
 	var restaurantModel model.Restaurant
 
 	result := r.db.
-		Model(&model.Restaurant{}).
+		Model(&model.Restaurant{
+			ID: id.String(),
+		}).
 		Preload("WorkingDays").
 		Preload("Tables").
-		First(&restaurantModel, "id = ?", id.String())
+		First(&restaurantModel)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -64,10 +80,12 @@ func (r *Restaurant) GetByOwnerID(ownerID uuid.UUID) ([]*aggregate.Restaurant, e
 	models := make([]model.Restaurant, 0)
 
 	result := r.db.
-		Model(&model.Restaurant{}).
+		Model(&model.Restaurant{
+			OwnerID: ownerID.String(),
+		}).
 		Preload("WorkingDays").
 		Preload("Tables").
-		Find(&models, "owner_id = ?", ownerID.String())
+		Find(&models)
 
 	if result.Error != nil {
 		return nil, result.Error

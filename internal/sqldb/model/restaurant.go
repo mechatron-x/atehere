@@ -11,15 +11,15 @@ type (
 		gorm.Model
 		ID             string `gorm:"primarykey"`
 		OwnerID        string
-		Owner          Manager `gorm:"foreignKey:OwnerID"`
 		Name           string
 		FoundationYear string
 		PhoneNumber    string
 		OpeningTime    string
 		ClosingTime    string
-		WorkingDays    []RestaurantWorkingDay
 		ImageName      string
-		Tables         []RestaurantTable
+		WorkingDays    []RestaurantWorkingDay `gorm:"constraint:OnDelete:CASCADE"`
+		Tables         []RestaurantTable      `gorm:"constraint:OnDelete:CASCADE"`
+		Menus          []Menu                 `gorm:"constraint:OnDelete:CASCADE"`
 	}
 
 	RestaurantTable struct {

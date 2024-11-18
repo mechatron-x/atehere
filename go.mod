@@ -72,6 +72,7 @@ require (
 )
 
 require (
+	github.com/lib/pq v1.10.9
 	go.uber.org/multierr v1.11.0 // indirect
 	gorm.io/driver/postgres v1.5.9
 )

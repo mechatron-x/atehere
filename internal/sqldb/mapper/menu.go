@@ -7,6 +7,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/menu/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/menu/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/sqldb/model"
+	"gorm.io/gorm"
 )
 
 type Menu struct {
@@ -48,6 +49,11 @@ func (m Menu) FromModel(model *model.Menu) (*aggregate.Menu, error) {
 	for _, mi := range menuItems {
 		menu.AddMenuItems(*mi)
 	}
+	menu.SetCreatedAt(model.CreatedAt)
+	menu.SetUpdatedAt(model.UpdatedAt)
+	if model.DeletedAt.Valid {
+		menu.SetDeletedAt(model.DeletedAt.Time)
+	}
 
 	return menu, nil
 }
@@ -81,6 +87,14 @@ func (m Menu) FromAggregate(aggregate *aggregate.Menu) *model.Menu {
 		RestaurantID: aggregate.RestaurantID().String(),
 		Category:     aggregate.Category().String(),
 		MenuItems:    menuItems,
+		Model: gorm.Model{
+			CreatedAt: aggregate.CreatedAt(),
+			UpdatedAt: aggregate.UpdatedAt(),
+			DeletedAt: gorm.DeletedAt{
+				Time:  aggregate.DeletedAt(),
+				Valid: aggregate.IsDeleted(),
+			},
+		},
 	}
 }
 

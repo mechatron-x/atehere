@@ -12,6 +12,12 @@ type (
 		Category     string `json:"category"`
 	}
 
+	MenuFilter struct {
+		RestaurantID string `json:"restaurant_id"`
+		Category     string `json:"category"`
+		Name         string `json:"name"`
+	}
+
 	Menu struct {
 		ID        string     `json:"id"`
 		Category  string     `json:"category"`
@@ -43,4 +49,14 @@ func ToMenu(menu *aggregate.Menu, imageCreator ImageURLCreatorFunc) *Menu {
 		Category:  menu.Category().String(),
 		MenuItems: toMenuItemList(menu.MenuItems(), imageCreator),
 	}
+}
+
+func ToMenuList(menus []*aggregate.Menu, imageCreator ImageURLCreatorFunc) []Menu {
+	menuDtos := make([]Menu, 0)
+
+	for _, m := range menus {
+		menuDtos = append(menuDtos, *ToMenu(m, imageCreator))
+	}
+
+	return menuDtos
 }

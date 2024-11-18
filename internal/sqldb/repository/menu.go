@@ -9,23 +9,31 @@ import (
 )
 
 type Menu struct {
-	db             *gorm.DB
-	menuMapper     mapper.Menu
-	menuItemMapper mapper.MenuItem
+	db     *gorm.DB
+	mapper mapper.Menu
 }
 
 func NewMenu(db *gorm.DB) *Menu {
 	return &Menu{
-		db:             db,
-		menuMapper:     mapper.Menu{},
-		menuItemMapper: mapper.MenuItem{},
+		db:     db,
+		mapper: mapper.Menu{},
 	}
 }
 
 func (m *Menu) Save(menu *aggregate.Menu) error {
-	menuModel := m.menuMapper.FromAggregate(menu)
+	menuModel := m.mapper.FromAggregate(menu)
 
-	result := m.db.Save(menuModel)
+	result := m.db.First(&model.Menu{ID: menuModel.ID})
+	if result.Error == gorm.ErrRecordNotFound {
+		result = m.db.Create(menuModel)
+	} else {
+		m.db.Model(menuModel).
+			Association("MenuItems").
+			Unscoped().
+			Replace(menuModel.MenuItems)
+
+		result = m.db.Updates(menuModel)
+	}
 
 	return result.Error
 }
@@ -42,10 +50,10 @@ func (m *Menu) GetByID(id uuid.UUID) (*aggregate.Menu, error) {
 		return nil, result.Error
 	}
 
-	return m.menuMapper.FromModel(&menuModel)
+	return m.mapper.FromModel(&menuModel)
 }
 
-func (m *Menu) GetByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu, error) {
+func (m *Menu) GetManyByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu, error) {
 	menuModels := make([]model.Menu, 0)
 
 	result := m.db.
@@ -57,22 +65,7 @@ func (m *Menu) GetByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu, err
 		return nil, result.Error
 	}
 
-	return m.menuMapper.FromModels(menuModels)
-}
-
-func (m *Menu) GetByCategory(restaurantID uuid.UUID, category string) (*aggregate.Menu, error) {
-	var menuModel model.Menu
-
-	result := m.db.
-		Model(&model.Menu{}).
-		Preload("MenuItems").
-		First(&menuModel, "restaurant_id = ? AND category LIKE ?", restaurantID.String(), category)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return m.menuMapper.FromModel(&menuModel)
+	return m.mapper.FromModels(menuModels)
 }
 
 func (m *Menu) IsRestaurantOwner(restaurantID, ownerID uuid.UUID) bool {

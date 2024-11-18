@@ -36,7 +36,6 @@ func New(conf *config.App) (*App, error) {
 		&model.RestaurantWorkingDay{},
 		&model.Menu{},
 		&model.MenuItem{},
-		&model.MenuItemIngredient{},
 	)
 	if err != nil {
 		return nil, err

@@ -91,18 +91,18 @@ func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto
 
 // TODO: Add menu item delete method
 
-func (ms *Menu) GetCustomerMenuByCategory(restaurantID, category string) (*dto.Menu, error) {
-	verifiedRestaurantID, err := uuid.Parse(restaurantID)
+func (ms *Menu) ListForCustomer(filterDto *dto.MenuFilter) ([]dto.Menu, error) {
+	verifiedRestaurantID, err := uuid.Parse(filterDto.RestaurantID)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	menu, err := ms.repository.GetByCategory(verifiedRestaurantID, category)
+	menus, err := ms.repository.GetManyByRestaurantID(verifiedRestaurantID)
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}
 
-	return dto.ToMenu(menu, ms.createImageURL), nil
+	return dto.ToMenuList(menus, ms.createImageURL), nil
 }
 
 func (ms *Menu) createImageURL(imageName valueobject.Image) string {
