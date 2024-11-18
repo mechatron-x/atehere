@@ -8,6 +8,6 @@ import (
 type MenuRepository interface {
 	Save(menu *aggregate.Menu) error
 	GetByID(id uuid.UUID) (*aggregate.Menu, error)
+	GetManyByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu, error)
 	IsRestaurantOwner(restaurantID, ownerID uuid.UUID) bool
-	GetByCategory(restaurantID uuid.UUID, category string) (*aggregate.Menu, error)
 }

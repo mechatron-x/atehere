@@ -31,6 +31,4 @@ func main() {
 	if err := app.Start(); err != nil {
 		log.Fatal("Failed to start application:", err)
 	}
-
-	defer app.Shutdown()
 }

@@ -1,11 +1,11 @@
 package mapper
 
 import (
-	"database/sql"
-
-	"github.com/mechatron-x/atehere/internal/sqldb/dal"
+	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
+	"gorm.io/gorm"
 )
 
 type Manager struct{}
@@ -14,8 +14,13 @@ func NewManager() Manager {
 	return Manager{}
 }
 
-func (m Manager) FromModel(model dal.Manager) (*aggregate.Manager, error) {
+func (m Manager) FromModel(model *model.Manager) (*aggregate.Manager, error) {
 	manager := aggregate.NewManager()
+
+	id, err := uuid.Parse(model.ID)
+	if err != nil {
+		return nil, err
+	}
 
 	fullName, err := valueobject.NewFullName(model.FullName)
 	if err != nil {
@@ -27,7 +32,7 @@ func (m Manager) FromModel(model dal.Manager) (*aggregate.Manager, error) {
 		return nil, err
 	}
 
-	manager.SetID(model.ID)
+	manager.SetID(id)
 	manager.SetFullName(fullName)
 	manager.SetPhoneNumber(phoneNumber)
 	manager.SetCreatedAt(model.CreatedAt)
@@ -39,16 +44,18 @@ func (m Manager) FromModel(model dal.Manager) (*aggregate.Manager, error) {
 	return manager, nil
 }
 
-func (m Manager) FromAggregate(manager *aggregate.Manager) dal.Manager {
-	return dal.Manager{
-		ID:          manager.ID(),
+func (m Manager) FromAggregate(manager *aggregate.Manager) *model.Manager {
+	return &model.Manager{
+		ID:          manager.ID().String(),
 		FullName:    manager.FullName().String(),
 		PhoneNumber: manager.PhoneNumber().String(),
-		CreatedAt:   manager.CreatedAt(),
-		UpdatedAt:   manager.UpdatedAt(),
-		DeletedAt: sql.NullTime{
-			Time:  manager.DeletedAt(),
-			Valid: manager.IsDeleted(),
+		Model: gorm.Model{
+			CreatedAt: manager.CreatedAt(),
+			UpdatedAt: manager.UpdatedAt(),
+			DeletedAt: gorm.DeletedAt{
+				Time:  manager.DeletedAt(),
+				Valid: manager.IsDeleted(),
+			},
 		},
 	}
 }

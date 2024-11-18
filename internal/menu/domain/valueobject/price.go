@@ -9,12 +9,13 @@ import (
 type Currency int64
 
 type Price struct {
-	quantity float64
+	amount   float64
 	currency Currency
 }
 
 const (
 	TRY Currency = iota
+	USD
 )
 
 func ParseCurrency(currency string) (Currency, error) {
@@ -24,6 +25,8 @@ func ParseCurrency(currency string) (Currency, error) {
 	switch currency {
 	case "try":
 		return TRY, nil
+	case "usd":
+		return USD, nil
 	default:
 		return -1, errors.New("unsupported currency")
 	}
@@ -32,6 +35,7 @@ func ParseCurrency(currency string) (Currency, error) {
 func AvailableCurrencies() []string {
 	return []string{
 		TRY.String(),
+		USD.String(),
 	}
 }
 
@@ -39,20 +43,22 @@ func (c Currency) String() string {
 	switch c {
 	case TRY:
 		return "TRY"
+	case USD:
+		return "USD"
 	default:
 		return ""
 	}
 }
 
-func NewPrice(quantity float64, currency Currency) Price {
+func NewPrice(amount float64, currency Currency) Price {
 	return Price{
-		quantity: quantity,
+		amount:   amount,
 		currency: currency,
 	}
 }
 
-func (p Price) Quantity() float64 {
-	return p.quantity
+func (p Price) Amount() float64 {
+	return p.amount
 }
 
 func (p Price) Currency() Currency {
@@ -60,5 +66,5 @@ func (p Price) Currency() Currency {
 }
 
 func (p Price) String() string {
-	return fmt.Sprintf("%.2f %s", p.quantity, p.currency)
+	return fmt.Sprintf("%.2f %s", p.amount, p.currency)
 }

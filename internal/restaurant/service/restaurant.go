@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -108,6 +109,36 @@ func (rs *Restaurant) ListForCustomer(filterDto *dto.RestaurantFilter) ([]dto.Re
 	filteredRestaurants := filterDto.ApplyFilter(restaurants)
 
 	return dto.ToRestaurantSummaryList(filteredRestaurants, rs.createImageURL), nil
+}
+
+func (rs Restaurant) Delete(idToken, restaurantID string) error {
+	managerID, err := rs.authService.GetUserID(idToken)
+	if err != nil {
+		return core.NewUnauthorizedError(err)
+	}
+
+	verifiedManagerID, err := uuid.Parse(managerID)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
+
+	verifiedRestaurantID, err := uuid.Parse(restaurantID)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
+
+	restaurant, err := rs.repository.GetByID(verifiedRestaurantID)
+	if err != nil {
+		return core.NewResourceNotFoundError(err)
+	}
+
+	if !restaurant.IsOwner(verifiedManagerID) {
+		return core.NewUnauthorizedError(errors.New("insufficient permissions to delete restaurant"))
+	}
+
+	restaurant.DeleteNow()
+
+	return rs.repository.Save(restaurant)
 }
 
 func (rs *Restaurant) AvailableWorkingDays() []string {

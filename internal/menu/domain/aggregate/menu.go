@@ -3,6 +3,7 @@ package aggregate
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
@@ -64,6 +65,9 @@ func (m *Menu) DeleteMenuItem(id uuid.UUID) error {
 func (m *Menu) addMenuItem(menuItem entity.MenuItem) {
 	for _, mi := range m.menuItems {
 		if mi.ID() == menuItem.ID() {
+			return
+		}
+		if strings.Compare(mi.Name().String(), menuItem.Name().String()) == 0 {
 			return
 		}
 	}

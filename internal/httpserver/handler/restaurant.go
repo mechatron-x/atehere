@@ -42,7 +42,7 @@ func (rh Restaurant) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rh Restaurant) GetOneForCustomer(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
+	id := r.PathValue("restaurant_id")
 
 	restaurantSummary, err := rh.rs.GetOneForCustomer(id)
 	if err != nil {
@@ -101,4 +101,22 @@ func (rh Restaurant) ListForCustomer(w http.ResponseWriter, r *http.Request) {
 		Restaurants:          restaurants,
 	}
 	response.Encode(w, resp, nil)
+}
+
+func (rh Restaurant) Delete(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("restaurant_id")
+
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	err = rh.rs.Delete(token, id)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	response.Encode(w, nil, nil, http.StatusOK)
 }

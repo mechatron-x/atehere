@@ -7,7 +7,6 @@ import (
 
 type (
 	MenuItemCreate struct {
-		RestaurantID       string   `json:"restaurant_id"`
 		MenuID             string   `json:"menu_id"`
 		Name               string   `json:"name"`
 		Description        string   `json:"description"`
@@ -47,8 +46,9 @@ func (mic MenuItemCreate) ToEntity() (*entity.MenuItem, error) {
 	verifiedPriceQuantity := mic.Price.Amount
 	verifiedPriceCurrency, err := valueobject.ParseCurrency(mic.Price.Currency)
 	if err != nil {
-
+		return nil, err
 	}
+
 	verifiedPrice := valueobject.NewPrice(verifiedPriceQuantity, verifiedPriceCurrency)
 
 	verifiedDiscountPercentage, err := valueobject.NewPercentage(mic.DiscountPercentage)
@@ -70,12 +70,12 @@ func (mic MenuItemCreate) ToEntity() (*entity.MenuItem, error) {
 
 func toMenuItem(menuItem entity.MenuItem, imageConvertor ImageURLCreatorFunc) MenuItem {
 	priceDto := Price{
-		Amount:   menuItem.Price().Quantity(),
+		Amount:   menuItem.Price().Amount(),
 		Currency: menuItem.Price().Currency().String(),
 	}
 
 	discountedPriceDto := Price{
-		Amount:   menuItem.DiscountedPrice().Quantity(),
+		Amount:   menuItem.DiscountedPrice().Amount(),
 		Currency: menuItem.DiscountedPrice().Currency().String(),
 	}
 

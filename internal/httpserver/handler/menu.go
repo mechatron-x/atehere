@@ -40,15 +40,44 @@ func (mh Menu) Create(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, menu, nil, http.StatusCreated)
 }
 
-func (mh Menu) GetCustomerMenu(w http.ResponseWriter, r *http.Request) {
-	restaurantID := r.PathValue("id")
-	category := r.PathValue("category")
+func (mh Menu) AddMenuItem(w http.ResponseWriter, r *http.Request) {
+	reqBody := &dto.MenuItemCreate{}
+	err := request.Decode(r, w, reqBody)
+	if err != nil {
+		return
+	}
 
-	menu, err := mh.ms.GetCustomerMenuByCategory(restaurantID, category)
+	reqBody.MenuID = r.PathValue("menu_id")
+
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.Encode(w, nil, err, http.StatusUnauthorized)
+		return
+	}
+
+	menu, err := mh.ms.AddMenuItem(token, reqBody)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return
 	}
 
 	response.Encode(w, menu, nil)
+}
+
+func (mh Menu) ListForCustomer(w http.ResponseWriter, r *http.Request) {
+	restaurantID := r.PathValue("restaurant_id")
+	menuFilter := &dto.MenuFilter{
+		RestaurantID: restaurantID,
+	}
+
+	menus, err := mh.ms.ListForCustomer(menuFilter)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	resp := &response.MenuList[dto.Menu]{
+		Menus: menus,
+	}
+	response.Encode(w, resp, nil)
 }
