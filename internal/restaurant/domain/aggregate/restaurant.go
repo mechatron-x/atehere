@@ -107,6 +107,15 @@ func (r *Restaurant) SetImageName(imageName valueobject.Image) {
 	r.imageName = imageName
 }
 
+func (r *Restaurant) IsOwner(ownerID uuid.UUID) bool {
+	return r.ownerID == ownerID
+}
+
+func (r *Restaurant) DeleteNow() {
+	r.tables = []entity.Table{}
+	r.SetDeletedAt(time.Now())
+}
+
 func (r *Restaurant) addWorkingDay(workingDay time.Weekday) {
 	if slices.Contains(r.workingDays, workingDay) {
 		return

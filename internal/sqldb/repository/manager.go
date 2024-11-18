@@ -1,49 +1,37 @@
 package repository
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-
 	"github.com/google/uuid"
-	"github.com/mechatron-x/atehere/internal/sqldb/dal"
 	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
+	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
+	"gorm.io/gorm"
 )
 
 type Manager struct {
-	queries *dal.Queries
-	mapper  mapper.Manager
+	db     *gorm.DB
+	mapper mapper.Manager
 }
 
-func NewManager(db *sql.DB) *Manager {
+func NewManager(db *gorm.DB) *Manager {
 	return &Manager{
-		queries: dal.New(db),
-		mapper:  mapper.NewManager(),
+		db:     db,
+		mapper: mapper.NewManager(),
 	}
 }
 
 func (m *Manager) Save(manager *aggregate.Manager) error {
-	managerModel := m.mapper.FromAggregate(manager)
-	saveParams := dal.SaveManagerParams(managerModel)
+	model := m.mapper.FromAggregate(manager)
 
-	err := m.queries.SaveManager(context.Background(), saveParams)
-	if err != nil {
-		return m.wrapError(err)
-	}
+	result := m.db.Save(model)
 
-	return nil
+	return result.Error
 }
 
 func (m *Manager) GetByID(id uuid.UUID) (*aggregate.Manager, error) {
-	managerModel, err := m.queries.GetManager(context.Background(), id)
-	if err != nil {
-		return nil, m.wrapError(err)
-	}
+	var result model.Manager
 
-	return m.mapper.FromModel(managerModel)
-}
+	m.db.Model(model.Manager{ID: id.String()}).First(&result)
 
-func (m *Manager) wrapError(err error) error {
-	return fmt.Errorf("repository.Manager: %v", err)
+	return m.mapper.FromModel(&result)
 }

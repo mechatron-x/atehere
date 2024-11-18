@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -18,10 +19,6 @@ type Restaurant struct {
 	apiConf      config.Api
 }
 
-const (
-	defaultPageSize int = 20
-)
-
 func NewRestaurant(
 	repository port.RestaurantRepository,
 	authService port.Authenticator,
@@ -36,7 +33,7 @@ func NewRestaurant(
 	}
 }
 
-func (rs *Restaurant) Create(idToken string, createDto dto.RestaurantCreate) (*dto.Restaurant, error) {
+func (rs *Restaurant) Create(idToken string, createDto *dto.RestaurantCreate) (*dto.Restaurant, error) {
 	restaurant, err := createDto.ToAggregate()
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -103,7 +100,7 @@ func (rs *Restaurant) ListForManager(idToken string) ([]dto.Restaurant, error) {
 	return dto.ToRestaurantList(restaurants, rs.createImageURL), nil
 }
 
-func (rs *Restaurant) ListForCustomer(page int, filterDto dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
+func (rs *Restaurant) ListForCustomer(filterDto *dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
 	restaurants, err := rs.repository.GetAll()
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
@@ -112,6 +109,36 @@ func (rs *Restaurant) ListForCustomer(page int, filterDto dto.RestaurantFilter) 
 	filteredRestaurants := filterDto.ApplyFilter(restaurants)
 
 	return dto.ToRestaurantSummaryList(filteredRestaurants, rs.createImageURL), nil
+}
+
+func (rs Restaurant) Delete(idToken, restaurantID string) error {
+	managerID, err := rs.authService.GetUserID(idToken)
+	if err != nil {
+		return core.NewUnauthorizedError(err)
+	}
+
+	verifiedManagerID, err := uuid.Parse(managerID)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
+
+	verifiedRestaurantID, err := uuid.Parse(restaurantID)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
+
+	restaurant, err := rs.repository.GetByID(verifiedRestaurantID)
+	if err != nil {
+		return core.NewResourceNotFoundError(err)
+	}
+
+	if !restaurant.IsOwner(verifiedManagerID) {
+		return core.NewUnauthorizedError(errors.New("insufficient permissions to delete restaurant"))
+	}
+
+	restaurant.DeleteNow()
+
+	return rs.repository.Save(restaurant)
 }
 
 func (rs *Restaurant) AvailableWorkingDays() []string {

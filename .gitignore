@@ -26,3 +26,7 @@ go.work.sum
 
 logs/
 static/
+
+# sonarqube results
+.scannerwork
+.vscode

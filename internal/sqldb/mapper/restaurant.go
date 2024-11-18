@@ -1,86 +1,103 @@
 package mapper
 
 import (
-	"database/sql"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
-	"github.com/mechatron-x/atehere/internal/sqldb/dal"
+	"github.com/mechatron-x/atehere/internal/sqldb/model"
+	"gorm.io/gorm"
 )
 
-type (
-	Restaurant struct{}
-)
+type Restaurant struct{}
 
-func NewRestaurant() Restaurant {
-	return Restaurant{}
-}
-
-func (rm Restaurant) FromModel(model dal.Restaurant, tables ...dal.RestaurantTable) (*aggregate.Restaurant, error) {
+func (r Restaurant) FromModel(model *model.Restaurant) (*aggregate.Restaurant, error) {
 	restaurant := aggregate.NewRestaurant()
 
-	verifiedName, err := valueobject.NewRestaurantName(model.Name)
+	id, err := uuid.Parse(model.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	verifiedFoundationYear, err := valueobject.NewFoundationYear(model.FoundationYear.String)
+	ownerID, err := uuid.Parse(model.OwnerID)
 	if err != nil {
 		return nil, err
 	}
 
-	verifiedPhoneNumber, err := valueobject.NewPhoneNumber(model.PhoneNumber.String)
+	name, err := valueobject.NewRestaurantName(model.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	verifiedOpeningTime, err := valueobject.NewWorkTime(model.OpeningTime)
+	foundationYear, err := valueobject.NewFoundationYear(model.FoundationYear)
 	if err != nil {
 		return nil, err
 	}
 
-	verifiedClosingTime, err := valueobject.NewWorkTime(model.ClosingTime)
+	phoneNumber, err := valueobject.NewPhoneNumber(model.PhoneNumber)
 	if err != nil {
 		return nil, err
 	}
 
-	verifiedImageName, err := valueobject.NewImage(model.ImageName.String)
+	openingTime, err := valueobject.NewWorkTime(model.OpeningTime)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, workingDay := range model.WorkingDays {
-		verifiedWorkingDay, err := valueobject.ParseWeekday(workingDay)
+	closingTime, err := valueobject.NewWorkTime(model.ClosingTime)
+	if err != nil {
+		return nil, err
+	}
+
+	workingDays := make([]time.Weekday, 0)
+	for _, wd := range model.WorkingDays {
+		workingDay, err := valueobject.ParseWeekday(wd)
 		if err != nil {
 			return nil, err
 		}
 
-		restaurant.AddWorkingDays(verifiedWorkingDay)
+		workingDays = append(workingDays, workingDay)
 	}
 
-	for _, t := range tables {
-		verifiedTableName, err := valueobject.NewTableName(t.Name)
+	imageName, err := valueobject.NewImage(model.ImageName)
+	if err != nil {
+		return nil, err
+	}
+
+	tables := make([]entity.Table, 0)
+	for _, t := range model.Tables {
+		id, err := uuid.Parse(t.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		tableName, err := valueobject.NewTableName(t.Name)
 		if err != nil {
 			return nil, err
 		}
 
 		table := entity.NewTable()
-		table.SetID(t.ID)
-		table.SetName(verifiedTableName)
+		table.SetID(id)
+		table.SetName(tableName)
 		table.SetCreatedAt(t.CreatedAt)
 		table.SetUpdatedAt(t.UpdatedAt)
-		restaurant.AddTables(table)
+
+		tables = append(tables, table)
 	}
 
-	restaurant.SetID(model.ID)
-	restaurant.SetOwner(model.OwnerID)
-	restaurant.SetName(verifiedName)
-	restaurant.SetFoundationYear(verifiedFoundationYear)
-	restaurant.SetPhoneNumber(verifiedPhoneNumber)
-	restaurant.SetOpeningTime(verifiedOpeningTime)
-	restaurant.SetClosingTime(verifiedClosingTime)
-	restaurant.SetImageName(verifiedImageName)
+	restaurant.SetID(id)
+	restaurant.SetOwner(ownerID)
+	restaurant.SetName(name)
+	restaurant.SetFoundationYear(foundationYear)
+	restaurant.SetPhoneNumber(phoneNumber)
+	restaurant.SetOpeningTime(openingTime)
+	restaurant.SetClosingTime(closingTime)
+	restaurant.AddWorkingDays(workingDays...)
+	restaurant.SetImageName(imageName)
+	restaurant.AddTables(tables...)
 	restaurant.SetCreatedAt(model.CreatedAt)
 	restaurant.SetUpdatedAt(model.UpdatedAt)
 	if model.DeletedAt.Valid {
@@ -90,37 +107,65 @@ func (rm Restaurant) FromModel(model dal.Restaurant, tables ...dal.RestaurantTab
 	return restaurant, nil
 }
 
-func (rm Restaurant) FromAggregate(restaurant *aggregate.Restaurant) dal.Restaurant {
-	workingDays := make([]string, 0)
+func (r Restaurant) FromModels(models []model.Restaurant) ([]*aggregate.Restaurant, error) {
+	aggregates := make([]*aggregate.Restaurant, 0)
 
-	for _, wd := range restaurant.WorkingDays() {
+	for _, m := range models {
+		aggregate, err := r.FromModel(&m)
+		if err != nil {
+			return nil, err
+		}
+
+		aggregates = append(aggregates, aggregate)
+	}
+
+	return aggregates, nil
+}
+
+func (r Restaurant) FromAggregate(aggregate *aggregate.Restaurant) *model.Restaurant {
+	workingDays := make(pq.StringArray, 0)
+	for _, wd := range aggregate.WorkingDays() {
 		workingDays = append(workingDays, wd.String())
 	}
 
-	return dal.Restaurant{
-		ID:      restaurant.ID(),
-		OwnerID: restaurant.OwnerID(),
-		Name:    restaurant.Name().String(),
-		FoundationYear: sql.NullString{
-			String: restaurant.FoundationYear().String(),
-			Valid:  true,
-		},
-		PhoneNumber: sql.NullString{
-			String: restaurant.PhoneNumber().String(),
-			Valid:  true,
-		},
-		OpeningTime: restaurant.OpeningTime().String(),
-		ClosingTime: restaurant.ClosingTime().String(),
-		WorkingDays: workingDays,
-		ImageName: sql.NullString{
-			String: restaurant.ImageName().String(),
-			Valid:  true,
-		},
-		CreatedAt: restaurant.CreatedAt(),
-		UpdatedAt: restaurant.UpdatedAt(),
-		DeletedAt: sql.NullTime{
-			Time:  restaurant.DeletedAt(),
-			Valid: restaurant.IsDeleted(),
+	tables := make([]model.RestaurantTable, 0)
+	for _, t := range aggregate.Tables() {
+		table := model.RestaurantTable{
+			ID:           t.ID().String(),
+			RestaurantID: aggregate.ID().String(),
+			Name:         t.Name().String(),
+		}
+
+		tables = append(tables, table)
+	}
+
+	return &model.Restaurant{
+		ID:             aggregate.ID().String(),
+		OwnerID:        aggregate.OwnerID().String(),
+		Name:           aggregate.Name().String(),
+		FoundationYear: aggregate.FoundationYear().String(),
+		PhoneNumber:    aggregate.PhoneNumber().String(),
+		OpeningTime:    aggregate.OpeningTime().String(),
+		ClosingTime:    aggregate.ClosingTime().String(),
+		WorkingDays:    workingDays,
+		ImageName:      aggregate.ImageName().String(),
+		Tables:         tables,
+		Model: gorm.Model{
+			CreatedAt: aggregate.CreatedAt(),
+			UpdatedAt: aggregate.UpdatedAt(),
+			DeletedAt: gorm.DeletedAt{
+				Time:  aggregate.DeletedAt(),
+				Valid: aggregate.IsDeleted(),
+			},
 		},
 	}
+}
+
+func (r Restaurant) FromAggregates(aggregates []*aggregate.Restaurant) []*model.Restaurant {
+	models := make([]*model.Restaurant, 0)
+	for _, a := range aggregates {
+		models = append(models, r.FromAggregate(a))
+	}
+
+	return models
 }

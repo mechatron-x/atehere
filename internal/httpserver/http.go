@@ -36,6 +36,7 @@ func NewServeMux(
 	ch handler.Customer,
 	mh handler.Manager,
 	rh handler.Restaurant,
+	rmh handler.Menu,
 ) *http.ServeMux {
 	mux := http.NewServeMux()
 	apiMux := http.NewServeMux()
@@ -45,22 +46,28 @@ func NewServeMux(
 	apiMux.HandleFunc("GET /api/health", hh.GetHealth)
 
 	// Customer endpoints
-	versionMux.HandleFunc("GET /customer/profile", ch.GetProfile)
-	versionMux.HandleFunc("PATCH /customer/profile", ch.UpdateProfile)
-	versionMux.HandleFunc("POST /customer/auth/signup", ch.SignUp)
+	versionMux.HandleFunc("GET /customers", ch.GetProfile)
+	versionMux.HandleFunc("PATCH /customers", ch.UpdateProfile)
+	versionMux.HandleFunc("POST /customers/auth/signup", ch.SignUp)
 
 	// Manager endpoints
-	versionMux.HandleFunc("GET /manager/profile", mh.GetProfile)
-	versionMux.HandleFunc("PATCH /manager/profile", mh.UpdateProfile)
-	versionMux.HandleFunc("POST /manager/auth/signup", mh.SignUp)
+	versionMux.HandleFunc("GET /managers", mh.GetProfile)
+	versionMux.HandleFunc("PATCH /managers", mh.UpdateProfile)
+	versionMux.HandleFunc("POST /managers/auth/signup", mh.SignUp)
 
 	// Manager restaurant endpoints
-	versionMux.HandleFunc("GET /manager/restaurants", rh.ListForManager)
-	versionMux.HandleFunc("POST /manager/restaurant", rh.Create)
+	versionMux.HandleFunc("GET /managers/restaurants", rh.ListForManager)
+	versionMux.HandleFunc("POST /managers/restaurants", rh.Create)
+	versionMux.HandleFunc("DELETE /managers/restaurants/{restaurant_id}", rh.Delete)
 
 	// Restaurant endpoints
 	versionMux.HandleFunc("POST /restaurants", rh.ListForCustomer)
-	versionMux.HandleFunc("GET /restaurants/{id}", rh.GetOneForCustomer)
+	versionMux.HandleFunc("GET /restaurants/{restaurant_id}", rh.GetOneForCustomer)
+
+	// Menu endpoints
+	versionMux.HandleFunc("POST /menus", rmh.Create)
+	versionMux.HandleFunc("PUT /menus/{menu_id}/items", rmh.AddMenuItem)
+	versionMux.HandleFunc("GET /restaurants/{restaurant_id}/menus", rmh.ListForCustomer)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

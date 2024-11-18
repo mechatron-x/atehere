@@ -6,6 +6,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/request"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
+	"github.com/mechatron-x/atehere/internal/usermanagement/dto"
 	"github.com/mechatron-x/atehere/internal/usermanagement/service"
 )
 
@@ -18,58 +19,56 @@ func NewManagerHandler(ms service.Manager) Manager {
 }
 
 func (mh Manager) SignUp(w http.ResponseWriter, r *http.Request) {
-	reqBody := &request.ManagerSignUp{}
+	reqBody := &dto.ManagerSignUp{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
+		response.Encode(w, nil, err, http.StatusBadRequest)
 		return
 	}
 
-	manager, err := mh.ms.SignUp(reqBody.ManagerSignUp)
+	manager, err := mh.ms.SignUp(reqBody)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err)
 		return
 	}
 
-	resp := response.ManagerSignUp{Manager: manager}
-	response.Encode(w, resp, http.StatusCreated)
+	response.Encode(w, manager, nil, http.StatusCreated)
 }
 
 func (mh Manager) GetProfile(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err)
 		return
 	}
 
 	manager, err := mh.ms.GetProfile(token)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err)
 		return
 	}
 
-	resp := response.ManagerGetProfile{Manager: manager}
-	response.Encode(w, resp, http.StatusOK)
+	response.Encode(w, manager, nil)
 }
 
 func (mh Manager) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err)
 		return
 	}
 
-	reqBody := &request.ManagerUpdateProfile{}
+	reqBody := &dto.Manager{}
 	err = request.Decode(r, w, reqBody)
 	if err != nil {
 		return
 	}
 
-	manager, err := mh.ms.UpdateProfile(token, reqBody.Manager)
+	manager, err := mh.ms.UpdateProfile(token, reqBody)
 	if err != nil {
-		response.EncodeError(w, err)
+		response.Encode(w, nil, err)
 		return
 	}
 
-	resp := response.ManagerGetProfile{Manager: manager}
-	response.Encode(w, resp, http.StatusOK)
+	response.Encode(w, manager, nil)
 }

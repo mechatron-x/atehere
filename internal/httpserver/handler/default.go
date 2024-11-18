@@ -15,5 +15,5 @@ func NewDefault() Default {
 }
 
 func (dh Default) NoHandler(w http.ResponseWriter, r *http.Request) {
-	response.EncodeError(w, errors.New("no handler found"), http.StatusForbidden)
+	response.Encode(w, nil, errors.New("no handler found"), http.StatusForbidden)
 }
