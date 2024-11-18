@@ -3,9 +3,8 @@ package model
 import "gorm.io/gorm"
 
 type Manager struct {
-	ID          string `gorm:"primarykey"`
-	FullName    string
+	ID          string `gorm:"primarykey;type:uuid"`
+	FullName    string `gorm:"not null;size:100"`
 	PhoneNumber string
-	Restaurants []Restaurant `gorm:"foreignKey:OwnerID"`
 	gorm.Model
 }

@@ -22,6 +22,8 @@ func NewMenu(db *gorm.DB) *Menu {
 
 func (m *Menu) Save(menu *aggregate.Menu) error {
 	menuModel := m.mapper.FromAggregate(menu)
+	menuModel.ID = "7c36c9d8-e0db-4dfb-b7dc-f381b5f4c5f6"
+	menuModel.Category = "Main Dish"
 
 	tx := m.db.Begin()
 	defer tx.Commit()
@@ -46,7 +48,7 @@ func (m *Menu) Save(menu *aggregate.Menu) error {
 		return err
 	}
 
-	result = tx.Updates(menuModel)
+	tx.Session(&gorm.Session{FullSaveAssociations: true}).Updates(menuModel)
 	if result.Error != nil {
 		tx.Rollback()
 	}

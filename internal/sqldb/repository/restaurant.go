@@ -47,7 +47,7 @@ func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 		return err
 	}
 
-	result = tx.Updates(restaurantModel)
+	tx.Session(&gorm.Session{FullSaveAssociations: true}).Updates(restaurantModel)
 	if result.Error != nil {
 		tx.Rollback()
 	}

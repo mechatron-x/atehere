@@ -9,21 +9,22 @@ import (
 
 type (
 	Menu struct {
-		ID           string `gorm:"primarykey;"`
+		ID           string `gorm:"primarykey;type:uuid"`
 		RestaurantID string
-		Category     string `gorm:"not null"`
+		Restaurant   Restaurant
+		Category     string `gorm:"not null;size:100"`
 		MenuItems    []MenuItem
 		gorm.Model
 	}
 
 	MenuItem struct {
-		ID                 string `gorm:"primarykey"`
+		ID                 string `gorm:"primarykey;type:uuid"`
 		MenuID             string
-		Name               string `gorm:"not null"`
-		Description        string `gorm:"not null"`
+		Name               string `gorm:"not null;size:100"`
+		Description        string `gorm:"not null;text"`
 		ImageName          string
-		PriceAmount        float64        `gorm:"not null"`
-		PriceCurrency      string         `gorm:"not null"`
+		PriceAmount        float64        `gorm:"not null;numeric;precision:10;scale:2"`
+		PriceCurrency      string         `gorm:"not null;size:5"`
 		DiscountPercentage int            `gorm:"not null"`
 		Ingredients        pq.StringArray `gorm:"type:text[]"`
 		CreatedAt          time.Time

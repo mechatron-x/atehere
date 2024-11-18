@@ -47,6 +47,8 @@ func (mh Menu) AddMenuItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	reqBody.MenuID = r.PathValue("menu_id")
+
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
 		response.Encode(w, nil, err, http.StatusUnauthorized)

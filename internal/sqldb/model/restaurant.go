@@ -9,24 +9,24 @@ import (
 
 type (
 	Restaurant struct {
-		ID             string `gorm:"primarykey"`
+		ID             string `gorm:"primarykey;type:uuid"`
 		OwnerID        string
-		Name           string
-		FoundationYear string
-		PhoneNumber    string
-		OpeningTime    string
-		ClosingTime    string
-		ImageName      string
-		WorkingDays    pq.StringArray `gorm:"type:text[]"`
+		Owner          Manager        `gorm:"foreignKey:OwnerID"`
+		Name           string         `gorm:"not null;size:100"`
+		FoundationYear string         `gorm:"not null;size:20"`
+		PhoneNumber    string         `gorm:"not null;size:255"`
+		OpeningTime    string         `gorm:"not null;size:5"`
+		ClosingTime    string         `gorm:"not null;size:5"`
+		ImageName      string         `gorm:"not null;size:50"`
+		WorkingDays    pq.StringArray `gorm:"type:text[];size:10"`
 		Tables         []RestaurantTable
-		Menus          []Menu
 		gorm.Model
 	}
 
 	RestaurantTable struct {
-		ID           string `gorm:"primarykey"`
+		ID           string `gorm:"primarykey;type:uuid"`
 		RestaurantID string
-		Name         string
+		Name         string `gorm:"not null;size:10"`
 		CreatedAt    time.Time
 		UpdatedAt    time.Time
 	}
