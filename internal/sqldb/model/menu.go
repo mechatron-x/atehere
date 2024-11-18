@@ -9,11 +9,11 @@ import (
 
 type (
 	Menu struct {
-		gorm.Model
 		ID           string `gorm:"primarykey;"`
 		RestaurantID string
-		Category     string     `gorm:"not null"`
-		MenuItems    []MenuItem `gorm:"constraint:OnDelete:CASCADE"`
+		Category     string `gorm:"not null"`
+		MenuItems    []MenuItem
+		gorm.Model
 	}
 
 	MenuItem struct {

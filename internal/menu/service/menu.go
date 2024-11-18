@@ -50,10 +50,6 @@ func (ms *Menu) Create(idToken string, createDto *dto.MenuCreate) (*dto.Menu, er
 }
 
 func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto.Menu, error) {
-	if err := ms.verifyOwnership(idToken, createDto.RestaurantID); err != nil {
-		return nil, core.NewUnauthorizedError(err)
-	}
-
 	menuID, err := uuid.Parse(createDto.MenuID)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -67,6 +63,10 @@ func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto
 	menu, err := ms.repository.GetByID(menuID)
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	if err := ms.verifyOwnership(idToken, menu.RestaurantID().String()); err != nil {
+		return nil, core.NewUnauthorizedError(err)
 	}
 
 	imageName, err := ms.imageStorage.Save(menuItem.ID().String(), createDto.Image)

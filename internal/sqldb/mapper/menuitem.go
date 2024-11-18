@@ -14,7 +14,7 @@ func NewMenuItem() MenuItem {
 	return MenuItem{}
 }
 
-func (mi MenuItem) FromModel(model *model.MenuItem) (*entity.MenuItem, error) {
+func (mi MenuItem) fromModel(model *model.MenuItem) (*entity.MenuItem, error) {
 	menuItem := entity.NewMenuItem()
 
 	verifiedID, err := uuid.Parse(model.ID)
@@ -57,10 +57,10 @@ func (mi MenuItem) FromModel(model *model.MenuItem) (*entity.MenuItem, error) {
 	return &menuItem, nil
 }
 
-func (mi MenuItem) FromModels(models []model.MenuItem) ([]*entity.MenuItem, error) {
+func (mi MenuItem) fromModels(models []model.MenuItem) ([]*entity.MenuItem, error) {
 	entities := make([]*entity.MenuItem, 0)
 	for _, model := range models {
-		entity, err := mi.FromModel(&model)
+		entity, err := mi.fromModel(&model)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +70,7 @@ func (mi MenuItem) FromModels(models []model.MenuItem) ([]*entity.MenuItem, erro
 	return entities, nil
 }
 
-func (mi MenuItem) FromEntity(menuID uuid.UUID, entity *entity.MenuItem) *model.MenuItem {
+func (mi MenuItem) fromEntity(menuID uuid.UUID, entity *entity.MenuItem) *model.MenuItem {
 	return &model.MenuItem{
 		ID:            entity.ID().String(),
 		MenuID:        menuID.String(),
@@ -85,10 +85,11 @@ func (mi MenuItem) FromEntity(menuID uuid.UUID, entity *entity.MenuItem) *model.
 	}
 }
 
-func (mi MenuItem) FromEntities(menuID uuid.UUID, entities []*entity.MenuItem) []*model.MenuItem {
-	models := make([]*model.MenuItem, 0)
+func (mi MenuItem) fromEntities(menuID uuid.UUID, entities []entity.MenuItem) []model.MenuItem {
+	models := make([]model.MenuItem, 0)
 	for _, entity := range entities {
-		models = append(models, mi.FromEntity(menuID, entity))
+		menuItem := mi.fromEntity(menuID, &entity)
+		models = append(models, *menuItem)
 	}
 
 	return models

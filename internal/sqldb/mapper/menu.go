@@ -38,7 +38,7 @@ func (m Menu) FromModel(model *model.Menu) (*aggregate.Menu, error) {
 		return nil, err
 	}
 
-	menuItems, err := m.mi.FromModels(model.MenuItems)
+	menuItems, err := m.mi.fromModels(model.MenuItems)
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +74,7 @@ func (m Menu) FromModels(models []model.Menu) ([]*aggregate.Menu, error) {
 }
 
 func (m Menu) FromAggregate(aggregate *aggregate.Menu) *model.Menu {
-	menuItems := make([]model.MenuItem, 0)
-	for _, mi := range aggregate.MenuItems() {
-		menuItem := m.mi.FromEntity(aggregate.ID(), &mi)
-
-		menuItems = append(menuItems, *menuItem)
-	}
+	menuItems := m.mi.fromEntities(aggregate.ID(), aggregate.MenuItems())
 
 	fmt.Println(aggregate.RestaurantID())
 	return &model.Menu{

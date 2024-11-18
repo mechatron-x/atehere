@@ -7,7 +7,6 @@ import (
 
 type (
 	MenuItemCreate struct {
-		RestaurantID       string   `json:"restaurant_id"`
 		MenuID             string   `json:"menu_id"`
 		Name               string   `json:"name"`
 		Description        string   `json:"description"`

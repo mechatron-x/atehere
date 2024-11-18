@@ -112,6 +112,7 @@ func (r *Restaurant) IsOwner(ownerID uuid.UUID) bool {
 }
 
 func (r *Restaurant) DeleteNow() {
+	r.tables = []entity.Table{}
 	r.SetDeletedAt(time.Now())
 }
 

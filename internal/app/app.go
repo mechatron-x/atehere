@@ -33,7 +33,6 @@ func New(conf *config.App) (*App, error) {
 		&model.Manager{},
 		&model.Restaurant{},
 		&model.RestaurantTable{},
-		&model.RestaurantWorkingDay{},
 		&model.Menu{},
 		&model.MenuItem{},
 	)

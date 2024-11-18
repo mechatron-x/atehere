@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/entity"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/valueobject"
@@ -53,7 +54,7 @@ func (r Restaurant) FromModel(model *model.Restaurant) (*aggregate.Restaurant, e
 
 	workingDays := make([]time.Weekday, 0)
 	for _, wd := range model.WorkingDays {
-		workingDay, err := valueobject.ParseWeekday(wd.Day)
+		workingDay, err := valueobject.ParseWeekday(wd)
 		if err != nil {
 			return nil, err
 		}
@@ -122,13 +123,9 @@ func (r Restaurant) FromModels(models []model.Restaurant) ([]*aggregate.Restaura
 }
 
 func (r Restaurant) FromAggregate(aggregate *aggregate.Restaurant) *model.Restaurant {
-	workingDays := make([]model.RestaurantWorkingDay, 0)
+	workingDays := make(pq.StringArray, 0)
 	for _, wd := range aggregate.WorkingDays() {
-		workingDay := model.RestaurantWorkingDay{
-			RestaurantID: aggregate.ID().String(),
-			Day:          wd.String(),
-		}
-		workingDays = append(workingDays, workingDay)
+		workingDays = append(workingDays, wd.String())
 	}
 
 	tables := make([]model.RestaurantTable, 0)

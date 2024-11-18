@@ -3,12 +3,12 @@ package model
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
 type (
 	Restaurant struct {
-		gorm.Model
 		ID             string `gorm:"primarykey"`
 		OwnerID        string
 		Name           string
@@ -17,9 +17,10 @@ type (
 		OpeningTime    string
 		ClosingTime    string
 		ImageName      string
-		WorkingDays    []RestaurantWorkingDay `gorm:"constraint:OnDelete:CASCADE"`
-		Tables         []RestaurantTable      `gorm:"constraint:OnDelete:CASCADE"`
-		Menus          []Menu                 `gorm:"constraint:OnDelete:CASCADE"`
+		WorkingDays    pq.StringArray `gorm:"type:text[]"`
+		Tables         []RestaurantTable
+		Menus          []Menu
+		gorm.Model
 	}
 
 	RestaurantTable struct {
@@ -28,10 +29,5 @@ type (
 		Name         string
 		CreatedAt    time.Time
 		UpdatedAt    time.Time
-	}
-
-	RestaurantWorkingDay struct {
-		RestaurantID string `gorm:"primaryKey"`
-		Day          string `gorm:"primaryKey"`
 	}
 )
