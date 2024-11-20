@@ -58,7 +58,7 @@ func (ma *MockAuthenticator) CreateUser(id, email, password string) error {
 		}
 
 		if u.Email == email {
-			return fmt.Errorf("user with email: %s already exists", id)
+			return fmt.Errorf("user with email: %s already exists", email)
 		}
 	}
 
