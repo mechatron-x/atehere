@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/mechatron-x/atehere/internal/core"
 )
 
 type EnvKey string
@@ -20,7 +18,16 @@ const (
 	DB_USER              EnvKey = "POSTGRES_USER"
 	DB_KEY               EnvKey = "POSTGRES_PASSWORD"
 	DB_NAME              EnvKey = "POSTGRES_DB"
+	APP_ENV              EnvKey = "APP_ENV"
 )
+
+var envKeys []EnvKey = []EnvKey{
+	FIREBASE_PRIVATE_KEY,
+	DB_USER,
+	DB_KEY,
+	DB_NAME,
+	APP_ENV,
+}
 
 func Load(confPath string) (*App, error) {
 	conf := new(App)
@@ -36,7 +43,7 @@ func Load(confPath string) (*App, error) {
 		return nil, fmt.Errorf("config: %v", err)
 	}
 
-	envMap, err := loadEnv(FIREBASE_PRIVATE_KEY, DB_USER, DB_KEY, DB_NAME)
+	envMap, err := loadEnv(envKeys...)
 	if err != nil {
 		return nil, fmt.Errorf("config: %v", err)
 	}
@@ -46,6 +53,8 @@ func Load(confPath string) (*App, error) {
 	conf.DB.User = envMap[DB_USER]
 	conf.DB.Password = envMap[DB_KEY]
 	conf.DB.Name = envMap[DB_NAME]
+
+	conf.Environment = parseEnvironment(envMap[APP_ENV])
 
 	return conf, nil
 }
@@ -57,9 +66,6 @@ func loadEnv(keys ...EnvKey) (map[EnvKey]string, error) {
 		val, ok := os.LookupEnv(key.String())
 		if !ok {
 			return nil, fmt.Errorf("environment variable %s is missing; please ensure it is set", key.String())
-		}
-		if core.IsEmptyString(val) {
-			return nil, fmt.Errorf("environment variable %s is set but empty; please provide a valid value", key.String())
 		}
 
 		envMap[key] = val
