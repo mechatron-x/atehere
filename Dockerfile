@@ -26,7 +26,7 @@ FROM ${OS}
 RUN apk update && \
     apk upgrade
 
-RUN mkdir -p /usr/local/bin /var/lib/atehere/logs /var/lib/atehere/static
+RUN mkdir -p /usr/local/bin /var/lib/atehere/logs /var/lib/atehere/static/mock
 
 COPY --from=build /app/bin /usr/local/bin
 

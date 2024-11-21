@@ -55,7 +55,10 @@ func New(conf *config.App) (*App, error) {
 			return nil, err
 		}
 	} else {
-		authenticator = infrastructure.NewMockAuthenticator(conf.Api, diskFileManager)
+		authenticator, err = infrastructure.NewMockAuthenticator(conf.Api, diskFileManager)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	customerCtx := ctx.NewCustomer(db, authenticator)

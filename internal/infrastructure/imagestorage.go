@@ -88,7 +88,6 @@ func fileType(data []byte) (string, error) {
 
 func createAbsPath(location, filename string) (string, error) {
 	savePath := filepath.Join(location, filepath.Clean(filename))
-	savePath = filepath.Clean(savePath)
 	if !strings.HasPrefix(savePath, location) {
 		return "", fmt.Errorf("invalid static root")
 	}

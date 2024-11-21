@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	authenticatorFilename = "authenticator.json"
+	authenticatorFilename = "/mock/authenticator.json"
 )
 
 type (
@@ -37,12 +37,21 @@ type (
 	}
 )
 
-func NewMockAuthenticator(apiConf config.Api, fileManager FileManager) *MockAuthenticator {
-	return &MockAuthenticator{
+func NewMockAuthenticator(apiConf config.Api, fileManager FileManager) (*MockAuthenticator, error) {
+	path := fmt.Sprintf("%s/%s", apiConf.StaticRoot, authenticatorFilename)
+
+	mockAuthenticator := &MockAuthenticator{
 		users:       make([]mockUser, 0),
-		path:        fmt.Sprintf("%s/%s", apiConf.StaticRoot, authenticatorFilename),
+		path:        path,
 		fileManager: fileManager,
 	}
+
+	err := mockAuthenticator.restore()
+	if err != nil {
+		return nil, err
+	}
+
+	return mockAuthenticator, nil
 }
 
 func (ma *MockAuthenticator) CreateUser(id, email, password string) error {
@@ -64,17 +73,10 @@ func (ma *MockAuthenticator) CreateUser(id, email, password string) error {
 
 	ma.users = append(ma.users, user)
 
-	ma.save()
-
-	return nil
+	return ma.save()
 }
 
 func (ma *MockAuthenticator) GetUserID(idToken string) (string, error) {
-	err := ma.sync()
-	if err != nil {
-		return "", nil
-	}
-
 	for _, u := range ma.users {
 		if u.ID != idToken {
 			continue
@@ -87,11 +89,6 @@ func (ma *MockAuthenticator) GetUserID(idToken string) (string, error) {
 }
 
 func (ma *MockAuthenticator) GetUserEmail(idToken string) (string, error) {
-	err := ma.sync()
-	if err != nil {
-		return "", nil
-	}
-
 	for _, u := range ma.users {
 		if u.ID != idToken {
 			continue
@@ -104,11 +101,6 @@ func (ma *MockAuthenticator) GetUserEmail(idToken string) (string, error) {
 }
 
 func (ma *MockAuthenticator) RevokeRefreshTokens(idToken string) error {
-	err := ma.sync()
-	if err != nil {
-		return nil
-	}
-
 	users := ma.users
 	for i, u := range users {
 		if u.ID != idToken {
@@ -137,12 +129,16 @@ func (ma *MockAuthenticator) save() error {
 	return ma.fileManager.Save(ma.path, bytes)
 }
 
-func (ma *MockAuthenticator) sync() error {
+func (ma *MockAuthenticator) restore() error {
 	readData := &mockStorageData{}
 
 	bytes, err := ma.fileManager.Read(ma.path)
 	if err != nil {
 		return err
+	}
+
+	if len(bytes) == 0 {
+		return nil
 	}
 
 	err = json.Unmarshal(bytes, readData)
