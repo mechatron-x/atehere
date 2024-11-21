@@ -54,7 +54,12 @@ func (rs *Restaurant) Create(idToken string, createDto *dto.RestaurantCreate) (*
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	restaurant.SetOwner(uuid.MustParse(managerID))
+	verifiedManagerID, err := uuid.Parse(managerID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	restaurant.SetOwner(verifiedManagerID)
 	restaurant.SetImageName(verifiedImage)
 
 	err = rs.repository.Save(restaurant)

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 type (
@@ -14,7 +16,7 @@ type (
 	}
 
 	FileSaver interface {
-		Save(filename string, data []byte, location string) error
+		Save(savePath string, data []byte) error
 	}
 )
 
@@ -30,15 +32,19 @@ func NewImageStorage(fileSaver FileSaver, location string) (*ImageStorage, error
 	}, nil
 }
 
-func (is *ImageStorage) Save(fileName string, data string) (string, error) {
+func (is *ImageStorage) Save(filename string, data string) (string, error) {
 	imageDecoded, imageType, err := decodeBase64Image(data)
 	if err != nil {
 		return "", err
 	}
 
-	imageName := fmt.Sprintf("%s.%s", fileName, imageType)
+	imageName := fmt.Sprintf("%s.%s", filename, imageType)
+	savePath, err := createAbsPath(is.location, imageName)
+	if err != nil {
+		return "", err
+	}
 
-	err = is.fs.Save(imageName, imageDecoded, is.location)
+	err = is.fs.Save(savePath, imageDecoded)
 	if err != nil {
 		return "", err
 	}
@@ -78,4 +84,13 @@ func fileType(data []byte) (string, error) {
 	}
 
 	return extension, nil
+}
+
+func createAbsPath(location, filename string) (string, error) {
+	savePath := filepath.Join(location, filepath.Clean(filename))
+	if !strings.HasPrefix(savePath, location) {
+		return "", fmt.Errorf("invalid static root")
+	}
+
+	return savePath, nil
 }
