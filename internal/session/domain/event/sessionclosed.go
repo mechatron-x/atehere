@@ -10,14 +10,14 @@ import (
 
 type SessionClosed struct {
 	core.BaseEvent
-	tableID uuid.UUID
-	orders  []entity.Order
+	sessionID uuid.UUID
+	orders    []entity.Order
 }
 
-func NewSessionClosed(tableID uuid.UUID, orders ...entity.Order) SessionClosed {
+func NewSessionClosed(sessionID uuid.UUID, orders ...entity.Order) SessionClosed {
 	return SessionClosed{
 		BaseEvent: core.NewDomainEvent(),
-		tableID:   tableID,
+		sessionID: sessionID,
 		orders:    slices.Clone(orders),
 	}
 }

@@ -15,7 +15,7 @@ type Session struct {
 	repository     port.SessionRepository
 	viewRepository port.SessionViewRepository
 	authenticator  port.Authenticator
-	eventPusher    port.EventPusher
+	eventNotifier  port.EventNotifier
 	events         chan core.DomainEvent
 	log            *zap.Logger
 }
@@ -24,14 +24,14 @@ func NewSession(
 	repository port.SessionRepository,
 	viewRepository port.SessionViewRepository,
 	authenticator port.Authenticator,
-	eventPusher port.EventPusher,
+	eventPusher port.EventNotifier,
 	eventBusSize int,
 ) *Session {
 	session := &Session{
 		repository:     repository,
 		viewRepository: viewRepository,
 		authenticator:  authenticator,
-		eventPusher:    eventPusher,
+		eventNotifier:  eventPusher,
 		events:         make(chan core.DomainEvent, eventBusSize),
 		log:            logger.Instance(),
 	}
@@ -43,36 +43,34 @@ func NewSession(
 	return session
 }
 
-func (ss *Session) PlaceOrder(idToken string, tableID string, placeOrder dto.PlaceOrder) error {
+func (ss *Session) PlaceOrder(idToken string, tableID string, orderCreate *dto.OrderCreate) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
 	}
-	placeOrder.OrderedBy = customerID
+
+	verifiedCustomerID, err := uuid.Parse(customerID)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
 
 	verifiedTableID, err := uuid.Parse(tableID)
 	if err != nil {
 		return core.NewValidationFailureError(err)
 	}
 
-	order, err := placeOrder.ToEntity()
+	order, err := orderCreate.ToEntity()
 	if err != nil {
 		return core.NewValidationFailureError(err)
 	}
+	order.SetOrderedBy(verifiedCustomerID)
 
-	hasSession := ss.repository.HasActiveSessions(verifiedTableID)
-	var session *aggregate.Session
-
-	if hasSession {
-		session, err = ss.repository.GetByTableID(verifiedTableID)
-		if err != nil {
-			return core.NewResourceNotFoundError(err)
-		}
-	} else {
-		session := aggregate.NewSession()
-		session.SetTableID(verifiedTableID)
+	session, err := ss.getActiveSession(verifiedTableID)
+	if err != nil {
+		return core.NewResourceNotFoundError(err)
 	}
 
+	session.SetTableID(verifiedTableID)
 	session.PlaceOrders(order)
 
 	err = ss.repository.Save(session)
@@ -83,6 +81,10 @@ func (ss *Session) PlaceOrder(idToken string, tableID string, placeOrder dto.Pla
 	ss.pushEventsAsync(session.Events())
 
 	return nil
+}
+
+func (ss *Session) getActiveSession(tableID uuid.UUID) (*aggregate.Session, error) {
+	panic("not implemented")
 }
 
 func (ss *Session) pushEventsAsync(events []core.DomainEvent) {
@@ -108,12 +110,13 @@ func (ss *Session) processEventsAsync() {
 }
 
 func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
-	orderCreatedEventView, err := ss.viewRepository.GetOrderCreatedEventView(event.TableID(), event.OrderID())
+	orderCreatedEventView, err := ss.viewRepository.OrderCreatedEventView(event.SessionID(), event.OrderID())
 	if err != nil {
 		return err
 	}
 
-	err = ss.eventPusher.PushOrderCreatedEvent(orderCreatedEventView, event.InvokeTime())
+	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
+	err = ss.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)
 	if err != nil {
 		return err
 	}

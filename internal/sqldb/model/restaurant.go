@@ -12,7 +12,7 @@ type (
 		ID             string `gorm:"primarykey;type:uuid"`
 		OwnerID        string
 		Owner          Manager        `gorm:"foreignKey:OwnerID"`
-		Name           string         `gorm:"not null;size:100"`
+		Name           string         `gorm:"not null;size:100;unique"`
 		FoundationYear string         `gorm:"not null;size:20"`
 		PhoneNumber    string         `gorm:"not null;size:255"`
 		OpeningTime    string         `gorm:"not null;size:5"`

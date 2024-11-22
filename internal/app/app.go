@@ -36,6 +36,8 @@ func New(conf *config.App) (*App, error) {
 		&model.RestaurantTable{},
 		&model.Menu{},
 		&model.MenuItem{},
+		&model.Session{},
+		&model.SessionOrder{},
 	)
 	if err != nil {
 		return nil, err
@@ -61,10 +63,16 @@ func New(conf *config.App) (*App, error) {
 		}
 	}
 
+	eventNotifier, err := infrastructure.NewFirebaseEventNotifier()
+	if err != nil {
+		return nil, err
+	}
+
 	customerCtx := ctx.NewCustomer(db, authenticator)
 	managerCtx := ctx.NewManager(db, authenticator)
 	restaurantCtx := ctx.NewRestaurant(db, authenticator, imageStorage, conf.Api)
 	menuCtx := ctx.NewMenu(db, authenticator, imageStorage, conf.Api)
+	sessionCtx := ctx.NewSession(db, authenticator, eventNotifier)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,
@@ -74,6 +82,7 @@ func New(conf *config.App) (*App, error) {
 		managerCtx.Handler(),
 		restaurantCtx.Handler(),
 		menuCtx.Handler(),
+		sessionCtx.Handler(),
 	)
 
 	httpServer, err := httpserver.New(conf.Api, mux)

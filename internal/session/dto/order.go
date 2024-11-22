@@ -1,14 +1,15 @@
 package dto
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/session/domain/entity"
 	"github.com/mechatron-x/atehere/internal/session/domain/valueobject"
 )
 
 type (
-	PlaceOrder struct {
-		OrderedBy  string `json:"ordered_by"`
+	OrderCreate struct {
 		MenuItemID string `json:"menu_item_id"`
 		Quantity   int    `json:"quantity"`
 	}
@@ -18,10 +19,12 @@ type (
 		Table        string
 		OrderedBy    string
 		MenuItem     string
+		Quantity     int
+		InvokeTime   int64
 	}
 )
 
-func (po *PlaceOrder) ToEntity() (entity.Order, error) {
+func (po *OrderCreate) ToEntity() (entity.Order, error) {
 	order := entity.NewOrder()
 
 	verifiedMenuItemID, err := uuid.Parse(po.MenuItemID)
@@ -34,14 +37,17 @@ func (po *PlaceOrder) ToEntity() (entity.Order, error) {
 		return entity.Order{}, err
 	}
 
-	verifiedOrderedBy, err := uuid.Parse(po.OrderedBy)
-	if err != nil {
-		return entity.Order{}, err
-	}
-
 	order.SetMenuItemID(verifiedMenuItemID)
-	order.SetOrderedBy(verifiedOrderedBy)
 	order.SetQuantity(verifiedQuantity)
 
 	return order, nil
+}
+
+func (rcv OrderCreatedEventView) Message() string {
+	return fmt.Sprintf("%s ordered %s x%d from table %s",
+		rcv.OrderedBy,
+		rcv.MenuItem,
+		rcv.Quantity,
+		rcv.Table,
+	)
 }

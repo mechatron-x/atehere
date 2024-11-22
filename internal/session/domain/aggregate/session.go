@@ -1,7 +1,6 @@
 package aggregate
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -60,25 +59,25 @@ func (s *Session) SetOrders(orders []entity.Order) {
 
 func (s *Session) PlaceOrders(orders ...entity.Order) {
 	for _, o := range orders {
-		err := s.addOrder(o)
-		if err != nil {
+		if !s.canPlaceOrder(o) {
 			continue
 		}
 
-		s.RaiseEvent(event.NewOrderCreated(s.tableID, o.ID()))
+		s.orders = append(s.orders, o)
+		s.RaiseEvent(event.NewOrderCreated(s.ID(), o.ID(), o.Quantity().Int()))
 	}
 }
 
 func (s *Session) Close() {
 	s.SetDeletedAt(time.Now())
-	s.RaiseEvent(event.NewSessionClosed(s.tableID, s.orders...))
+	s.RaiseEvent(event.NewSessionClosed(s.ID(), s.orders...))
 }
 
-func (s *Session) addOrder(order entity.Order) error {
+func (s *Session) canPlaceOrder(order entity.Order) bool {
 	for _, o := range s.orders {
 		if o.ID() == order.ID() {
-			return fmt.Errorf("order with id %s already placed", o.ID())
+			return false
 		}
 	}
-	return nil
+	return true
 }

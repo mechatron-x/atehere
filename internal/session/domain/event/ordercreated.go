@@ -8,23 +8,29 @@ import (
 type (
 	OrderCreated struct {
 		core.BaseEvent
-		tableID uuid.UUID
-		orderID uuid.UUID
+		sessionID uuid.UUID
+		orderID   uuid.UUID
+		quantity  int
 	}
 )
 
-func NewOrderCreated(tableID, orderID uuid.UUID) OrderCreated {
+func NewOrderCreated(sessionID, orderID uuid.UUID, quantity int) OrderCreated {
 	return OrderCreated{
 		BaseEvent: core.NewDomainEvent(),
-		tableID:   tableID,
+		sessionID: sessionID,
 		orderID:   orderID,
+		quantity:  quantity,
 	}
 }
 
-func (oc OrderCreated) TableID() uuid.UUID {
-	return oc.tableID
+func (oc OrderCreated) SessionID() uuid.UUID {
+	return oc.sessionID
 }
 
 func (oc OrderCreated) OrderID() uuid.UUID {
 	return oc.orderID
+}
+
+func (oc OrderCreated) Quantity() int {
+	return oc.quantity
 }

@@ -9,11 +9,11 @@ import (
 type (
 	SessionRepository interface {
 		Save(session *aggregate.Session) error
-		GetByTableID(tableID uuid.UUID) (*aggregate.Session, error)
-		HasActiveSessions(tableID uuid.UUID) bool
+		// GetByTableID(tableID uuid.UUID) (*aggregate.Session, error)
+		// HasActiveSessions(tableID uuid.UUID) bool
 	}
 
 	SessionViewRepository interface {
-		GetOrderCreatedEventView(tableID, orderID uuid.UUID) (*dto.OrderCreatedEventView, error)
+		OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEventView, error)
 	}
 )
