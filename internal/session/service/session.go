@@ -12,32 +12,42 @@ type Session struct {
 	repository    port.SessionRepository
 	authenticator port.Authenticator
 	eventPusher   port.EventPusher
+	events        chan core.DomainEvent
 }
 
 func NewSession(
 	repository port.SessionRepository,
 	authenticator port.Authenticator,
 	eventPusher port.EventPusher,
+	eventBusSize int,
 ) *Session {
-	return &Session{
+	session := &Session{
 		repository:    repository,
 		authenticator: authenticator,
 		eventPusher:   eventPusher,
+		events:        make(chan core.DomainEvent, eventBusSize),
 	}
+
+	for i := 0; i < eventBusSize; i++ {
+		session.processEventsAsync()
+	}
+
+	return session
 }
 
-func (ss *Session) PlaceOrder(idToken string, placeOrders dto.PlaceOrders) error {
+func (ss *Session) PlaceOrder(idToken string, tableID string, placeOrder dto.PlaceOrder) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
 	}
+	placeOrder.OrderedBy = customerID
 
-	verifiedTableID, err := uuid.Parse(placeOrders.TableID)
+	verifiedTableID, err := uuid.Parse(tableID)
 	if err != nil {
 		return core.NewValidationFailureError(err)
 	}
 
-	orders, err := placeOrders.ToEntities(customerID)
+	order, err := placeOrder.ToEntity()
 	if err != nil {
 		return core.NewValidationFailureError(err)
 	}
@@ -55,16 +65,28 @@ func (ss *Session) PlaceOrder(idToken string, placeOrders dto.PlaceOrders) error
 		session.SetTableID(verifiedTableID)
 	}
 
-	session.AddOrders(orders...)
+	session.PlaceOrders(order)
 
 	err = ss.repository.Save(session)
 	if err != nil {
 		return core.NewPersistenceFailureError(err)
 	}
 
-	go ss.eventPusher.Push(session)
+	ss.pushEventsAsync(session.Events())
 
 	return nil
 }
 
-//TODO:
+func (ss *Session) pushEventsAsync(events []core.DomainEvent) {
+	go func(events []core.DomainEvent) {
+		for _, event := range events {
+			ss.events <- event
+		}
+	}(events)
+}
+
+func (ss *Session) processEventsAsync() {
+	go func(eventChan <-chan core.DomainEvent) {
+
+	}(ss.events)
+}

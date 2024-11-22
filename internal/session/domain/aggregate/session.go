@@ -1,12 +1,13 @@
 package aggregate
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/session/domain/entity"
-	"github.com/mechatron-x/atehere/internal/session/domain/valueobject"
+	"github.com/mechatron-x/atehere/internal/session/domain/event"
 )
 
 type Session struct {
@@ -15,7 +16,6 @@ type Session struct {
 	startTime time.Time
 	endTime   time.Time
 	orders    []entity.Order
-	events    []entity.Event
 }
 
 func NewSession() *Session {
@@ -23,7 +23,6 @@ func NewSession() *Session {
 		Aggregate: core.NewAggregate(),
 		startTime: time.Now(),
 		orders:    make([]entity.Order, 0),
-		events:    make([]entity.Event, 0),
 	}
 }
 
@@ -43,10 +42,6 @@ func (s *Session) Orders() []entity.Order {
 	return s.orders
 }
 
-func (s *Session) Events() []entity.Event {
-	return s.events
-}
-
 func (s *Session) SetTableID(tableID uuid.UUID) {
 	s.tableID = tableID
 }
@@ -63,37 +58,27 @@ func (s *Session) SetOrders(orders []entity.Order) {
 	s.orders = orders
 }
 
-func (s *Session) SetEvents(events []entity.Event) {
-	s.events = events
-}
-
-func (s *Session) AddOrders(orders ...entity.Order) {
+func (s *Session) PlaceOrders(orders ...entity.Order) {
 	for _, o := range orders {
-		s.addOrder(o)
+		err := s.addOrder(o)
+		if err != nil {
+			continue
+		}
+
+		s.RaiseEvent(event.NewOrderCreated(s.tableID, o.ID()))
 	}
 }
 
-func (s *Session) addOrder(order entity.Order) {
+func (s *Session) Close() {
+	s.SetDeletedAt(time.Now())
+	s.RaiseEvent(event.NewSessionClosed(s.tableID, s.orders...))
+}
+
+func (s *Session) addOrder(order entity.Order) error {
 	for _, o := range s.orders {
 		if o.ID() == order.ID() {
-			return
+			return fmt.Errorf("order with id %s already placed", o.ID())
 		}
 	}
-
-	s.addEvent(valueobject.NewOrderPlaced)
-	s.orders = append(s.orders, order)
-}
-
-func (s *Session) addEvent(eventType valueobject.EventType) {
-	for _, e := range s.events {
-		if eventType.Equals(e.EventType()) {
-			e.SetInvokeTime(time.Now())
-			return
-		}
-	}
-
-	newEvent := entity.NewEvent()
-	newEvent.SetEventType(eventType)
-
-	s.events = append(s.events, newEvent)
+	return nil
 }
