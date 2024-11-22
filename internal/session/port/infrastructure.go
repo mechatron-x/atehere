@@ -1,11 +1,16 @@
 package port
 
-import "github.com/mechatron-x/atehere/internal/session/domain/aggregate"
+import (
+	"time"
+
+	"github.com/mechatron-x/atehere/internal/session/dto"
+)
 
 type (
 	EventPusher interface {
-		Push(session *aggregate.Session) error
+		PushOrderCreatedEvent(event *dto.OrderCreatedEventView, invokeTime time.Time) error
 	}
+
 	Authenticator interface {
 		GetUserID(idToken string) (string, error)
 	}

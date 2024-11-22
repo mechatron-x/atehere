@@ -12,6 +12,13 @@ type (
 		MenuItemID string `json:"menu_item_id"`
 		Quantity   int    `json:"quantity"`
 	}
+
+	OrderCreatedEventView struct {
+		RestaurantID string
+		Table        string
+		OrderedBy    string
+		MenuItem     string
+	}
 )
 
 func (po *PlaceOrder) ToEntity() (entity.Order, error) {

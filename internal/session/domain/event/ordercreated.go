@@ -20,3 +20,11 @@ func NewOrderCreated(tableID, orderID uuid.UUID) OrderCreated {
 		orderID:   orderID,
 	}
 }
+
+func (oc OrderCreated) TableID() uuid.UUID {
+	return oc.tableID
+}
+
+func (oc OrderCreated) OrderID() uuid.UUID {
+	return oc.orderID
+}

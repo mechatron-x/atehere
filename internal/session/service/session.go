@@ -3,29 +3,37 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/logger"
 	"github.com/mechatron-x/atehere/internal/session/domain/aggregate"
+	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/session/dto"
 	"github.com/mechatron-x/atehere/internal/session/port"
+	"go.uber.org/zap"
 )
 
 type Session struct {
-	repository    port.SessionRepository
-	authenticator port.Authenticator
-	eventPusher   port.EventPusher
-	events        chan core.DomainEvent
+	repository     port.SessionRepository
+	viewRepository port.SessionViewRepository
+	authenticator  port.Authenticator
+	eventPusher    port.EventPusher
+	events         chan core.DomainEvent
+	log            *zap.Logger
 }
 
 func NewSession(
 	repository port.SessionRepository,
+	viewRepository port.SessionViewRepository,
 	authenticator port.Authenticator,
 	eventPusher port.EventPusher,
 	eventBusSize int,
 ) *Session {
 	session := &Session{
-		repository:    repository,
-		authenticator: authenticator,
-		eventPusher:   eventPusher,
-		events:        make(chan core.DomainEvent, eventBusSize),
+		repository:     repository,
+		viewRepository: viewRepository,
+		authenticator:  authenticator,
+		eventPusher:    eventPusher,
+		events:         make(chan core.DomainEvent, eventBusSize),
+		log:            logger.Instance(),
 	}
 
 	for i := 0; i < eventBusSize; i++ {
@@ -87,6 +95,32 @@ func (ss *Session) pushEventsAsync(events []core.DomainEvent) {
 
 func (ss *Session) processEventsAsync() {
 	go func(eventChan <-chan core.DomainEvent) {
-
+		for e := range eventChan {
+			if orderCreatedEvent, ok := e.(event.OrderCreated); ok {
+				_ = ss.processOrderCreatedEvent(orderCreatedEvent)
+			} else if sessionClosedEvent, ok := e.(event.SessionClosed); ok {
+				_ = ss.processSessionClosedEvent(sessionClosedEvent)
+			} else {
+				ss.log.Warn("unsupported event type skipping event processing")
+			}
+		}
 	}(ss.events)
+}
+
+func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
+	orderCreatedEventView, err := ss.viewRepository.GetOrderCreatedEventView(event.TableID(), event.OrderID())
+	if err != nil {
+		return err
+	}
+
+	err = ss.eventPusher.PushOrderCreatedEvent(orderCreatedEventView, event.InvokeTime())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ss *Session) processSessionClosedEvent(event event.SessionClosed) error {
+	panic("not implemented")
 }
