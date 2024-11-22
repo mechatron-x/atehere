@@ -45,10 +45,18 @@ func (m *Menu) SetCategory(category valueobject.Category) {
 	m.category = category
 }
 
-func (m *Menu) AddMenuItems(menuItems ...entity.MenuItem) {
+func (m *Menu) AddMenuItems(menuItems ...entity.MenuItem) error {
+	newItems := make([]entity.MenuItem, 0)
 	for _, mi := range menuItems {
-		m.addMenuItem(mi)
+		if err := m.addMenuItemPolicy(mi); err != nil {
+			return err
+		}
+
+		newItems = append(newItems, mi)
 	}
+
+	m.menuItems = append(m.menuItems, newItems...)
+	return nil
 }
 
 func (m *Menu) DeleteMenuItem(id uuid.UUID) error {
@@ -62,15 +70,16 @@ func (m *Menu) DeleteMenuItem(id uuid.UUID) error {
 	return fmt.Errorf("menu item with id: %s not found", id)
 }
 
-func (m *Menu) addMenuItem(menuItem entity.MenuItem) {
+func (m *Menu) addMenuItemPolicy(menuItem entity.MenuItem) error {
 	for _, mi := range m.menuItems {
 		if mi.ID() == menuItem.ID() {
-			return
+			return fmt.Errorf("menu item with id %s already exists", menuItem.ID())
 		}
+
 		if strings.Compare(mi.Name().String(), menuItem.Name().String()) == 0 {
-			return
+			return fmt.Errorf("menu item with name %s already exists", menuItem.Name())
 		}
 	}
 
-	m.menuItems = append(m.menuItems, menuItem)
+	return nil
 }

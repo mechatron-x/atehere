@@ -9,8 +9,8 @@ import (
 type (
 	SessionRepository interface {
 		Save(session *aggregate.Session) error
-		// GetByTableID(tableID uuid.UUID) (*aggregate.Session, error)
-		// HasActiveSessions(tableID uuid.UUID) bool
+		GetByTableID(tableID uuid.UUID) (*aggregate.Session, error)
+		HasActiveSessions(tableID uuid.UUID) bool
 	}
 
 	SessionViewRepository interface {

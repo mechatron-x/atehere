@@ -57,6 +57,36 @@ func (s *Session) Save(session *aggregate.Session) error {
 	return result.Error
 }
 
+func (s *Session) GetByTableID(tableID uuid.UUID) (*aggregate.Session, error) {
+	var sessionModel model.Session
+
+	result := s.db.Model(&model.Session{TableID: tableID.String()}).
+		Preload("Orders").
+		First(&sessionModel)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	session, err := s.mapper.FromModel(&sessionModel)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, err
+}
+
+func (s *Session) HasActiveSessions(tableID uuid.UUID) bool {
+	var count int64
+	result := s.db.Model(&model.Session{TableID: tableID.String()}).
+		Count(&count)
+
+	if result.Error != nil {
+		return false
+	}
+
+	return count != 0
+}
+
 type SessionView struct {
 	db *gorm.DB
 }

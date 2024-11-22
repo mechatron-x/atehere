@@ -84,7 +84,16 @@ func (ss *Session) PlaceOrder(idToken string, tableID string, orderCreate *dto.O
 }
 
 func (ss *Session) getActiveSession(tableID uuid.UUID) (*aggregate.Session, error) {
-	panic("not implemented")
+	if !ss.repository.HasActiveSessions(tableID) {
+		return aggregate.NewSession(), nil
+	}
+
+	session, err := ss.repository.GetByTableID(tableID)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
 
 func (ss *Session) pushEventsAsync(events []core.DomainEvent) {

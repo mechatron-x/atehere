@@ -89,6 +89,7 @@ func (s Session) FromAggregate(aggregate *aggregate.Session) *model.Session {
 	for _, o := range aggregate.Orders() {
 		order := model.SessionOrder{
 			ID:         o.ID().String(),
+			SessionID:  aggregate.ID().String(),
 			MenuItemID: o.MenuItemID().String(),
 			OrderedBy:  o.OrderedBy().String(),
 			Quantity:   o.Quantity().Int(),

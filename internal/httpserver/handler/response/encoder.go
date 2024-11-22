@@ -3,66 +3,69 @@ package response
 import (
 	"encoding/json"
 	"net/http"
-	"reflect"
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/core"
 )
 
 func Encode(w http.ResponseWriter, data any, err error, status ...int) {
-	resp := Payload[any]{}
-
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	responseStatus := determineStatus(err, status)
 
-	if len(status) > 0 {
-		w.WriteHeader(status[0])
-	}
+	var payload Payload[any]
 
 	if err != nil {
-		resp.Error = newErrorData(err, status...)
+		payload.Error = createError(err, responseStatus)
+		responseStatus = payload.Error.Status
 	} else if data != nil {
-		if reflect.TypeOf(data).Kind() == reflect.Pointer {
-			resp.Data = data
-		}
-	} else {
-		return
+		payload.Data = data
 	}
 
-	_ = json.NewEncoder(w).Encode(resp)
+	w.WriteHeader(responseStatus)
+	_ = json.NewEncoder(w).Encode(payload)
 }
 
-func newErrorData(err error, httpStatus ...int) *ErrorData {
-	status := http.StatusInternalServerError
-	code := "unhandled"
-	message := err.Error()
-	now := time.Now().String()
-
-	if len(httpStatus) > 0 {
-		status = httpStatus[0]
+func determineStatus(err error, status []int) int {
+	if err != nil {
+		return http.StatusInternalServerError
 	}
+	if len(status) > 0 {
+		return status[0]
+	}
+	return http.StatusOK
+}
+
+func createError(err error, defaultStatus int) *Error {
+	status := defaultStatus
+	code := "unhandled_error"
+	message := err.Error()
 
 	if domainErr, ok := err.(core.DomainError); ok {
 		code = domainErr.Code()
-
-		switch domainErr.Code() {
-		case core.CodeUnauthorized:
-			status = http.StatusUnauthorized
-		case core.CodePersistenceFailure:
-			status = http.StatusInternalServerError
-		case core.CodeResourceNotFound:
-			status = http.StatusNotFound
-		case core.CodeDataConflict:
-			status = http.StatusConflict
-		case core.CodeValidationFailure:
-			status = http.StatusBadRequest
-		}
+		status = mapDomainErrorToStatus(domainErr.Code(), status)
 	}
 
-	return &ErrorData{
+	return &Error{
 		Status:    status,
 		Code:      code,
 		Message:   message,
-		CreatedAt: now,
+		CreatedAt: time.Now(),
+	}
+}
+
+func mapDomainErrorToStatus(code string, defaultStatus int) int {
+	switch code {
+	case core.CodeUnauthorized:
+		return http.StatusUnauthorized
+	case core.CodePersistenceFailure:
+		return http.StatusInternalServerError
+	case core.CodeResourceNotFound:
+		return http.StatusNotFound
+	case core.CodeDataConflict:
+		return http.StatusConflict
+	case core.CodeValidationFailure:
+		return http.StatusBadRequest
+	default:
+		return defaultStatus
 	}
 }

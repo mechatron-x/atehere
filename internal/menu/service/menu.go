@@ -80,7 +80,10 @@ func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto
 	}
 
 	menuItem.SetImageName(verifiedImage)
-	menu.AddMenuItems(*menuItem)
+	err = menu.AddMenuItems(*menuItem)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
 
 	if err := ms.repository.Save(menu); err != nil {
 		return nil, core.NewPersistenceFailureError(err)
