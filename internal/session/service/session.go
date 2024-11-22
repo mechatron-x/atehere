@@ -71,7 +71,10 @@ func (ss *Session) PlaceOrder(idToken string, tableID string, orderCreate *dto.O
 	}
 
 	session.SetTableID(verifiedTableID)
-	session.PlaceOrders(order)
+	err = session.PlaceOrders(order)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
 
 	err = ss.repository.Save(session)
 	if err != nil {

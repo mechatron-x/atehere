@@ -47,7 +47,7 @@ func (m Menu) FromModel(model *model.Menu) (*aggregate.Menu, error) {
 	menu.SetRestaurantID(restaurantID)
 	menu.SetCategory(category)
 	for _, mi := range menuItems {
-		menu.AddMenuItems(*mi)
+		menu.SetMenuItems(*mi)
 	}
 	menu.SetCreatedAt(model.CreatedAt)
 	menu.SetUpdatedAt(model.UpdatedAt)

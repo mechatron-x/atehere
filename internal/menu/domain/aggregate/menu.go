@@ -45,6 +45,10 @@ func (m *Menu) SetCategory(category valueobject.Category) {
 	m.category = category
 }
 
+func (m *Menu) SetMenuItems(menuItems ...entity.MenuItem) {
+	m.menuItems = append(m.menuItems, menuItems...)
+}
+
 func (m *Menu) AddMenuItems(menuItems ...entity.MenuItem) error {
 	newItems := make([]entity.MenuItem, 0)
 	for _, mi := range menuItems {
