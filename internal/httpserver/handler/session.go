@@ -19,7 +19,7 @@ func NewSessionHandler(ss service.Session) Session {
 }
 
 func (sh Session) PlaceOrder(w http.ResponseWriter, r *http.Request) {
-	table_id := r.PathValue("table_id")
+	tableID := r.PathValue("table_id")
 
 	reqBody := &dto.OrderCreate{}
 	err := request.Decode(r, w, reqBody)
@@ -34,7 +34,23 @@ func (sh Session) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sh.ss.PlaceOrder(token, table_id, reqBody)
+	err = sh.ss.PlaceOrder(token, tableID, reqBody)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+}
+
+func (sh Session) Checkout(w http.ResponseWriter, r *http.Request) {
+	tableID := r.PathValue("table_id")
+
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	err = sh.ss.Checkout(token, tableID)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return

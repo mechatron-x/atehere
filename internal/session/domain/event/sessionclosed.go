@@ -21,3 +21,11 @@ func NewSessionClosed(sessionID uuid.UUID, orders ...entity.Order) SessionClosed
 		orders:    slices.Clone(orders),
 	}
 }
+
+func (sc SessionClosed) SessionID() uuid.UUID {
+	return sc.sessionID
+}
+
+func (sc SessionClosed) Orders() []entity.Order {
+	return sc.orders
+}

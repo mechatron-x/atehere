@@ -79,9 +79,17 @@ func (s *Session) PlaceOrders(orders ...entity.Order) error {
 	return nil
 }
 
-func (s *Session) Close() {
+func (s *Session) Close(customerID uuid.UUID) error {
+	err := s.closeSessionPolicy(customerID)
+	if err != nil {
+		return err
+	}
+
 	s.SetDeletedAt(time.Now())
 	s.RaiseEvent(event.NewSessionClosed(s.ID(), s.orders...))
+	s.orders = make([]entity.Order, 0)
+
+	return nil
 }
 
 func (s *Session) placeOrderPolicy(order entity.Order) error {
@@ -91,4 +99,14 @@ func (s *Session) placeOrderPolicy(order entity.Order) error {
 		}
 	}
 	return nil
+}
+
+func (s *Session) closeSessionPolicy(customerID uuid.UUID) error {
+	for _, order := range s.orders {
+		if order.OrderedBy() == customerID {
+			return nil
+		}
+	}
+
+	return errors.New("the session cannot be closed because, specified customer is not a participant")
 }

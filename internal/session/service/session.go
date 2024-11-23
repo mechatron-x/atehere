@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
@@ -43,7 +45,7 @@ func NewSession(
 	return session
 }
 
-func (ss *Session) PlaceOrder(idToken string, tableID string, orderCreate *dto.OrderCreate) error {
+func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCreate) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
@@ -65,10 +67,7 @@ func (ss *Session) PlaceOrder(idToken string, tableID string, orderCreate *dto.O
 	}
 	order.SetOrderedBy(verifiedCustomerID)
 
-	session, err := ss.getActiveSession(verifiedTableID)
-	if err != nil {
-		return core.NewResourceNotFoundError(err)
-	}
+	session := ss.getActiveSession(verifiedTableID)
 
 	session.SetTableID(verifiedTableID)
 	err = session.PlaceOrders(order)
@@ -86,17 +85,45 @@ func (ss *Session) PlaceOrder(idToken string, tableID string, orderCreate *dto.O
 	return nil
 }
 
-func (ss *Session) getActiveSession(tableID uuid.UUID) (*aggregate.Session, error) {
-	if !ss.repository.HasActiveSessions(tableID) {
-		return aggregate.NewSession(), nil
+func (ss *Session) Checkout(idToken, tableID string) error {
+	customerID, err := ss.authenticator.GetUserID(idToken)
+	if err != nil {
+		return core.NewUnauthorizedError(err)
 	}
 
+	verifiedCustomerID, err := uuid.Parse(customerID)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
+
+	verifiedTableID, err := uuid.Parse(tableID)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
+
+	session := ss.getActiveSession(verifiedTableID)
+	err = session.Close(verifiedCustomerID)
+	if err != nil {
+		return core.NewDomainIntegrityViolationError(err)
+	}
+
+	err = ss.repository.Save(session)
+	if err != nil {
+		return core.NewPersistenceFailureError(err)
+	}
+
+	ss.pushEventsAsync(session.Events())
+
+	return nil
+}
+
+func (ss *Session) getActiveSession(tableID uuid.UUID) *aggregate.Session {
 	session, err := ss.repository.GetByTableID(tableID)
 	if err != nil {
-		return nil, err
+		return aggregate.NewSession()
 	}
 
-	return session, nil
+	return session
 }
 
 func (ss *Session) pushEventsAsync(events []core.DomainEvent) {
@@ -137,5 +164,7 @@ func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
 }
 
 func (ss *Session) processSessionClosedEvent(event event.SessionClosed) error {
-	panic("not implemented")
+	fmt.Println(event.Orders())
+	return nil
+	// panic("not implemented")
 }
