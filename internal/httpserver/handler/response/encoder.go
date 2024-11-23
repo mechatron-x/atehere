@@ -72,7 +72,7 @@ func mapDomainErrorToStatus(code string, defaultStatus int) int {
 		return http.StatusNotFound
 	case core.CodeDataConflict:
 		return http.StatusConflict
-	case core.CodeValidationFailure, core.CodeDomainIntegrityViolation:
+	case core.CodeValidationFailure, core.CodeAggregateIntegrityViolation:
 		return http.StatusBadRequest
 	default:
 		return defaultStatus
