@@ -8,7 +8,6 @@ import (
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
 	"github.com/mechatron-x/atehere/internal/httpserver/middleware"
-	"github.com/mechatron-x/atehere/internal/logger"
 )
 
 type (
@@ -78,7 +77,13 @@ func NewServeMux(
 	versionMux.HandleFunc("/", dh.NoHandler)
 
 	// Routers
-	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))
+	mux.Handle("/",
+		middleware.Header(
+			middleware.Logger(
+				middleware.Recover(apiMux),
+			),
+		),
+	)
 	apiMux.Handle("/api/", http.StripPrefix("/api", versionMux))
 	apiMux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(conf.StaticRoot))))
 	versionMux.Handle(fmt.Sprintf("/%s/", conf.Version), http.StripPrefix(fmt.Sprintf("/%s", conf.Version), versionMux))

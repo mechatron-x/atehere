@@ -82,7 +82,7 @@ func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto
 	menuItem.SetImageName(verifiedImage)
 	err = menu.AddMenuItems(*menuItem)
 	if err != nil {
-		return nil, core.NewValidationFailureError(err)
+		return nil, core.NewDomainIntegrityViolationError(err)
 	}
 
 	if err := ms.repository.Save(menu); err != nil {
@@ -91,8 +91,6 @@ func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto
 
 	return dto.ToMenu(menu, ms.createImageURL), nil
 }
-
-// TODO: Add menu item delete method
 
 func (ms *Menu) ListForCustomer(filterDto *dto.MenuFilter) ([]dto.Menu, error) {
 	verifiedRestaurantID, err := uuid.Parse(filterDto.RestaurantID)
