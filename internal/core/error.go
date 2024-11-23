@@ -1,11 +1,12 @@
 package core
 
 var (
-	CodeUnauthorized       = "domain.error.unauthorized"
-	CodeResourceNotFound   = "domain.error.resource_not_found"
-	CodeDataConflict       = "domain.error.data_conflict"
-	CodePersistenceFailure = "domain.error.persistence_failure"
-	CodeValidationFailure  = "domain.error.validation_failure"
+	CodeUnauthorized             = "domain.error.unauthorized"
+	CodeResourceNotFound         = "domain.error.resource_not_found"
+	CodeDataConflict             = "domain.error.data_conflict"
+	CodePersistenceFailure       = "domain.error.persistence_failure"
+	CodeValidationFailure        = "domain.error.validation_failure"
+	CodeDomainIntegrityViolation = "domain.error.aggregate_integrity_violation"
 )
 
 // DomainError interface defines the structure for all domain errors.
@@ -88,6 +89,19 @@ func NewValidationFailureError(reason error) *ValidationFailureError {
 	return &ValidationFailureError{
 		baseDomainError: baseDomainError{
 			code:   CodeValidationFailure,
+			reason: reason,
+		},
+	}
+}
+
+type DomainIntegrityViolationError struct {
+	baseDomainError
+}
+
+func NewDomainIntegrityViolationError(reason error) *DomainIntegrityViolationError {
+	return &DomainIntegrityViolationError{
+		baseDomainError: baseDomainError{
+			code:   CodeDomainIntegrityViolation,
 			reason: reason,
 		},
 	}
