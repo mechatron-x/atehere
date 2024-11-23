@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	glogger "gorm.io/gorm/logger"
 )
 
 const (
@@ -70,5 +71,6 @@ func connect(dsn string, tyrCount uint, timeout time.Duration) (*gorm.DB, error)
 		return connect(dsn, tyrCount-1, timeout)
 	}
 
+	db.Logger.LogMode(glogger.Silent)
 	return db, nil
 }
