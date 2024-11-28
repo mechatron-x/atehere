@@ -40,3 +40,22 @@ func (sh Session) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (sh Session) ListForCustomer(w http.ResponseWriter, r *http.Request) {
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	orders, err := sh.ss.CustomerOrders(token)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	resp := &response.OrderList[dto.OrderCustomerView]{
+		Orders: orders,
+	}
+	response.Encode(w, resp, nil)
+}

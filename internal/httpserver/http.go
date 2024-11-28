@@ -72,6 +72,7 @@ func NewServeMux(
 
 	// Session endpoint
 	versionMux.HandleFunc("POST /tables/{table_id}/orders", sh.PlaceOrder)
+	versionMux.HandleFunc("GET /orders/customer", sh.ListForCustomer)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

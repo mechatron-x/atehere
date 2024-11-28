@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
@@ -36,9 +38,7 @@ func NewSession(
 		log:            logger.Instance(),
 	}
 
-	for i := 0; i < eventBusSize; i++ {
-		session.processEventsAsync()
-	}
+	session.processEventsAsync()
 
 	return session
 }
@@ -86,6 +86,25 @@ func (ss *Session) PlaceOrder(idToken string, tableID string, orderCreate *dto.O
 	return nil
 }
 
+func (ss *Session) CustomerOrders(idToken string) ([]dto.OrderCustomerView, error) {
+	customerID, err := ss.authenticator.GetUserID(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	verifiedCustomerID, err := uuid.Parse(customerID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	orders, err := ss.viewRepository.OrderCustomerView(verifiedCustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 func (ss *Session) getActiveSession(tableID uuid.UUID) (*aggregate.Session, error) {
 	if !ss.repository.HasActiveSessions(tableID) {
 		return aggregate.NewSession(), nil
@@ -126,6 +145,8 @@ func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(orderCreatedEventView)
 
 	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
 	err = ss.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)

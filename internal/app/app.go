@@ -63,7 +63,7 @@ func New(conf *config.App) (*App, error) {
 		}
 	}
 
-	eventNotifier, err := infrastructure.NewFirebaseEventNotifier()
+	eventNotifier, err := infrastructure.NewFirecloudEventNotifier(conf.Firebase)
 	if err != nil {
 		return nil, err
 	}

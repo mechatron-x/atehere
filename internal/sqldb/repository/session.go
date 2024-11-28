@@ -123,3 +123,25 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 		Quantity:     order.Quantity,
 	}, nil
 }
+
+func (sv *SessionView) OrderCustomerView(customerID uuid.UUID) ([]dto.OrderCustomerView, error) {
+	var orders []model.SessionOrder
+
+	result := sv.db.Model(&model.SessionOrder{OrderedBy: customerID.String()}).
+		Preload(clause.Associations).
+		Find(&orders)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	orderViews := make([]dto.OrderCustomerView, 0)
+	for _, order := range orders {
+		orderViews = append(orderViews, dto.OrderCustomerView{
+			MenuItemName: order.MenuItem.Name,
+			Quantity:     order.Quantity,
+		})
+	}
+
+	return orderViews, nil
+}

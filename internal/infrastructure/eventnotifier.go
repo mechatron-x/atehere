@@ -1,22 +1,74 @@
 package infrastructure
 
 import (
-	"github.com/mechatron-x/atehere/internal/logger"
+	"context"
+	"encoding/json"
+
+	"cloud.google.com/go/firestore"
+	firebase "firebase.google.com/go/v4"
+	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/session/dto"
-	"go.uber.org/zap"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-type FirebaseEventNotifier struct {
-	log *zap.Logger
-}
+type (
+	FirebaseEventNotifier struct {
+		app *firebase.App
+	}
+)
 
-func NewFirebaseEventNotifier() (*FirebaseEventNotifier, error) {
+func NewFirecloudEventNotifier(conf config.Firebase) (*FirebaseEventNotifier, error) {
+	bytes, err := json.Marshal(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	opt := option.WithCredentialsJSON(bytes)
+
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		return nil, err
+	}
+
 	return &FirebaseEventNotifier{
-		log: logger.Instance(),
+		app: app,
 	}, nil
 }
 
 func (fen *FirebaseEventNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEventView) error {
-	fen.log.Info(event.Message())
+	client, err := fen.app.Firestore(context.Background())
+	if err != nil {
+		return err
+	}
+
+	notificationData := map[string]interface{}{
+		"invoke_time": event.InvokeTime,
+		"message":     event.Message(),
+		"table_name":  event.Table,
+	}
+
+	_, err = client.Collection("session_events").
+		Doc(event.RestaurantID).
+		Update(context.Background(), []firestore.Update{
+			{
+				Path:  "events",
+				Value: firestore.ArrayUnion(notificationData),
+			},
+		})
+	if status.Code(err) == codes.NotFound {
+		_, err := client.Collection("session_events").
+			Doc(event.RestaurantID).
+			Set(context.Background(), map[string]interface{}{
+				"events": []interface{}{notificationData},
+			})
+		if err != nil {
+			return err
+		}
+	} else {
+		return err
+	}
+
 	return nil
 }
