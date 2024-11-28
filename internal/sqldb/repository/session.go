@@ -101,16 +101,16 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 	var session model.Session
 	var order model.SessionOrder
 
-	result := sv.db.Model(&model.Session{ID: sessionID.String()}).
+	result := sv.db.Model(&model.Session{}).
 		Preload("Table").
-		First(&session)
+		First(&session, "id=?", sessionID.String())
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	result = sv.db.Model(&model.SessionOrder{ID: orderID.String()}).
+	result = sv.db.Model(&model.SessionOrder{}).
 		Preload(clause.Associations).
-		First(&order)
+		First(&order, "id=?", orderID.String())
 	if result.Error != nil {
 		return nil, result.Error
 	}

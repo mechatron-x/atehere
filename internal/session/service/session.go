@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
@@ -38,7 +36,9 @@ func NewSession(
 		log:            logger.Instance(),
 	}
 
-	session.processEventsAsync()
+	for i := 0; i < eventBusSize; i++ {
+		session.processEventsAsync()
+	}
 
 	return session
 }
@@ -145,8 +145,6 @@ func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(orderCreatedEventView)
 
 	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
 	err = ss.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)

@@ -1,8 +1,6 @@
 package mapper
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/menu/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/menu/domain/valueobject"
@@ -76,7 +74,6 @@ func (m Menu) FromModels(models []model.Menu) ([]*aggregate.Menu, error) {
 func (m Menu) FromAggregate(aggregate *aggregate.Menu) *model.Menu {
 	menuItems := m.mi.fromEntities(aggregate.ID(), aggregate.MenuItems())
 
-	fmt.Println(aggregate.RestaurantID())
 	return &model.Menu{
 		ID:           aggregate.ID().String(),
 		RestaurantID: aggregate.RestaurantID().String(),
