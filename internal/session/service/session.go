@@ -67,7 +67,6 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 
 	session := ss.getActiveSession(verifiedTableID)
 
-	session.SetTableID(verifiedTableID)
 	err = session.PlaceOrders(order)
 	if err != nil {
 		return core.NewDomainIntegrityViolationError(err)
@@ -156,7 +155,9 @@ func (ss *Session) Checkout(idToken, tableID string) error {
 func (ss *Session) getActiveSession(tableID uuid.UUID) *aggregate.Session {
 	session, err := ss.repository.GetByTableID(tableID)
 	if err != nil {
-		return aggregate.NewSession()
+		session = aggregate.NewSession()
+		session.SetTableID(tableID)
+		return session
 	}
 
 	return session

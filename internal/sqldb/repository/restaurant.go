@@ -56,26 +56,23 @@ func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 }
 
 func (r *Restaurant) GetByID(id uuid.UUID) (*aggregate.Restaurant, error) {
-	var restaurantModel model.Restaurant
+	restaurantModel := new(model.Restaurant)
 
 	result := r.db.
-		Model(&model.Restaurant{}).
 		Preload("Tables").
 		Where(&model.Restaurant{ID: id.String()}).
-		First(&restaurantModel)
-
+		First(restaurantModel)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return r.mapper.FromModel(&restaurantModel)
+	return r.mapper.FromModel(restaurantModel)
 }
 
 func (r *Restaurant) GetAll() ([]*aggregate.Restaurant, error) {
 	restaurantModels := make([]model.Restaurant, 0)
 
 	result := r.db.
-		Model(&model.Restaurant{}).
 		Preload("Tables").
 		Find(&restaurantModels)
 
@@ -90,7 +87,6 @@ func (r *Restaurant) GetByOwnerID(ownerID uuid.UUID) ([]*aggregate.Restaurant, e
 	models := make([]model.Restaurant, 0)
 
 	result := r.db.
-		Model(&model.Restaurant{}).
 		Preload("Tables").
 		Where(&model.Restaurant{OwnerID: ownerID.String()}).
 		Find(&models)
