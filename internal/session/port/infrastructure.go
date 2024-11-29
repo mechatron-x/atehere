@@ -7,6 +7,7 @@ import (
 type (
 	EventNotifier interface {
 		NotifyOrderCreatedEvent(event *dto.OrderCreatedEventView) error
+		NotifySessionClosedEvent(event *dto.SessionClosedEventView) error
 	}
 
 	Authenticator interface {

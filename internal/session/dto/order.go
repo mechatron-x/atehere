@@ -27,6 +27,11 @@ type (
 		MenuItemName string `json:"menu_item_name"`
 		Quantity     int    `json:"quantity"`
 	}
+
+	OrderTableView struct {
+		MenuItemName string `json:"menu_item_name"`
+		Quantity     int    `json:"quantity"`
+	}
 )
 
 func (po *OrderCreate) ToEntity() (entity.Order, error) {

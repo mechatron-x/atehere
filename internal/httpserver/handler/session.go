@@ -75,3 +75,24 @@ func (sh Session) ListForCustomer(w http.ResponseWriter, r *http.Request) {
 	}
 	response.Encode(w, resp, nil)
 }
+
+func (sh Session) ListForTable(w http.ResponseWriter, r *http.Request) {
+	table_id := r.PathValue("table_id")
+
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	orders, err := sh.ss.TableOrders(token, table_id)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	resp := &response.OrderList[dto.OrderTableView]{
+		Orders: orders,
+	}
+	response.Encode(w, resp, nil)
+}

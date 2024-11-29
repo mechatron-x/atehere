@@ -124,6 +124,22 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 	}, nil
 }
 
+func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEventView, error) {
+	var session model.Session
+
+	result := sv.db.Model(&model.Session{}).
+		Preload("Table").
+		First(&session, "id=?", sessionID.String())
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &dto.SessionClosedEventView{
+		RestaurantID: session.Table.RestaurantID,
+		Table:        session.Table.Name,
+	}, nil
+}
+
 func (sv *SessionView) OrderCustomerView(customerID uuid.UUID) ([]dto.OrderCustomerView, error) {
 	var orders []model.SessionOrder
 
@@ -138,6 +154,37 @@ func (sv *SessionView) OrderCustomerView(customerID uuid.UUID) ([]dto.OrderCusto
 	orderViews := make([]dto.OrderCustomerView, 0)
 	for _, order := range orders {
 		orderViews = append(orderViews, dto.OrderCustomerView{
+			MenuItemName: order.MenuItem.Name,
+			Quantity:     order.Quantity,
+		})
+	}
+
+	return orderViews, nil
+}
+
+func (sv *SessionView) OrderTableView(tableID uuid.UUID) ([]dto.OrderTableView, error) {
+	var session model.Session
+	var orders []model.SessionOrder
+
+	result := sv.db.Model(&model.Session{}).
+		Preload("Table").
+		First(&session, "table_id=?", tableID.String())
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	result = sv.db.Model(&model.SessionOrder{}).
+		Preload(clause.Associations).
+		Select("menu_item_name, sum(quantity) as quantity").
+		Group("menu_item_id").
+		Find(&orders, "session_id=?", session.ID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	orderViews := make([]dto.OrderTableView, 0)
+	for _, order := range orders {
+		orderViews = append(orderViews, dto.OrderTableView{
 			MenuItemName: order.MenuItem.Name,
 			Quantity:     order.Quantity,
 		})

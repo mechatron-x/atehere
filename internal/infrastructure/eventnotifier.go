@@ -72,3 +72,39 @@ func (fen *FirebaseEventNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreate
 
 	return nil
 }
+
+func (fen *FirebaseEventNotifier) NotifySessionClosedEvent(event *dto.SessionClosedEventView) error {
+	client, err := fen.app.Firestore(context.Background())
+	if err != nil {
+		return err
+	}
+
+	notificationData := map[string]interface{}{
+		"invoke_time": event.InvokeTime,
+		"message":     event.Message(),
+		"table_name":  event.Table,
+	}
+
+	_, err = client.Collection("session_events").
+		Doc(event.RestaurantID).
+		Update(context.Background(), []firestore.Update{
+			{
+				Path:  "events",
+				Value: firestore.ArrayUnion(notificationData),
+			},
+		})
+	if status.Code(err) == codes.NotFound {
+		_, err := client.Collection("session_events").
+			Doc(event.RestaurantID).
+			Set(context.Background(), map[string]interface{}{
+				"events": []interface{}{notificationData},
+			})
+		if err != nil {
+			return err
+		}
+	} else {
+		return err
+	}
+
+	return nil
+}
