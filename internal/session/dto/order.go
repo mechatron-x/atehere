@@ -22,6 +22,11 @@ type (
 		Quantity     int
 		InvokeTime   int64
 	}
+
+	OrderCustomerView struct {
+		MenuItemName string `json:"menu_item_name"`
+		Quantity     int    `json:"quantity"`
+	}
 )
 
 func (po *OrderCreate) ToEntity() (entity.Order, error) {

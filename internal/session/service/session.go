@@ -85,6 +85,25 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 	return nil
 }
 
+func (ss *Session) CustomerOrders(idToken string) ([]dto.OrderCustomerView, error) {
+	customerID, err := ss.authenticator.GetUserID(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	verifiedCustomerID, err := uuid.Parse(customerID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	orders, err := ss.viewRepository.OrderCustomerView(verifiedCustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 func (ss *Session) Checkout(idToken, tableID string) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {

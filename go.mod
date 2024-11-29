@@ -3,10 +3,12 @@ module github.com/mechatron-x/atehere
 go 1.23.2
 
 require (
+	cloud.google.com/go/firestore v1.17.0
 	firebase.google.com/go/v4 v4.15.0
 	github.com/google/uuid v1.6.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/api v0.205.0
+	google.golang.org/grpc v1.68.0
 	gorm.io/gorm v1.25.12
 )
 
@@ -16,7 +18,6 @@ require (
 	cloud.google.com/go/auth v0.10.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.5 // indirect
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
-	cloud.google.com/go/firestore v1.17.0 // indirect
 	cloud.google.com/go/iam v1.2.2 // indirect
 	cloud.google.com/go/longrunning v0.6.2 // indirect
 	cloud.google.com/go/monitoring v1.21.2 // indirect
@@ -66,7 +67,6 @@ require (
 	google.golang.org/genproto v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect
-	google.golang.org/grpc v1.68.0 // indirect
 	google.golang.org/grpc/stats/opentelemetry v0.0.0-20241028142157-ada6787961b3 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
 )
