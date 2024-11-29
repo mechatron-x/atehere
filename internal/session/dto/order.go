@@ -15,6 +15,7 @@ type (
 	}
 
 	OrderCreatedEventView struct {
+		ID           uuid.UUID
 		RestaurantID string
 		Table        string
 		OrderedBy    string

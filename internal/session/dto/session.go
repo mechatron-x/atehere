@@ -1,9 +1,14 @@
 package dto
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 type (
 	SessionClosedEventView struct {
+		ID           uuid.UUID
 		RestaurantID string
 		Table        string
 		InvokeTime   int64

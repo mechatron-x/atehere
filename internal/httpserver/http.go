@@ -73,7 +73,7 @@ func NewServeMux(
 	versionMux.HandleFunc("POST /tables/{table_id}/checkout", sh.Checkout)
 	versionMux.HandleFunc("PUT /tables/{table_id}/orders", sh.PlaceOrder)
 	versionMux.HandleFunc("GET /orders/customer", sh.ListForCustomer)
-	versionMux.HandleFunc("GET /orders/table/{table_id}", sh.ListForTable)
+	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.ListForTable)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

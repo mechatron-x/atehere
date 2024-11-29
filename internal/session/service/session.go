@@ -191,6 +191,7 @@ func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
 	}
 
 	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
+	orderCreatedEventView.ID = event.ID()
 	err = ss.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)
 	if err != nil {
 		return err
@@ -206,6 +207,7 @@ func (ss *Session) processSessionClosedEvent(event event.SessionClosed) error {
 	}
 
 	sessionClosedEventView.InvokeTime = event.InvokeTime().Unix()
+	sessionClosedEventView.ID = event.ID()
 	err = ss.eventNotifier.NotifySessionClosedEvent(sessionClosedEventView)
 	if err != nil {
 		return err

@@ -59,10 +59,9 @@ func (r *Restaurant) GetByID(id uuid.UUID) (*aggregate.Restaurant, error) {
 	var restaurantModel model.Restaurant
 
 	result := r.db.
-		Model(&model.Restaurant{
-			ID: id.String(),
-		}).
+		Model(&model.Restaurant{}).
 		Preload("Tables").
+		Where(&model.Restaurant{ID: id.String()}).
 		First(&restaurantModel)
 
 	if result.Error != nil {
@@ -91,10 +90,9 @@ func (r *Restaurant) GetByOwnerID(ownerID uuid.UUID) ([]*aggregate.Restaurant, e
 	models := make([]model.Restaurant, 0)
 
 	result := r.db.
-		Model(&model.Restaurant{
-			OwnerID: ownerID.String(),
-		}).
+		Model(&model.Restaurant{}).
 		Preload("Tables").
+		Where(&model.Restaurant{OwnerID: ownerID.String()}).
 		Find(&models)
 
 	if result.Error != nil {
