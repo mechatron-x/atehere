@@ -58,13 +58,15 @@ func (sh Session) Checkout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh Session) ListForCustomer(w http.ResponseWriter, r *http.Request) {
+	tableID := r.PathValue("table_id")
+
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return
 	}
 
-	orders, err := sh.ss.CustomerOrders(token)
+	orders, err := sh.ss.CustomerOrders(token, tableID)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return

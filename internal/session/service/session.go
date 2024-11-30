@@ -82,7 +82,7 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 	return nil
 }
 
-func (ss *Session) CustomerOrders(idToken string) ([]dto.OrderCustomerView, error) {
+func (ss *Session) CustomerOrders(idToken, tableID string) ([]dto.OrderCustomerView, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -93,7 +93,12 @@ func (ss *Session) CustomerOrders(idToken string) ([]dto.OrderCustomerView, erro
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	orders, err := ss.viewRepository.OrderCustomerView(verifiedCustomerID)
+	verifiedTableID, err := uuid.Parse(tableID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	orders, err := ss.viewRepository.OrderCustomerView(verifiedCustomerID, verifiedTableID)
 	if err != nil {
 		return nil, err
 	}

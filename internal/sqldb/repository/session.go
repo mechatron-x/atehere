@@ -88,7 +88,6 @@ func NewSessionView(db *gorm.DB) *SessionView {
 
 func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEventView, error) {
 	sessionModel := new(model.Session)
-
 	orderModel := new(model.SessionOrder)
 
 	result := sv.db.
@@ -138,20 +137,30 @@ func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.Session
 	}, nil
 }
 
-func (sv *SessionView) OrderCustomerView(customerID uuid.UUID) ([]dto.OrderCustomerView, error) {
-	var orders []model.SessionOrder
+func (sv *SessionView) OrderCustomerView(customerID, tableID uuid.UUID) ([]dto.OrderCustomerView, error) {
+	sessionModel := new(model.Session)
+	var orderModels []model.SessionOrder
 
 	result := sv.db.
+		Preload("Table").
+		Where(&model.Session{TableID: tableID.String()}).
+		First(sessionModel)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	result = sv.db.
 		Preload(clause.Associations).
+		Where(&model.SessionOrder{SessionID: sessionModel.ID}).
 		Where(&model.SessionOrder{OrderedBy: customerID.String()}).
-		Find(&orders)
+		Find(&orderModels)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	orderViews := make([]dto.OrderCustomerView, 0)
-	for _, order := range orders {
+	for _, order := range orderModels {
 		orderViews = append(orderViews, dto.OrderCustomerView{
 			MenuItemName: order.MenuItem.Name,
 			Quantity:     order.Quantity,
