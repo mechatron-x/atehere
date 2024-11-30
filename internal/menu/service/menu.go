@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -131,7 +132,7 @@ func (ms *Menu) verifyOwnership(idToken, restaurantID string) error {
 	}
 
 	if !ms.repository.IsRestaurantOwner(verifiedRestaurantID, verifiedManagerID) {
-		return err
+		return errors.New("invalid restaurant ownership")
 	}
 
 	return nil
