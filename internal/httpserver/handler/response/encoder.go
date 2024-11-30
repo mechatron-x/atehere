@@ -3,66 +3,78 @@ package response
 import (
 	"encoding/json"
 	"net/http"
-	"reflect"
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
 )
 
 func Encode(w http.ResponseWriter, data any, err error, status ...int) {
-	resp := Payload[any]{}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	if len(status) > 0 {
-		w.WriteHeader(status[0])
-	}
-
 	if err != nil {
-		resp.Error = newErrorData(err)
-	} else if data != nil {
-		if reflect.TypeOf(data).Kind() == reflect.Pointer {
-			resp.Data = data
-		}
-	} else {
+		encodeError(w, err, status...)
 		return
 	}
-
-	_ = json.NewEncoder(w).Encode(resp)
+	if data != nil {
+		encodeData(w, data, status...)
+		return
+	}
 }
 
-func newErrorData(err error, httpStatus ...int) *ErrorData {
-	status := http.StatusInternalServerError
-	code := "unhandled"
-	message := err.Error()
-	now := time.Now().String()
-
-	if len(httpStatus) > 0 {
-		status = httpStatus[0]
+func encodeError(w http.ResponseWriter, err error, status ...int) {
+	defaultStatus := http.StatusInternalServerError
+	if len(status) > 0 {
+		defaultStatus = status[0]
 	}
 
+	code := "unhandled_code"
+	message := err.Error()
 	if domainErr, ok := err.(core.DomainError); ok {
 		code = domainErr.Code()
-
-		switch domainErr.Code() {
-		case core.CodeUnauthorized:
-			status = http.StatusUnauthorized
-		case core.CodePersistenceFailure:
-			status = http.StatusInternalServerError
-		case core.CodeResourceNotFound:
-			status = http.StatusNotFound
-		case core.CodeDataConflict:
-			status = http.StatusConflict
-		case core.CodeValidationFailure:
-			status = http.StatusBadRequest
-		}
+		defaultStatus = mapDomainErrorToStatus(code, defaultStatus)
 	}
 
-	return &ErrorData{
-		Status:    status,
-		Code:      code,
-		Message:   message,
-		CreatedAt: now,
+	payload := &Payload[any]{
+		Error: &Error{
+			Status:    defaultStatus,
+			Code:      code,
+			Message:   message,
+			CreatedAt: time.Now(),
+		},
+	}
+
+	w.Header().Set(header.ContentTypeKey, header.ContentTypeJSON)
+	w.WriteHeader(defaultStatus)
+	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func encodeData(w http.ResponseWriter, data any, status ...int) {
+	defaultStatus := http.StatusOK
+	if len(status) > 0 {
+		defaultStatus = status[0]
+	}
+
+	payload := &Payload[any]{
+		Data: data,
+	}
+
+	w.Header().Set(header.ContentTypeKey, header.ContentTypeJSON)
+	w.WriteHeader(defaultStatus)
+	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func mapDomainErrorToStatus(code string, defaultStatus int) int {
+	switch code {
+	case core.CodeUnauthorized:
+		return http.StatusUnauthorized
+	case core.CodePersistenceFailure:
+		return http.StatusInternalServerError
+	case core.CodeResourceNotFound:
+		return http.StatusNotFound
+	case core.CodeDataConflict:
+		return http.StatusConflict
+	case core.CodeValidationFailure, core.CodeAggregateIntegrityViolation:
+		return http.StatusBadRequest
+	default:
+		return defaultStatus
 	}
 }

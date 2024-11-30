@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/logger"
 	"go.uber.org/zap"
 )
 
@@ -43,7 +44,8 @@ func (lrw *logResponseWriter) Header() http.Header {
 	return lrw.ResponseWriter.Header()
 }
 
-func Logger(next http.Handler, log *zap.Logger) http.Handler {
+func Logger(next http.Handler) http.Handler {
+	log := logger.Instance()
 	traceId := uuid.NewString()
 
 	f := func(w http.ResponseWriter, r *http.Request) {

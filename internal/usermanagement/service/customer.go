@@ -109,7 +109,12 @@ func (cs *Customer) getCustomer(idToken string) (*aggregate.Customer, error) {
 		return nil, core.NewUnauthorizedError(err)
 	}
 
-	customer, err := cs.customerRepo.GetByID(uuid.MustParse(id))
+	verifiedID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	customer, err := cs.customerRepo.GetByID(verifiedID)
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}

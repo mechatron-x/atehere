@@ -8,7 +8,6 @@ import (
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
 	"github.com/mechatron-x/atehere/internal/httpserver/middleware"
-	"github.com/mechatron-x/atehere/internal/logger"
 )
 
 type (
@@ -37,6 +36,7 @@ func NewServeMux(
 	mh handler.Manager,
 	rh handler.Restaurant,
 	rmh handler.Menu,
+	sh handler.Session,
 ) *http.ServeMux {
 	mux := http.NewServeMux()
 	apiMux := http.NewServeMux()
@@ -69,12 +69,24 @@ func NewServeMux(
 	versionMux.HandleFunc("PUT /menus/{menu_id}/items", rmh.AddMenuItem)
 	versionMux.HandleFunc("GET /restaurants/{restaurant_id}/menus", rmh.ListForCustomer)
 
+	// Session endpoints
+	versionMux.HandleFunc("POST /tables/{table_id}/checkout", sh.Checkout)
+	versionMux.HandleFunc("PUT /tables/{table_id}/orders", sh.PlaceOrder)
+	versionMux.HandleFunc("GET /tables/{table_id}/customers/orders", sh.CustomerOrders)
+	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.TableOrders)
+
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)
 	versionMux.HandleFunc("/", dh.NoHandler)
 
 	// Routers
-	mux.Handle("/", middleware.Header(middleware.Logger(apiMux, logger.Instance())))
+	mux.Handle("/",
+		middleware.Header(
+			middleware.Logger(
+				middleware.Recover(apiMux),
+			),
+		),
+	)
 	apiMux.Handle("/api/", http.StripPrefix("/api", versionMux))
 	apiMux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(conf.StaticRoot))))
 	versionMux.Handle(fmt.Sprintf("/%s/", conf.Version), http.StripPrefix(fmt.Sprintf("/%s", conf.Version), versionMux))

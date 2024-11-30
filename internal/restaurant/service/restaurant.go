@@ -13,23 +13,23 @@ import (
 )
 
 type Restaurant struct {
-	repository   port.RestaurantRepository
-	authService  port.Authenticator
-	imageStorage port.ImageStorage
-	apiConf      config.Api
+	repository    port.RestaurantRepository
+	authenticator port.Authenticator
+	imageStorage  port.ImageStorage
+	apiConf       config.Api
 }
 
 func NewRestaurant(
 	repository port.RestaurantRepository,
-	authService port.Authenticator,
+	authenticator port.Authenticator,
 	fileService port.ImageStorage,
 	apiConf config.Api,
 ) *Restaurant {
 	return &Restaurant{
-		repository:   repository,
-		authService:  authService,
-		imageStorage: fileService,
-		apiConf:      apiConf,
+		repository:    repository,
+		authenticator: authenticator,
+		imageStorage:  fileService,
+		apiConf:       apiConf,
 	}
 }
 
@@ -39,7 +39,7 @@ func (rs *Restaurant) Create(idToken string, createDto *dto.RestaurantCreate) (*
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	managerID, err := rs.authService.GetUserID(idToken)
+	managerID, err := rs.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
@@ -54,7 +54,12 @@ func (rs *Restaurant) Create(idToken string, createDto *dto.RestaurantCreate) (*
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	restaurant.SetOwner(uuid.MustParse(managerID))
+	verifiedManagerID, err := uuid.Parse(managerID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	restaurant.SetOwner(verifiedManagerID)
 	restaurant.SetImageName(verifiedImage)
 
 	err = rs.repository.Save(restaurant)
@@ -82,7 +87,7 @@ func (rs *Restaurant) GetOneForCustomer(id string) (*dto.RestaurantSummary, erro
 }
 
 func (rs *Restaurant) ListForManager(idToken string) ([]dto.Restaurant, error) {
-	managerID, err := rs.authService.GetUserID(idToken)
+	managerID, err := rs.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
 	}
@@ -112,7 +117,7 @@ func (rs *Restaurant) ListForCustomer(filterDto *dto.RestaurantFilter) ([]dto.Re
 }
 
 func (rs Restaurant) Delete(idToken, restaurantID string) error {
-	managerID, err := rs.authService.GetUserID(idToken)
+	managerID, err := rs.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
 	}
