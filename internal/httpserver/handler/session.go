@@ -57,7 +57,7 @@ func (sh Session) Checkout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (sh Session) ListForCustomer(w http.ResponseWriter, r *http.Request) {
+func (sh Session) CustomerOrders(w http.ResponseWriter, r *http.Request) {
 	tableID := r.PathValue("table_id")
 
 	token, err := header.GetBearerToken(r.Header)
@@ -78,7 +78,7 @@ func (sh Session) ListForCustomer(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, resp, nil)
 }
 
-func (sh Session) ListForTable(w http.ResponseWriter, r *http.Request) {
+func (sh Session) TableOrders(w http.ResponseWriter, r *http.Request) {
 	table_id := r.PathValue("table_id")
 
 	token, err := header.GetBearerToken(r.Header)
