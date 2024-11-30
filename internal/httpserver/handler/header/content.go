@@ -7,6 +7,12 @@ const (
 )
 
 const (
+	ConnectionKey       = "Connection"
+	ConnectionClose     = "close"
+	ConnectionKeepAlive = "Keep-Alive"
+)
+
+const (
 	AccessControlAllowOriginKey = "Access-Control-Allow-Origin"
 	AuthorizationKey            = "Authorization"
 )

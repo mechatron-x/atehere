@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -80,7 +81,10 @@ func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto
 	}
 
 	menuItem.SetImageName(verifiedImage)
-	menu.AddMenuItems(*menuItem)
+	err = menu.AddMenuItems(*menuItem)
+	if err != nil {
+		return nil, core.NewDomainIntegrityViolationError(err)
+	}
 
 	if err := ms.repository.Save(menu); err != nil {
 		return nil, core.NewPersistenceFailureError(err)
@@ -88,8 +92,6 @@ func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto
 
 	return dto.ToMenu(menu, ms.createImageURL), nil
 }
-
-// TODO: Add menu item delete method
 
 func (ms *Menu) ListForCustomer(filterDto *dto.MenuFilter) ([]dto.Menu, error) {
 	verifiedRestaurantID, err := uuid.Parse(filterDto.RestaurantID)
@@ -130,7 +132,7 @@ func (ms *Menu) verifyOwnership(idToken, restaurantID string) error {
 	}
 
 	if !ms.repository.IsRestaurantOwner(verifiedRestaurantID, verifiedManagerID) {
-		return err
+		return errors.New("invalid restaurant ownership")
 	}
 
 	return nil

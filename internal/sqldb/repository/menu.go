@@ -55,27 +55,27 @@ func (m *Menu) Save(menu *aggregate.Menu) error {
 }
 
 func (m *Menu) GetByID(id uuid.UUID) (*aggregate.Menu, error) {
-	var menuModel model.Menu
+	menuModel := new(model.Menu)
 
 	result := m.db.
-		Model(&model.Menu{}).
 		Preload("MenuItems").
-		First(&menuModel, "id = ?", id.String())
+		Where(&model.Menu{ID: id.String()}).
+		First(menuModel)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return m.mapper.FromModel(&menuModel)
+	return m.mapper.FromModel(menuModel)
 }
 
 func (m *Menu) GetManyByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu, error) {
 	menuModels := make([]model.Menu, 0)
 
 	result := m.db.
-		Model(&model.Menu{}).
 		Preload("MenuItems").
-		Find(&menuModels, "restaurant_id = ?", restaurantID.String())
+		Where(&model.Menu{RestaurantID: restaurantID.String()}).
+		Find(&menuModels)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -85,12 +85,14 @@ func (m *Menu) GetManyByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu,
 }
 
 func (m *Menu) IsRestaurantOwner(restaurantID, ownerID uuid.UUID) bool {
-	restaurantModel := &model.Restaurant{
-		ID:      restaurantID.String(),
-		OwnerID: ownerID.String(),
-	}
+	restaurantModel := new(model.Restaurant)
 
-	result := m.db.First(restaurantModel)
+	result := m.db.
+		Where(&model.Restaurant{
+			ID:      restaurantID.String(),
+			OwnerID: ownerID.String(),
+		}).
+		First(restaurantModel)
 	if result.Error != nil {
 		return false
 	}
