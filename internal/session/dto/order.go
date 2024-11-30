@@ -15,6 +15,7 @@ type (
 	}
 
 	OrderCreatedEventView struct {
+		ID           uuid.UUID
 		RestaurantID string
 		Table        string
 		OrderedBy    string
@@ -24,6 +25,11 @@ type (
 	}
 
 	OrderCustomerView struct {
+		MenuItemName string `json:"menu_item_name"`
+		Quantity     int    `json:"quantity"`
+	}
+
+	OrderTableView struct {
 		MenuItemName string `json:"menu_item_name"`
 		Quantity     int    `json:"quantity"`
 	}

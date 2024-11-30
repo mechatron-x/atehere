@@ -29,9 +29,13 @@ func (m *Manager) Save(manager *aggregate.Manager) error {
 }
 
 func (m *Manager) GetByID(id uuid.UUID) (*aggregate.Manager, error) {
-	var result model.Manager
+	managerModel := new(model.Manager)
 
-	m.db.Model(model.Manager{ID: id.String()}).First(&result)
-
-	return m.mapper.FromModel(&result)
+	result := m.db.
+		Where(&model.Manager{ID: id.String()}).
+		First(managerModel)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return m.mapper.FromModel(managerModel)
 }

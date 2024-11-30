@@ -29,12 +29,14 @@ func (c *Customer) Save(customer *aggregate.Customer) error {
 }
 
 func (c *Customer) GetByID(id uuid.UUID) (*aggregate.Customer, error) {
-	var model model.Customer
+	customerModel := new(model.Customer)
 
-	result := c.db.First(&model, "id = ?", id.String())
+	result := c.db.
+		Where(&model.Customer{ID: id.String()}).
+		First(customerModel)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return c.mapper.FromModel(&model)
+	return c.mapper.FromModel(customerModel)
 }

@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/logger"
@@ -69,7 +67,6 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 
 	session := ss.getActiveSession(verifiedTableID)
 
-	session.SetTableID(verifiedTableID)
 	err = session.PlaceOrders(order)
 	if err != nil {
 		return core.NewDomainIntegrityViolationError(err)
@@ -85,7 +82,7 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 	return nil
 }
 
-func (ss *Session) CustomerOrders(idToken string) ([]dto.OrderCustomerView, error) {
+func (ss *Session) CustomerOrders(idToken, tableID string) ([]dto.OrderCustomerView, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -96,7 +93,31 @@ func (ss *Session) CustomerOrders(idToken string) ([]dto.OrderCustomerView, erro
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	orders, err := ss.viewRepository.OrderCustomerView(verifiedCustomerID)
+	verifiedTableID, err := uuid.Parse(tableID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	orders, err := ss.viewRepository.OrderCustomerView(verifiedCustomerID, verifiedTableID)
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
+func (ss *Session) TableOrders(idToken, tableID string) ([]dto.OrderTableView, error) {
+	_, err := ss.authenticator.GetUserID(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	verifiedTableID, err := uuid.Parse(tableID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	orders, err := ss.viewRepository.OrderTableView(verifiedTableID)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +160,9 @@ func (ss *Session) Checkout(idToken, tableID string) error {
 func (ss *Session) getActiveSession(tableID uuid.UUID) *aggregate.Session {
 	session, err := ss.repository.GetByTableID(tableID)
 	if err != nil {
-		return aggregate.NewSession()
+		session = aggregate.NewSession()
+		session.SetTableID(tableID)
+		return session
 	}
 
 	return session
@@ -174,6 +197,7 @@ func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
 	}
 
 	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
+	orderCreatedEventView.ID = event.ID()
 	err = ss.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)
 	if err != nil {
 		return err
@@ -183,7 +207,17 @@ func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
 }
 
 func (ss *Session) processSessionClosedEvent(event event.SessionClosed) error {
-	fmt.Println(event.Orders())
+	sessionClosedEventView, err := ss.viewRepository.SessionClosedEventView(event.SessionID())
+	if err != nil {
+		return err
+	}
+
+	sessionClosedEventView.InvokeTime = event.InvokeTime().Unix()
+	sessionClosedEventView.ID = event.ID()
+	err = ss.eventNotifier.NotifySessionClosedEvent(sessionClosedEventView)
+	if err != nil {
+		return err
+	}
+
 	return nil
-	// panic("not implemented")
 }

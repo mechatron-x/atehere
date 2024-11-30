@@ -58,33 +58,22 @@ func (s *Session) Save(session *aggregate.Session) error {
 }
 
 func (s *Session) GetByTableID(tableID uuid.UUID) (*aggregate.Session, error) {
-	var sessionModel model.Session
+	sessionModel := new(model.Session)
 
-	result := s.db.Model(&model.Session{TableID: tableID.String()}).
+	result := s.db.
 		Preload("Orders").
-		First(&sessionModel)
+		Where(&model.Session{TableID: tableID.String()}).
+		First(sessionModel)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	session, err := s.mapper.FromModel(&sessionModel)
+	session, err := s.mapper.FromModel(sessionModel)
 	if err != nil {
 		return nil, err
 	}
 
 	return session, err
-}
-
-func (s *Session) HasActiveSessions(tableID uuid.UUID) bool {
-	var count int64
-	result := s.db.Model(&model.Session{TableID: tableID.String()}).
-		Count(&count)
-
-	if result.Error != nil {
-		return false
-	}
-
-	return count != 0
 }
 
 type SessionView struct {
@@ -98,45 +87,80 @@ func NewSessionView(db *gorm.DB) *SessionView {
 }
 
 func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEventView, error) {
-	var session model.Session
-	var order model.SessionOrder
+	sessionModel := new(model.Session)
+	orderModel := new(model.SessionOrder)
 
-	result := sv.db.Model(&model.Session{}).
+	result := sv.db.
 		Preload("Table").
-		First(&session, "id=?", sessionID.String())
+		Where(&model.Session{ID: sessionID.String()}).
+		First(sessionModel)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	result = sv.db.Model(&model.SessionOrder{}).
-		Preload(clause.Associations).
-		First(&order, "id=?", orderID.String())
+	result = sv.db.
+		Preload("Customer").
+		Preload("MenuItem").
+		Where(&model.SessionOrder{
+			ID:        orderID.String(),
+			SessionID: sessionID.String(),
+		}).
+		First(orderModel)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	return &dto.OrderCreatedEventView{
-		RestaurantID: session.Table.RestaurantID,
-		Table:        session.Table.Name,
-		OrderedBy:    order.Customer.FullName,
-		MenuItem:     order.MenuItem.Name,
-		Quantity:     order.Quantity,
+		RestaurantID: sessionModel.Table.RestaurantID,
+		Table:        sessionModel.Table.Name,
+		OrderedBy:    orderModel.Customer.FullName,
+		MenuItem:     orderModel.MenuItem.Name,
+		Quantity:     orderModel.Quantity,
 	}, nil
 }
 
-func (sv *SessionView) OrderCustomerView(customerID uuid.UUID) ([]dto.OrderCustomerView, error) {
-	var orders []model.SessionOrder
+func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEventView, error) {
+	sessionModel := new(model.Session)
 
-	result := sv.db.Model(&model.SessionOrder{OrderedBy: customerID.String()}).
+	result := sv.db.
+		Unscoped().
+		Preload("Table").
+		Where(&model.Session{ID: sessionID.String()}).
+		First(sessionModel)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &dto.SessionClosedEventView{
+		RestaurantID: sessionModel.Table.RestaurantID,
+		Table:        sessionModel.Table.Name,
+	}, nil
+}
+
+func (sv *SessionView) OrderCustomerView(customerID, tableID uuid.UUID) ([]dto.OrderCustomerView, error) {
+	sessionModel := new(model.Session)
+	var orderModels []model.SessionOrder
+
+	result := sv.db.
+		Preload("Table").
+		Where(&model.Session{TableID: tableID.String()}).
+		First(sessionModel)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	result = sv.db.
 		Preload(clause.Associations).
-		Find(&orders)
+		Where(&model.SessionOrder{SessionID: sessionModel.ID}).
+		Where(&model.SessionOrder{OrderedBy: customerID.String()}).
+		Find(&orderModels)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	orderViews := make([]dto.OrderCustomerView, 0)
-	for _, order := range orders {
+	for _, order := range orderModels {
 		orderViews = append(orderViews, dto.OrderCustomerView{
 			MenuItemName: order.MenuItem.Name,
 			Quantity:     order.Quantity,
@@ -144,4 +168,22 @@ func (sv *SessionView) OrderCustomerView(customerID uuid.UUID) ([]dto.OrderCusto
 	}
 
 	return orderViews, nil
+}
+
+func (sv *SessionView) OrderTableView(tableID uuid.UUID) ([]dto.OrderTableView, error) {
+	var orders []dto.OrderTableView
+
+	result := sv.db.
+		Table("session_orders").
+		Select("menu_items.name AS menu_item_name, SUM(session_orders.quantity) AS quantity").
+		Joins("JOIN menu_items ON menu_items.id = session_orders.menu_item_id").
+		Joins("JOIN sessions ON sessions.id = session_orders.session_id").
+		Where("sessions.table_id = ?", tableID.String()).
+		Group("menu_items.name").
+		Scan(&orders)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return orders, nil
 }
