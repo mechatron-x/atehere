@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/session/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/session/dto"
@@ -60,7 +58,7 @@ func (s *Session) Save(session *aggregate.Session) error {
 }
 
 func (s *Session) GetByTableID(tableID uuid.UUID) (*aggregate.Session, error) {
-	sessionModel := &model.Session{}
+	sessionModel := new(model.Session)
 
 	result := s.db.
 		Preload("Orders").
@@ -74,8 +72,7 @@ func (s *Session) GetByTableID(tableID uuid.UUID) (*aggregate.Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(tableID)
-	fmt.Println(session.TableID())
+
 	return session, err
 }
 
