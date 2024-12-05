@@ -144,7 +144,7 @@ func (sv *SessionView) CustomerOrders(customerID, tableID uuid.UUID) ([]dto.Orde
 			menu_items.id AS menu_item_id,
 			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
 		 	menu_items.price_amount AS unit_price,
-			menu_items.price_currency,
+			menu_items.currency,
 			menu_items.name AS menu_item_name, 
 			SUM(session_orders.quantity) AS quantity
 		`).
@@ -158,7 +158,7 @@ func (sv *SessionView) CustomerOrders(customerID, tableID uuid.UUID) ([]dto.Orde
 			menu_items.id,
 			menu_items.name,
 			menu_items.price_amount,
-			menu_items.price_currency
+			menu_items.currency
 		`).
 		Scan(&orders)
 	if result.Error != nil {
@@ -175,7 +175,7 @@ func (sv *SessionView) TableOrders(tableID uuid.UUID) ([]dto.Order, error) {
 		Select(`
 			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
 			menu_items.price_amount AS unit_price,
-			menu_items.price_currency,
+			menu_items.currency,
 			menu_items.name AS menu_item_name, 
 			SUM(session_orders.quantity) AS quantity
 		`).
@@ -185,7 +185,7 @@ func (sv *SessionView) TableOrders(tableID uuid.UUID) ([]dto.Order, error) {
 		Group(`
 			menu_items.name,
 			menu_items.price_amount,
-			menu_items.price_currency
+			menu_items.currency
 		`).
 		Scan(&orders)
 	if result.Error != nil {

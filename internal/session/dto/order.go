@@ -30,22 +30,29 @@ type (
 	}
 
 	Order struct {
-		MenuItemName  string  `json:"menu_item_name"`
-		UnitPrice     float64 `json:"unit_price"`
-		OrderPrice    float64 `json:"order_price"`
-		PriceCurrency string  `json:"price_currency"`
-		Quantity      int     `json:"quantity"`
+		MenuItemID   string  `json:"menu_item_id"`
+		MenuItemName string  `json:"menu_item_name"`
+		UnitPrice    float64 `json:"unit_price"`
+		OrderPrice   float64 `json:"order_price"`
+		Currency     string  `json:"price_currency"`
+		Quantity     int     `json:"quantity"`
+	}
+
+	CustomerOrdersView struct {
+		Orders     []Order `json:"orders"`
+		TotalPrice float64 `json:"total_price"`
+		Currency   string  `json:"price_currency"`
+	}
+
+	TableOrdersView struct {
+		Orders     []Order `json:"orders"`
+		TotalPrice float64 `json:"total_price"`
+		Currency   string  `json:"price_currency"`
 	}
 
 	SessionCustomer struct {
 		ID       string `json:"customer_id"`
 		FullName string `json:"full_name"`
-	}
-
-	TableOrders struct {
-		Orders        []Order `json:"orders"`
-		TotalPrice    float64 `json:"total_price"`
-		PriceCurrency string  `json:"price_currency"`
 	}
 )
 
