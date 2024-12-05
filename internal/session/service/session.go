@@ -77,33 +77,10 @@ func (ss *Session) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOr
 }
 
 func (ss *Session) CustomerOrders(idToken, tableID string) (*dto.CustomerOrdersView, error) {
-	customerID, err := ss.authenticator.GetUserID(idToken)
-	if err != nil {
-		return nil, core.NewUnauthorizedError(err)
-	}
 
-	verifiedCustomerID, err := uuid.Parse(customerID)
-	if err != nil {
-		return nil, core.NewValidationFailureError(err)
-	}
-
-	verifiedTableID, err := uuid.Parse(tableID)
-	if err != nil {
-		return nil, core.NewValidationFailureError(err)
-	}
-
-	orders, err := ss.viewRepository.CustomerOrders(
-		verifiedCustomerID,
-		verifiedTableID,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dto.CustomerOrdersView{Orders: orders}, nil
 }
 
-func (ss *Session) TableOrders(idToken, tableID string) (*dto.TableOrdersView, error) {
+func (ss *Session) TableOrders(idToken, tableID string) (*dto.TableOrders, error) {
 	_, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -119,7 +96,18 @@ func (ss *Session) TableOrders(idToken, tableID string) (*dto.TableOrdersView, e
 		return nil, err
 	}
 
-	return &dto.TableOrdersView{Orders: orders}, nil
+	var currency string
+	var totalPrice float64
+	for _, o := range orders {
+		totalPrice += o.OrderPrice
+		currency = o.PriceCurrency
+	}
+
+	return &dto.TableOrders{
+		Orders:        orders,
+		TotalPrice:    totalPrice,
+		PriceCurrency: currency,
+	}, nil
 }
 
 func (ss *Session) Checkout(idToken, tableID string) error {

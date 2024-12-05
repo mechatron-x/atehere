@@ -142,7 +142,8 @@ func (sv *SessionView) CustomerOrders(customerID, tableID uuid.UUID) ([]dto.Orde
 		Table("session_orders").
 		Select(`
 			menu_items.id AS menu_item_id,
-			menu_items.price_amount, 
+			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
+		 	menu_items.price_amount AS unit_price,
 			menu_items.price_currency,
 			menu_items.name AS menu_item_name, 
 			SUM(session_orders.quantity) AS quantity
@@ -172,8 +173,8 @@ func (sv *SessionView) TableOrders(tableID uuid.UUID) ([]dto.Order, error) {
 	result := sv.db.
 		Table("session_orders").
 		Select(`
-			menu_items.id AS menu_item_id,
-			menu_items.price_amount, 
+			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
+			menu_items.price_amount AS unit_price,
 			menu_items.price_currency,
 			menu_items.name AS menu_item_name, 
 			SUM(session_orders.quantity) AS quantity
@@ -182,7 +183,6 @@ func (sv *SessionView) TableOrders(tableID uuid.UUID) ([]dto.Order, error) {
 		Joins("JOIN sessions ON sessions.id = session_orders.session_id").
 		Where("sessions.table_id = ?", tableID.String()).
 		Group(`
-			menu_items.id,
 			menu_items.name,
 			menu_items.price_amount,
 			menu_items.price_currency
