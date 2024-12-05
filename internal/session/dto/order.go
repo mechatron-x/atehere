@@ -30,29 +30,34 @@ type (
 	}
 
 	Order struct {
-		MenuItemID   string  `json:"menu_item_id"`
 		MenuItemName string  `json:"menu_item_name"`
 		UnitPrice    float64 `json:"unit_price"`
 		OrderPrice   float64 `json:"order_price"`
-		Currency     string  `json:"price_currency"`
+		Currency     string  `json:"currency"`
 		Quantity     int     `json:"quantity"`
 	}
 
-	CustomerOrdersView struct {
-		Orders     []Order `json:"orders"`
-		TotalPrice float64 `json:"total_price"`
-		Currency   string  `json:"price_currency"`
+	CustomerOrders struct {
+		OrderedBy      string  `json:"ordered_by"`
+		CustomerOrders []Order `json:"customer_orders"`
 	}
 
-	TableOrdersView struct {
-		Orders     []Order `json:"orders"`
-		TotalPrice float64 `json:"total_price"`
-		Currency   string  `json:"price_currency"`
+	OrdersView[TOrder OrderPriceCalculator] struct {
+		Orders     []TOrder `json:"orders"`
+		TotalPrice float64  `json:"total_price"`
+		Currency   string   `json:"currency"`
 	}
 
 	SessionCustomer struct {
 		ID       string `json:"customer_id"`
 		FullName string `json:"full_name"`
+	}
+)
+
+type (
+	OrderPriceCalculator interface {
+		GetOrderPrice() float64
+		GetCurrency() string
 	}
 )
 
@@ -103,4 +108,41 @@ func (rcv OrderCreatedEvent) Message() string {
 		rcv.Quantity,
 		rcv.Table,
 	)
+}
+
+func (rcv Order) GetOrderPrice() float64 {
+	return rcv.OrderPrice
+}
+
+func (rcv Order) GetCurrency() string {
+	return rcv.Currency
+}
+
+func (rcv CustomerOrders) GetOrderPrice() float64 {
+	var orderPrice float64
+	for _, o := range rcv.CustomerOrders {
+		orderPrice += o.GetOrderPrice()
+	}
+
+	return orderPrice
+}
+
+func (rcv CustomerOrders) GetCurrency() string {
+	if len(rcv.CustomerOrders) == 0 {
+		return "N/A"
+	}
+
+	return rcv.CustomerOrders[0].GetCurrency()
+}
+
+func (rcv *OrdersView[TOrder]) CalculateTotalPrice() {
+	var totalPrice float64
+	var currency string
+	for _, o := range rcv.Orders {
+		totalPrice += o.GetOrderPrice()
+		currency = o.GetCurrency()
+	}
+
+	rcv.TotalPrice = totalPrice
+	rcv.Currency = currency
 }

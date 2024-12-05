@@ -57,7 +57,7 @@ func (sh Session) Checkout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (sh Session) CustomerOrders(w http.ResponseWriter, r *http.Request) {
+func (sh Session) CustomerOrdersView(w http.ResponseWriter, r *http.Request) {
 	tableID := r.PathValue("table_id")
 
 	token, err := header.GetBearerToken(r.Header)
@@ -66,7 +66,7 @@ func (sh Session) CustomerOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orders, err := sh.ss.CustomerOrders(token, tableID)
+	orders, err := sh.ss.CustomerOrdersView(token, tableID)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return
@@ -75,7 +75,7 @@ func (sh Session) CustomerOrders(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, orders, nil)
 }
 
-func (sh Session) TableOrders(w http.ResponseWriter, r *http.Request) {
+func (sh Session) ManagerOrdersView(w http.ResponseWriter, r *http.Request) {
 	table_id := r.PathValue("table_id")
 
 	token, err := header.GetBearerToken(r.Header)
@@ -84,7 +84,19 @@ func (sh Session) TableOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orders, err := sh.ss.TableOrders(token, table_id)
+	orders, err := sh.ss.ManagerOrdersView(token, table_id)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	response.Encode(w, orders, nil)
+}
+
+func (sh Session) TableOrdersView(w http.ResponseWriter, r *http.Request) {
+	table_id := r.PathValue("table_id")
+
+	orders, err := sh.ss.TableOrdersView(table_id)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return

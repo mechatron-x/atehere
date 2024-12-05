@@ -136,7 +136,7 @@ func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.Session
 	}, nil
 }
 
-func (sv *SessionView) CustomerOrders(customerID, tableID uuid.UUID) ([]dto.Order, error) {
+func (sv *SessionView) CustomerOrdersView(customerID, tableID uuid.UUID) ([]dto.Order, error) {
 	orders := make([]dto.Order, 0)
 	result := sv.db.
 		Table("session_orders").
@@ -144,7 +144,7 @@ func (sv *SessionView) CustomerOrders(customerID, tableID uuid.UUID) ([]dto.Orde
 			menu_items.id AS menu_item_id,
 			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
 		 	menu_items.price_amount AS unit_price,
-			menu_items.currency,
+			menu_items.price_currency AS currency,
 			menu_items.name AS menu_item_name, 
 			SUM(session_orders.quantity) AS quantity
 		`).
@@ -158,7 +158,7 @@ func (sv *SessionView) CustomerOrders(customerID, tableID uuid.UUID) ([]dto.Orde
 			menu_items.id,
 			menu_items.name,
 			menu_items.price_amount,
-			menu_items.currency
+			menu_items.price_currency
 		`).
 		Scan(&orders)
 	if result.Error != nil {
@@ -167,7 +167,7 @@ func (sv *SessionView) CustomerOrders(customerID, tableID uuid.UUID) ([]dto.Orde
 	return orders, nil
 }
 
-func (sv *SessionView) TableOrders(tableID uuid.UUID) ([]dto.Order, error) {
+func (sv *SessionView) ManagerOrdersView(tableID uuid.UUID) ([]dto.Order, error) {
 	orders := make([]dto.Order, 0)
 
 	result := sv.db.
@@ -175,7 +175,7 @@ func (sv *SessionView) TableOrders(tableID uuid.UUID) ([]dto.Order, error) {
 		Select(`
 			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
 			menu_items.price_amount AS unit_price,
-			menu_items.currency,
+			menu_items.price_currency AS currency,
 			menu_items.name AS menu_item_name, 
 			SUM(session_orders.quantity) AS quantity
 		`).
@@ -185,7 +185,7 @@ func (sv *SessionView) TableOrders(tableID uuid.UUID) ([]dto.Order, error) {
 		Group(`
 			menu_items.name,
 			menu_items.price_amount,
-			menu_items.currency
+			menu_items.price_currency
 		`).
 		Scan(&orders)
 	if result.Error != nil {
@@ -193,4 +193,20 @@ func (sv *SessionView) TableOrders(tableID uuid.UUID) ([]dto.Order, error) {
 	}
 
 	return orders, nil
+}
+
+func (sv *SessionView) GetCustomersInSession(tableID uuid.UUID) ([]dto.SessionCustomer, error) {
+	sessionCustomers := make([]dto.SessionCustomer, 0)
+
+	result := sv.db.Table("session_orders").
+		Select("DISTINCT customers.id, customers.full_name").
+		Joins("JOIN customers ON session_orders.ordered_by=customers.id").
+		Joins("JOIN sessions ON session_orders.session_id = sessions.id").
+		Where("sessions.table_id= ?", tableID.String()).
+		Scan(&sessionCustomers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return sessionCustomers, nil
 }

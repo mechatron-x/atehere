@@ -72,8 +72,9 @@ func NewServeMux(
 	// Session endpoints
 	versionMux.HandleFunc("POST /tables/{table_id}/checkout", sh.Checkout)
 	versionMux.HandleFunc("PUT /tables/{table_id}/orders", sh.PlaceOrders)
-	versionMux.HandleFunc("GET /tables/{table_id}/customers/orders", sh.CustomerOrders)
-	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.TableOrders)
+	versionMux.HandleFunc("GET /tables/{table_id}/customers/orders", sh.CustomerOrdersView)
+	versionMux.HandleFunc("GET /tables/{table_id}/managers/orders", sh.ManagerOrdersView)
+	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.TableOrdersView)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)
