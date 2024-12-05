@@ -71,7 +71,7 @@ func NewServeMux(
 
 	// Session endpoints
 	versionMux.HandleFunc("POST /tables/{table_id}/checkout", sh.Checkout)
-	versionMux.HandleFunc("PUT /tables/{table_id}/orders", sh.PlaceOrder)
+	versionMux.HandleFunc("PUT /tables/{table_id}/orders", sh.PlaceOrders)
 	versionMux.HandleFunc("GET /tables/{table_id}/customers/orders", sh.CustomerOrders)
 	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.TableOrders)
 

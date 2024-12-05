@@ -9,12 +9,17 @@ import (
 )
 
 type (
-	OrderCreate struct {
+	CreateOrder struct {
 		MenuItemID string `json:"menu_item_id"`
 		Quantity   int    `json:"quantity"`
+		OrderedBy  string `json:"ordered_by"`
 	}
 
-	OrderCreatedEventView struct {
+	PlaceOrders struct {
+		Orders []CreateOrder `json:"orders"`
+	}
+
+	OrderCreatedEvent struct {
 		ID           uuid.UUID
 		RestaurantID string
 		Table        string
@@ -24,37 +29,64 @@ type (
 		InvokeTime   int64
 	}
 
-	OrderCustomerView struct {
-		MenuItemName string `json:"menu_item_name"`
-		Quantity     int    `json:"quantity"`
+	Order struct {
+		MenuItemID    string  `json:"menu_item_id"`
+		MenuItemName  string  `json:"menu_item_name"`
+		PriceAmount   float32 `json:"price_amount"`
+		PriceCurrency string  `json:"price_currency"`
+		Quantity      int     `json:"quantity"`
 	}
 
-	OrderTableView struct {
-		MenuItemName string `json:"menu_item_name"`
-		Quantity     int    `json:"quantity"`
+	CustomerOrdersView struct {
+		Orders []Order `json:"orders"`
+	}
+
+	TableOrdersView struct {
+		Orders []Order `json:"orders"`
 	}
 )
 
-func (po *OrderCreate) ToEntity() (entity.Order, error) {
+func (rcv *CreateOrder) ToEntity() (entity.Order, error) {
 	order := entity.NewOrder()
 
-	verifiedMenuItemID, err := uuid.Parse(po.MenuItemID)
+	verifiedOrderedBy, err := uuid.Parse(rcv.OrderedBy)
 	if err != nil {
 		return entity.Order{}, err
 	}
 
-	verifiedQuantity, err := valueobject.NewQuantity(po.Quantity)
+	verifiedMenuItemID, err := uuid.Parse(rcv.MenuItemID)
+	if err != nil {
+		return entity.Order{}, err
+	}
+
+	verifiedQuantity, err := valueobject.NewQuantity(rcv.Quantity)
 	if err != nil {
 		return entity.Order{}, err
 	}
 
 	order.SetMenuItemID(verifiedMenuItemID)
 	order.SetQuantity(verifiedQuantity)
-
+	order.SetOrderedBy(verifiedOrderedBy)
 	return order, nil
 }
 
-func (rcv OrderCreatedEventView) Message() string {
+func (rcv *PlaceOrders) ToEntities(orderedBy string) ([]entity.Order, error) {
+	orders := make([]entity.Order, 0)
+	for _, o := range rcv.Orders {
+		o.OrderedBy = orderedBy
+
+		order, err := o.ToEntity()
+		if err != nil {
+			return nil, err
+		}
+
+		orders = append(orders, order)
+	}
+
+	return orders, nil
+}
+
+func (rcv OrderCreatedEvent) Message() string {
 	return fmt.Sprintf("%s ordered %s x%d from table %s",
 		rcv.OrderedBy,
 		rcv.MenuItem,

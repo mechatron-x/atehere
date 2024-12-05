@@ -43,15 +43,10 @@ func NewSession(
 	return session
 }
 
-func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCreate) error {
+func (ss *Session) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
-	}
-
-	verifiedCustomerID, err := uuid.Parse(customerID)
-	if err != nil {
-		return core.NewValidationFailureError(err)
 	}
 
 	verifiedTableID, err := uuid.Parse(tableID)
@@ -59,15 +54,14 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 		return core.NewValidationFailureError(err)
 	}
 
-	order, err := orderCreate.ToEntity()
+	orders, err := placeOrders.ToEntities(customerID)
 	if err != nil {
 		return core.NewValidationFailureError(err)
 	}
-	order.SetOrderedBy(verifiedCustomerID)
 
 	session := ss.getActiveSession(verifiedTableID)
 
-	err = session.PlaceOrders(order)
+	err = session.PlaceOrders(orders...)
 	if err != nil {
 		return core.NewDomainIntegrityViolationError(err)
 	}
@@ -82,7 +76,7 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 	return nil
 }
 
-func (ss *Session) CustomerOrders(idToken, tableID string) ([]dto.OrderCustomerView, error) {
+func (ss *Session) CustomerOrders(idToken, tableID string) (*dto.CustomerOrdersView, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -98,15 +92,18 @@ func (ss *Session) CustomerOrders(idToken, tableID string) ([]dto.OrderCustomerV
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	orders, err := ss.viewRepository.OrderCustomerView(verifiedCustomerID, verifiedTableID)
+	orders, err := ss.viewRepository.CustomerOrders(
+		verifiedCustomerID,
+		verifiedTableID,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return orders, nil
+	return &dto.CustomerOrdersView{Orders: orders}, nil
 }
 
-func (ss *Session) TableOrders(idToken, tableID string) ([]dto.OrderTableView, error) {
+func (ss *Session) TableOrders(idToken, tableID string) (*dto.TableOrdersView, error) {
 	_, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -117,12 +114,12 @@ func (ss *Session) TableOrders(idToken, tableID string) ([]dto.OrderTableView, e
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	orders, err := ss.viewRepository.OrderTableView(verifiedTableID)
+	orders, err := ss.viewRepository.TableOrders(verifiedTableID)
 	if err != nil {
 		return nil, err
 	}
 
-	return orders, nil
+	return &dto.TableOrdersView{Orders: orders}, nil
 }
 
 func (ss *Session) Checkout(idToken, tableID string) error {

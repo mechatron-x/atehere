@@ -18,10 +18,10 @@ func NewSessionHandler(ss service.Session) Session {
 	return Session{ss}
 }
 
-func (sh Session) PlaceOrder(w http.ResponseWriter, r *http.Request) {
+func (sh Session) PlaceOrders(w http.ResponseWriter, r *http.Request) {
 	tableID := r.PathValue("table_id")
 
-	reqBody := &dto.OrderCreate{}
+	reqBody := &dto.PlaceOrders{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
 		response.Encode(w, nil, err, http.StatusBadRequest)
@@ -34,7 +34,7 @@ func (sh Session) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sh.ss.PlaceOrder(token, tableID, reqBody)
+	err = sh.ss.PlaceOrders(token, tableID, reqBody)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return
@@ -72,10 +72,7 @@ func (sh Session) CustomerOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := &response.OrderList[dto.OrderCustomerView]{
-		Orders: orders,
-	}
-	response.Encode(w, resp, nil)
+	response.Encode(w, orders, nil)
 }
 
 func (sh Session) TableOrders(w http.ResponseWriter, r *http.Request) {
@@ -93,8 +90,5 @@ func (sh Session) TableOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := &response.OrderList[dto.OrderTableView]{
-		Orders: orders,
-	}
-	response.Encode(w, resp, nil)
+	response.Encode(w, orders, nil)
 }
