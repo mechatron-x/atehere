@@ -136,59 +136,56 @@ func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.Session
 	}, nil
 }
 
-func (sv *SessionView) CustomerOrdersView(customerID, tableID uuid.UUID) ([]dto.Order, error) {
-	orders := make([]dto.Order, 0)
-	result := sv.db.
-		Table("session_orders").
+func (sv *SessionView) GetTableOrdersView(tableID uuid.UUID) ([]dto.TableOrderView, error) {
+	var orders []dto.TableOrderView
+
+	result := sv.db.Table("session_orders").
 		Select(`
-			menu_items.id AS menu_item_id,
-			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
-		 	menu_items.price_amount AS unit_price,
-			menu_items.price_currency AS currency,
-			menu_items.name AS menu_item_name, 
-			SUM(session_orders.quantity) AS quantity
-		`).
-		Joins("JOIN menu_items ON menu_items.id = session_orders.menu_item_id").
-		Joins("JOIN sessions ON sessions.id = session_orders.session_id").
-		Where("sessions.table_id = ? AND session_orders.ordered_by = ?",
-			tableID.String(),
-			customerID.String(),
-		).
+			customers.id AS customer_id,
+			customers.full_name AS customer_full_name,
+			menu_items.name AS menu_item_name,
+			SUM(session_orders.quantity) AS quantity,
+			menu_items.price_amount AS unit_price,
+			menu_items.price_amount * SUM(session_orders.quantity) AS total_price,
+			menu_items.price_currency AS currency
+		`).Joins("INNER JOIN sessions ON session_orders.session_id = sessions.id").
+		Joins("INNER JOIN menu_items ON session_orders.menu_item_id = menu_items.id").
+		Joins("INNER JOIN customers ON session_orders.ordered_by = customers.id").
+		Where("sessions.table_id = ?", tableID.String()).
 		Group(`
-			menu_items.id,
 			menu_items.name,
 			menu_items.price_amount,
-			menu_items.price_currency
-		`).
+			menu_items.price_currency,
+			customers.full_name,
+			customers.id
+		`).Order("customers.full_name").
 		Scan(&orders)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return orders, nil
 }
 
-func (sv *SessionView) ManagerOrdersView(tableID uuid.UUID) ([]dto.Order, error) {
-	orders := make([]dto.Order, 0)
+func (sv *SessionView) GetManagerOrdersView(tableID uuid.UUID) ([]dto.ManagerOrderView, error) {
+	var orders []dto.ManagerOrderView
 
-	result := sv.db.
-		Table("session_orders").
+	result := sv.db.Table("session_orders").
 		Select(`
-			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
+			menu_items.name AS menu_item_name,
+			SUM(session_orders.quantity) AS quantity,
 			menu_items.price_amount AS unit_price,
-			menu_items.price_currency AS currency,
-			menu_items.name AS menu_item_name, 
-			SUM(session_orders.quantity) AS quantity
-		`).
-		Joins("JOIN menu_items ON menu_items.id = session_orders.menu_item_id").
-		Joins("JOIN sessions ON sessions.id = session_orders.session_id").
+			menu_items.price_amount * SUM(session_orders.quantity) AS total_price,
+			menu_items.price_currency AS currency
+		`).Joins("INNER JOIN sessions ON session_orders.session_id = sessions.id").
+		Joins("INNER JOIN menu_items ON session_orders.menu_item_id = menu_items.id").
 		Where("sessions.table_id = ?", tableID.String()).
 		Group(`
 			menu_items.name,
 			menu_items.price_amount,
 			menu_items.price_currency
-		`).
-
-		Scan(&orders)
+		`).Scan(&orders)
 	if result.Error != nil {
 		return nil, result.Error
 	}
