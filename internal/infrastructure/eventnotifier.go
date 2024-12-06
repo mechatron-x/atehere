@@ -34,7 +34,7 @@ func NewFirecloudEventNotifier(conf config.Firebase) (*FirebaseEventNotifier, er
 	}, nil
 }
 
-func (fen *FirebaseEventNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEventView) error {
+func (fen *FirebaseEventNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEvent) error {
 	client, err := fen.app.Firestore(context.Background())
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (fen *FirebaseEventNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreate
 	return err
 }
 
-func (fen *FirebaseEventNotifier) NotifySessionClosedEvent(event *dto.SessionClosedEventView) error {
+func (fen *FirebaseEventNotifier) NotifySessionClosedEvent(event *dto.SessionClosedEvent) error {
 	client, err := fen.app.Firestore(context.Background())
 	if err != nil {
 		return err

@@ -43,15 +43,10 @@ func NewSession(
 	return session
 }
 
-func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCreate) error {
+func (ss *Session) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
-	}
-
-	verifiedCustomerID, err := uuid.Parse(customerID)
-	if err != nil {
-		return core.NewValidationFailureError(err)
 	}
 
 	verifiedTableID, err := uuid.Parse(tableID)
@@ -59,15 +54,14 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 		return core.NewValidationFailureError(err)
 	}
 
-	order, err := orderCreate.ToEntity()
+	orders, err := placeOrders.ToEntities(customerID)
 	if err != nil {
 		return core.NewValidationFailureError(err)
 	}
-	order.SetOrderedBy(verifiedCustomerID)
 
 	session := ss.getActiveSession(verifiedTableID)
 
-	err = session.PlaceOrders(order)
+	err = session.PlaceOrders(orders...)
 	if err != nil {
 		return core.NewDomainIntegrityViolationError(err)
 	}
@@ -82,7 +76,7 @@ func (ss *Session) PlaceOrder(idToken, tableID string, orderCreate *dto.OrderCre
 	return nil
 }
 
-func (ss *Session) CustomerOrders(idToken, tableID string) ([]dto.OrderCustomerView, error) {
+func (ss *Session) CustomerOrdersView(idToken, tableID string) (*dto.OrdersView[dto.Order], error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -98,15 +92,24 @@ func (ss *Session) CustomerOrders(idToken, tableID string) ([]dto.OrderCustomerV
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	orders, err := ss.viewRepository.OrderCustomerView(verifiedCustomerID, verifiedTableID)
+	orders, err := ss.viewRepository.CustomerOrdersView(
+		verifiedCustomerID,
+		verifiedTableID,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return orders, nil
+	ordersView := &dto.OrdersView[dto.Order]{
+		Orders: orders,
+	}
+
+	ordersView.CalculateTotalPrice()
+
+	return ordersView, nil
 }
 
-func (ss *Session) TableOrders(idToken, tableID string) ([]dto.OrderTableView, error) {
+func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrdersView[dto.Order], error) {
 	_, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -117,12 +120,56 @@ func (ss *Session) TableOrders(idToken, tableID string) ([]dto.OrderTableView, e
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	orders, err := ss.viewRepository.OrderTableView(verifiedTableID)
+	orders, err := ss.viewRepository.ManagerOrdersView(verifiedTableID)
 	if err != nil {
 		return nil, err
 	}
 
-	return orders, nil
+	ordersView := &dto.OrdersView[dto.Order]{
+		Orders: orders,
+	}
+
+	ordersView.CalculateTotalPrice()
+
+	return ordersView, nil
+}
+
+func (ss *Session) TableOrdersView(tableID string) (*dto.OrdersView[dto.CustomerOrders], error) {
+	verifiedTableID, err := uuid.Parse(tableID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	sessionCustomers, err := ss.viewRepository.GetCustomersInSession(verifiedTableID)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	customerOrdersList := make([]dto.CustomerOrders, 0)
+	for _, sc := range sessionCustomers {
+		verifiedCustomerID, err := uuid.Parse(sc.ID)
+		if err != nil {
+			return nil, core.NewValidationFailureError(err)
+		}
+		orders, err := ss.viewRepository.CustomerOrdersView(verifiedCustomerID, verifiedTableID)
+		if err != nil {
+			return nil, core.NewResourceNotFoundError(err)
+		}
+
+		co := dto.CustomerOrders{
+			OrderedBy:      sc.FullName,
+			CustomerOrders: orders,
+		}
+		customerOrdersList = append(customerOrdersList, co)
+	}
+
+	tableOrders := &dto.OrdersView[dto.CustomerOrders]{
+		Orders: customerOrdersList,
+	}
+
+	tableOrders.CalculateTotalPrice()
+
+	return tableOrders, nil
 }
 
 func (ss *Session) Checkout(idToken, tableID string) error {

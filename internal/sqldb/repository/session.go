@@ -7,7 +7,6 @@ import (
 	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
 	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type Session struct {
@@ -86,7 +85,7 @@ func NewSessionView(db *gorm.DB) *SessionView {
 	}
 }
 
-func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEventView, error) {
+func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEvent, error) {
 	sessionModel := new(model.Session)
 	orderModel := new(model.SessionOrder)
 
@@ -110,7 +109,7 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 		return nil, result.Error
 	}
 
-	return &dto.OrderCreatedEventView{
+	return &dto.OrderCreatedEvent{
 		RestaurantID: sessionModel.Table.RestaurantID,
 		Table:        sessionModel.Table.Name,
 		OrderedBy:    orderModel.Customer.FullName,
@@ -119,7 +118,7 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 	}, nil
 }
 
-func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEventView, error) {
+func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEvent, error) {
 	sessionModel := new(model.Session)
 
 	result := sv.db.
@@ -131,59 +130,83 @@ func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.Session
 		return nil, result.Error
 	}
 
-	return &dto.SessionClosedEventView{
+	return &dto.SessionClosedEvent{
 		RestaurantID: sessionModel.Table.RestaurantID,
 		Table:        sessionModel.Table.Name,
 	}, nil
 }
 
-func (sv *SessionView) OrderCustomerView(customerID, tableID uuid.UUID) ([]dto.OrderCustomerView, error) {
-	sessionModel := new(model.Session)
-	var orderModels []model.SessionOrder
-
+func (sv *SessionView) CustomerOrdersView(customerID, tableID uuid.UUID) ([]dto.Order, error) {
+	orders := make([]dto.Order, 0)
 	result := sv.db.
-		Preload("Table").
-		Where(&model.Session{TableID: tableID.String()}).
-		First(sessionModel)
+		Table("session_orders").
+		Select(`
+			menu_items.id AS menu_item_id,
+			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
+		 	menu_items.price_amount AS unit_price,
+			menu_items.price_currency AS currency,
+			menu_items.name AS menu_item_name, 
+			SUM(session_orders.quantity) AS quantity
+		`).
+		Joins("JOIN menu_items ON menu_items.id = session_orders.menu_item_id").
+		Joins("JOIN sessions ON sessions.id = session_orders.session_id").
+		Where("sessions.table_id = ? AND session_orders.ordered_by = ?",
+			tableID.String(),
+			customerID.String(),
+		).
+		Group(`
+			menu_items.id,
+			menu_items.name,
+			menu_items.price_amount,
+			menu_items.price_currency
+		`).
+		Scan(&orders)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-
-	result = sv.db.
-		Preload(clause.Associations).
-		Where(&model.SessionOrder{SessionID: sessionModel.ID}).
-		Where(&model.SessionOrder{OrderedBy: customerID.String()}).
-		Find(&orderModels)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	orderViews := make([]dto.OrderCustomerView, 0)
-	for _, order := range orderModels {
-		orderViews = append(orderViews, dto.OrderCustomerView{
-			MenuItemName: order.MenuItem.Name,
-			Quantity:     order.Quantity,
-		})
-	}
-
-	return orderViews, nil
+	return orders, nil
 }
 
-func (sv *SessionView) OrderTableView(tableID uuid.UUID) ([]dto.OrderTableView, error) {
-	var orders []dto.OrderTableView
+func (sv *SessionView) ManagerOrdersView(tableID uuid.UUID) ([]dto.Order, error) {
+	orders := make([]dto.Order, 0)
 
 	result := sv.db.
 		Table("session_orders").
-		Select("menu_items.name AS menu_item_name, SUM(session_orders.quantity) AS quantity").
+		Select(`
+			menu_items.price_amount * SUM(session_orders.quantity) AS order_price,
+			menu_items.price_amount AS unit_price,
+			menu_items.price_currency AS currency,
+			menu_items.name AS menu_item_name, 
+			SUM(session_orders.quantity) AS quantity
+		`).
 		Joins("JOIN menu_items ON menu_items.id = session_orders.menu_item_id").
 		Joins("JOIN sessions ON sessions.id = session_orders.session_id").
 		Where("sessions.table_id = ?", tableID.String()).
-		Group("menu_items.name").
+		Group(`
+			menu_items.name,
+			menu_items.price_amount,
+			menu_items.price_currency
+		`).
 		Scan(&orders)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	return orders, nil
+}
+
+func (sv *SessionView) GetCustomersInSession(tableID uuid.UUID) ([]dto.SessionCustomer, error) {
+	sessionCustomers := make([]dto.SessionCustomer, 0)
+
+	result := sv.db.Table("session_orders").
+		Select("DISTINCT customers.id, customers.full_name").
+		Joins("JOIN customers ON session_orders.ordered_by=customers.id").
+		Joins("JOIN sessions ON session_orders.session_id = sessions.id").
+		Where("sessions.table_id= ?", tableID.String()).
+		Scan(&sessionCustomers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return sessionCustomers, nil
 }
