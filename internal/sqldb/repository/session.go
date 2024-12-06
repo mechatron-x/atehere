@@ -187,6 +187,7 @@ func (sv *SessionView) ManagerOrdersView(tableID uuid.UUID) ([]dto.Order, error)
 			menu_items.price_amount,
 			menu_items.price_currency
 		`).
+
 		Scan(&orders)
 	if result.Error != nil {
 		return nil, result.Error

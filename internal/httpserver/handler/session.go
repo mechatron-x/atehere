@@ -83,7 +83,7 @@ func (sh Session) ManagerOrdersView(w http.ResponseWriter, r *http.Request) {
 		response.Encode(w, nil, err)
 		return
 	}
-
+  
 	orders, err := sh.ss.ManagerOrdersView(token, table_id)
 	if err != nil {
 		response.Encode(w, nil, err)

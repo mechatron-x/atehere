@@ -119,7 +119,7 @@ func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrdersView[d
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
 	}
-
+  
 	orders, err := ss.viewRepository.ManagerOrdersView(verifiedTableID)
 	if err != nil {
 		return nil, err
