@@ -121,7 +121,7 @@ func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, e
 	if err != nil {
 		return nil, err
 	}
-
+  
 	ordersView := &dto.OrderList{
 		Orders: dto.FromManagerOrdersView(managerOrders),
 	}

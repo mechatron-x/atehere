@@ -186,10 +186,25 @@ func (sv *SessionView) GetManagerOrdersView(tableID uuid.UUID) ([]dto.ManagerOrd
 			menu_items.price_amount,
 			menu_items.price_currency
 		`).Scan(&orders)
-
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	return orders, nil
+}
+
+func (sv *SessionView) GetCustomersInSession(tableID uuid.UUID) ([]dto.SessionCustomer, error) {
+	sessionCustomers := make([]dto.SessionCustomer, 0)
+
+	result := sv.db.Table("session_orders").
+		Select("DISTINCT customers.id, customers.full_name").
+		Joins("JOIN customers ON session_orders.ordered_by=customers.id").
+		Joins("JOIN sessions ON session_orders.session_id = sessions.id").
+		Where("sessions.table_id= ?", tableID.String()).
+		Scan(&sessionCustomers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return sessionCustomers, nil
 }
