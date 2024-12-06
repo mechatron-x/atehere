@@ -99,7 +99,6 @@ func (ss *Session) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, 
 	}
 
 	ordersView.CalculateTotalPrice()
-	ordersView.CalculateTotalPrice()
 	if len(orders) != 0 {
 		ordersView.Currency = orders[0].Currency
 	}
@@ -127,7 +126,6 @@ func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, e
 		Orders: dto.FromManagerOrdersView(managerOrders),
 	}
 
-	ordersView.CalculateTotalPrice()
 	ordersView.CalculateTotalPrice()
 	if len(managerOrders) != 0 {
 		ordersView.Currency = managerOrders[0].Currency
