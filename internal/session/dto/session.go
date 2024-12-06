@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	SessionClosedEventView struct {
+	SessionClosedEvent struct {
 		ID           uuid.UUID
 		RestaurantID string
 		Table        string
@@ -15,7 +15,7 @@ type (
 	}
 )
 
-func (scv SessionClosedEventView) Message() string {
+func (scv SessionClosedEvent) Message() string {
 	return fmt.Sprintf("Session of table %s has been closed",
 		scv.Table,
 	)

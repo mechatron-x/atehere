@@ -13,9 +13,10 @@ type (
 	}
 
 	SessionViewRepository interface {
-		OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEventView, error)
-		SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEventView, error)
-		OrderCustomerView(customerID, tableID uuid.UUID) ([]dto.OrderCustomerView, error)
-		OrderTableView(tableID uuid.UUID) ([]dto.OrderTableView, error)
+		OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEvent, error)
+		SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEvent, error)
+		CustomerOrdersView(customerID, tableID uuid.UUID) ([]dto.Order, error)
+		ManagerOrdersView(tableID uuid.UUID) ([]dto.Order, error)
+		GetCustomersInSession(tableID uuid.UUID) ([]dto.SessionCustomer, error)
 	}
 )
