@@ -12,6 +12,7 @@ down:
 	@docker compose -f ${COMPOSE_FILE} down
 	@docker container prune -f
 	@docker image prune -f
+	@docker rmi atehere-app
 
 prune:
 	@docker system prune -af
