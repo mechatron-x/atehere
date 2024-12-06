@@ -30,34 +30,17 @@ type (
 	}
 
 	Order struct {
-		MenuItemName string  `json:"menu_item_name"`
-		UnitPrice    float64 `json:"unit_price"`
-		OrderPrice   float64 `json:"order_price"`
-		Currency     string  `json:"currency"`
-		Quantity     int     `json:"quantity"`
+		CustomerFullName string  `json:"customer_full_name,omitempty"`
+		MenuItemName     string  `json:"menu_item_name,omitempty"`
+		Quantity         int     `json:"quantity,omitempty"`
+		UnitPrice        float64 `json:"unit_price,omitempty"`
+		TotalPrice       float64 `json:"total_price,omitempty"`
 	}
 
-	CustomerOrders struct {
-		OrderedBy      string  `json:"ordered_by"`
-		CustomerOrders []Order `json:"customer_orders"`
-	}
-
-	OrdersView[TOrder OrderPriceCalculator] struct {
-		Orders     []TOrder `json:"orders"`
-		TotalPrice float64  `json:"total_price"`
-		Currency   string   `json:"currency"`
-	}
-
-	SessionCustomer struct {
-		ID       string `json:"customer_id"`
-		FullName string `json:"full_name"`
-	}
-)
-
-type (
-	OrderPriceCalculator interface {
-		GetOrderPrice() float64
-		GetCurrency() string
+	OrderList struct {
+		Orders     []Order `json:"orders"`
+		TotalPrice float64 `json:"total_price"`
+		Currency   string  `json:"currency"`
 	}
 )
 
@@ -110,39 +93,11 @@ func (rcv OrderCreatedEvent) Message() string {
 	)
 }
 
-func (rcv Order) GetOrderPrice() float64 {
-	return rcv.OrderPrice
-}
-
-func (rcv Order) GetCurrency() string {
-	return rcv.Currency
-}
-
-func (rcv CustomerOrders) GetOrderPrice() float64 {
-	var orderPrice float64
-	for _, o := range rcv.CustomerOrders {
-		orderPrice += o.GetOrderPrice()
-	}
-
-	return orderPrice
-}
-
-func (rcv CustomerOrders) GetCurrency() string {
-	if len(rcv.CustomerOrders) == 0 {
-		return "N/A"
-	}
-
-	return rcv.CustomerOrders[0].GetCurrency()
-}
-
-func (rcv *OrdersView[TOrder]) CalculateTotalPrice() {
+func (rcv *OrderList) CalculateTotalPrice() {
 	var totalPrice float64
-	var currency string
 	for _, o := range rcv.Orders {
-		totalPrice += o.GetOrderPrice()
-		currency = o.GetCurrency()
+		totalPrice += o.TotalPrice
 	}
 
 	rcv.TotalPrice = totalPrice
-	rcv.Currency = currency
 }
