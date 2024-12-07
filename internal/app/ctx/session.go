@@ -1,8 +1,12 @@
 package ctx
 
 import (
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/infrastructure/broker"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/repository"
+	"github.com/mechatron-x/atehere/internal/session/consumer"
+	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/session/port"
 	"github.com/mechatron-x/atehere/internal/session/service"
 	"gorm.io/gorm"
@@ -16,16 +20,24 @@ func NewSession(
 	db *gorm.DB,
 	authenticator port.Authenticator,
 	eventNotifier port.EventNotifier,
+	orderCreatedEventPublisher *broker.Publisher[event.OrderCreated],
+	sessionClosedEventPublisher *broker.Publisher[core.SessionClosedEvent],
 ) Session {
 	repo := repository.NewSession(db)
 	viewRepo := repository.NewSessionView(db)
+
+	notifyOrderCreatedEvent := consumer.NotifyOrder(viewRepo, eventNotifier)
+	orderCreatedEventPublisher.AddConsumer(notifyOrderCreatedEvent)
+
+	notifyConsumer := consumer.NewNotifySession(viewRepo, eventNotifier)
+	sessionClosedEventPublisher.AddConsumer(notifyConsumer)
 
 	service := service.NewSession(
 		repo,
 		viewRepo,
 		authenticator,
-		eventNotifier,
-		10,
+		orderCreatedEventPublisher,
+		sessionClosedEventPublisher,
 	)
 
 	handler := handler.NewSession(*service)

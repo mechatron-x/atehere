@@ -87,7 +87,7 @@ func (s *Session) Close(customerID uuid.UUID) error {
 
 	s.SetDeletedAt(time.Now())
 	s.endTime = time.Now()
-	s.RaiseEvent(event.NewSessionClosed(s.ID(), s.orders...))
+	s.RaiseEvent(core.NewSessionClosedEvent(s.ID()))
 	s.orders = make([]entity.Order, 0)
 
 	return nil

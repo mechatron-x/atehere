@@ -5,15 +5,19 @@ import (
 	"net/http"
 
 	"github.com/mechatron-x/atehere/internal/app/ctx"
+	"github.com/mechatron-x/atehere/internal/billing/consumer"
 	"github.com/mechatron-x/atehere/internal/config"
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/httpserver"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
 	"github.com/mechatron-x/atehere/internal/infrastructure/authenticator"
+	"github.com/mechatron-x/atehere/internal/infrastructure/broker"
 	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"github.com/mechatron-x/atehere/internal/infrastructure/notifier"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/infrastructure/storage"
+	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/usermanagement/port"
 )
 
@@ -70,11 +74,17 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
+	orderCreatedPublisher := broker.NewPublisher[event.OrderCreated]()
+	sessionClosedPublisher := broker.NewPublisher[core.SessionClosedEvent]()
+
+	createBillConsumer := consumer.CreateBill()
+	sessionClosedPublisher.AddConsumer(createBillConsumer)
+
 	customerCtx := ctx.NewCustomer(db, auth)
 	managerCtx := ctx.NewManager(db, auth)
 	restaurantCtx := ctx.NewRestaurant(db, auth, imageStorage, conf.Api)
 	menuCtx := ctx.NewMenu(db, auth, imageStorage, conf.Api)
-	sessionCtx := ctx.NewSession(db, auth, eventNotifier)
+	sessionCtx := ctx.NewSession(db, auth, eventNotifier, orderCreatedPublisher, sessionClosedPublisher)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,

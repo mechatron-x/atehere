@@ -12,32 +12,28 @@ import (
 )
 
 type SessionService struct {
-	repository     port.SessionRepository
-	viewRepository port.SessionViewRepository
-	authenticator  port.Authenticator
-	eventNotifier  port.EventNotifier
-	events         chan core.DomainEvent
-	log            *zap.Logger
+	repository                  port.SessionRepository
+	viewRepository              port.SessionViewRepository
+	authenticator               port.Authenticator
+	orderCreatedEventPublisher  port.OrderCreatedEventPublisher
+	sessionClosedEventPublisher port.SessionClosedEventPublisher
+	log                         *zap.Logger
 }
 
 func NewSession(
 	repository port.SessionRepository,
 	viewRepository port.SessionViewRepository,
 	authenticator port.Authenticator,
-	eventPusher port.EventNotifier,
-	eventBusSize int,
+	orderCreatedEventPublisher port.OrderCreatedEventPublisher,
+	sessionClosedEventPublisher port.SessionClosedEventPublisher,
 ) *SessionService {
 	session := &SessionService{
-		repository:     repository,
-		viewRepository: viewRepository,
-		authenticator:  authenticator,
-		eventNotifier:  eventPusher,
-		events:         make(chan core.DomainEvent, eventBusSize),
-		log:            logger.Instance(),
-	}
-
-	for i := 0; i < eventBusSize; i++ {
-		session.processEventsAsync()
+		repository:                  repository,
+		viewRepository:              viewRepository,
+		authenticator:               authenticator,
+		orderCreatedEventPublisher:  orderCreatedEventPublisher,
+		sessionClosedEventPublisher: sessionClosedEventPublisher,
+		log:                         logger.Instance(),
 	}
 
 	return session
@@ -72,7 +68,6 @@ func (ss *SessionService) PlaceOrders(idToken, tableID string, placeOrders *dto.
 	}
 
 	ss.pushEventsAsync(session.Events())
-
 	return nil
 }
 
@@ -202,54 +197,14 @@ func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session
 
 func (ss *SessionService) pushEventsAsync(events []core.DomainEvent) {
 	go func(events []core.DomainEvent) {
-		for _, event := range events {
-			ss.events <- event
-		}
-	}(events)
-}
-
-func (ss *SessionService) processEventsAsync() {
-	go func(eventChan <-chan core.DomainEvent) {
-		for e := range eventChan {
+		for _, e := range events {
 			if orderCreatedEvent, ok := e.(event.OrderCreated); ok {
-				_ = ss.processOrderCreatedEvent(orderCreatedEvent)
-			} else if sessionClosedEvent, ok := e.(event.SessionClosed); ok {
-				_ = ss.processSessionClosedEvent(sessionClosedEvent)
+				ss.orderCreatedEventPublisher.NotifyEvent(orderCreatedEvent)
+			} else if sessionClosedEvent, ok := e.(core.SessionClosedEvent); ok {
+				ss.sessionClosedEventPublisher.NotifyEvent(sessionClosedEvent)
 			} else {
 				ss.log.Warn("unsupported event type skipping event processing")
 			}
 		}
-	}(ss.events)
-}
-
-func (ss *SessionService) processOrderCreatedEvent(event event.OrderCreated) error {
-	orderCreatedEventView, err := ss.viewRepository.OrderCreatedEventView(event.SessionID(), event.OrderID())
-	if err != nil {
-		return err
-	}
-
-	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
-	orderCreatedEventView.ID = event.ID()
-	err = ss.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (ss *SessionService) processSessionClosedEvent(event event.SessionClosed) error {
-	sessionClosedEventView, err := ss.viewRepository.SessionClosedEventView(event.SessionID())
-	if err != nil {
-		return err
-	}
-
-	sessionClosedEventView.InvokeTime = event.InvokeTime().Unix()
-	sessionClosedEventView.ID = event.ID()
-	err = ss.eventNotifier.NotifySessionClosedEvent(sessionClosedEventView)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	}(events)
 }
