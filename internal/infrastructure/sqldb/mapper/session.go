@@ -2,10 +2,10 @@ package mapper
 
 import (
 	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/session/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/session/domain/entity"
 	"github.com/mechatron-x/atehere/internal/session/domain/valueobject"
-	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"gorm.io/gorm"
 )
 

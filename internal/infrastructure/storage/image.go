@@ -1,4 +1,4 @@
-package infrastructure
+package storage
 
 import (
 	"encoding/base64"
@@ -20,7 +20,7 @@ type (
 	}
 )
 
-func NewImageStorage(fileSaver FileSaver, location string) (*ImageStorage, error) {
+func NewImage(fileSaver FileSaver, location string) (*ImageStorage, error) {
 	_, err := os.ReadDir(location)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read image storage location, reason: %v", err)

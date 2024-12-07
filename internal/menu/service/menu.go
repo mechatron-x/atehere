@@ -12,7 +12,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/menu/port"
 )
 
-type Menu struct {
+type MenuService struct {
 	repository   port.MenuRepository
 	authService  port.Authenticator
 	imageStorage port.ImageStorage
@@ -24,8 +24,8 @@ func NewMenu(
 	authService port.Authenticator,
 	fileService port.ImageStorage,
 	apiConf config.Api,
-) *Menu {
-	return &Menu{
+) *MenuService {
+	return &MenuService{
 		repository:   repository,
 		authService:  authService,
 		imageStorage: fileService,
@@ -33,7 +33,7 @@ func NewMenu(
 	}
 }
 
-func (ms *Menu) Create(idToken string, createDto *dto.MenuCreate) (*dto.Menu, error) {
+func (ms *MenuService) Create(idToken string, createDto *dto.MenuCreate) (*dto.Menu, error) {
 	menu, err := createDto.ToAggregate()
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -50,7 +50,7 @@ func (ms *Menu) Create(idToken string, createDto *dto.MenuCreate) (*dto.Menu, er
 	return dto.ToMenu(menu, ms.createImageURL), nil
 }
 
-func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto.Menu, error) {
+func (ms *MenuService) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto.Menu, error) {
 	menuID, err := uuid.Parse(createDto.MenuID)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -93,7 +93,7 @@ func (ms *Menu) AddMenuItem(idToken string, createDto *dto.MenuItemCreate) (*dto
 	return dto.ToMenu(menu, ms.createImageURL), nil
 }
 
-func (ms *Menu) ListForCustomer(filterDto *dto.MenuFilter) ([]dto.Menu, error) {
+func (ms *MenuService) ListForCustomer(filterDto *dto.MenuFilter) ([]dto.Menu, error) {
 	verifiedRestaurantID, err := uuid.Parse(filterDto.RestaurantID)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -107,7 +107,7 @@ func (ms *Menu) ListForCustomer(filterDto *dto.MenuFilter) ([]dto.Menu, error) {
 	return dto.ToMenuList(menus, ms.createImageURL), nil
 }
 
-func (ms *Menu) createImageURL(imageName valueobject.Image) string {
+func (ms *MenuService) createImageURL(imageName valueobject.Image) string {
 	if core.IsEmptyString(imageName.String()) {
 		return ""
 	}
@@ -115,7 +115,7 @@ func (ms *Menu) createImageURL(imageName valueobject.Image) string {
 	return fmt.Sprintf("%s/static/%s", ms.apiConf.URL, imageName.String())
 }
 
-func (ms *Menu) verifyOwnership(idToken, restaurantID string) error {
+func (ms *MenuService) verifyOwnership(idToken, restaurantID string) error {
 	verifiedRestaurantID, err := uuid.Parse(restaurantID)
 	if err != nil {
 		return err

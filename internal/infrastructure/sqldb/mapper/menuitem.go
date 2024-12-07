@@ -3,9 +3,9 @@ package mapper
 import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/menu/domain/entity"
 	"github.com/mechatron-x/atehere/internal/menu/domain/valueobject"
-	"github.com/mechatron-x/atehere/internal/sqldb/model"
 )
 
 type MenuItem struct{}

@@ -2,25 +2,25 @@ package repository
 
 import (
 	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/mapper"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/menu/domain/aggregate"
-	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
-	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"gorm.io/gorm"
 )
 
-type Menu struct {
+type MenuRepository struct {
 	db     *gorm.DB
 	mapper mapper.Menu
 }
 
-func NewMenu(db *gorm.DB) *Menu {
-	return &Menu{
+func NewMenu(db *gorm.DB) *MenuRepository {
+	return &MenuRepository{
 		db:     db,
 		mapper: mapper.Menu{},
 	}
 }
 
-func (m *Menu) Save(menu *aggregate.Menu) error {
+func (m *MenuRepository) Save(menu *aggregate.Menu) error {
 	menuModel := m.mapper.FromAggregate(menu)
 
 	tx := m.db.Begin()
@@ -54,7 +54,7 @@ func (m *Menu) Save(menu *aggregate.Menu) error {
 	return result.Error
 }
 
-func (m *Menu) GetByID(id uuid.UUID) (*aggregate.Menu, error) {
+func (m *MenuRepository) GetByID(id uuid.UUID) (*aggregate.Menu, error) {
 	menuModel := new(model.Menu)
 
 	result := m.db.
@@ -69,7 +69,7 @@ func (m *Menu) GetByID(id uuid.UUID) (*aggregate.Menu, error) {
 	return m.mapper.FromModel(menuModel)
 }
 
-func (m *Menu) GetManyByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu, error) {
+func (m *MenuRepository) GetManyByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu, error) {
 	menuModels := make([]model.Menu, 0)
 
 	result := m.db.
@@ -84,7 +84,7 @@ func (m *Menu) GetManyByRestaurantID(restaurantID uuid.UUID) ([]*aggregate.Menu,
 	return m.mapper.FromModels(menuModels)
 }
 
-func (m *Menu) IsRestaurantOwner(restaurantID, ownerID uuid.UUID) bool {
+func (m *MenuRepository) IsRestaurantOwner(restaurantID, ownerID uuid.UUID) bool {
 	restaurantModel := new(model.Restaurant)
 
 	result := m.db.

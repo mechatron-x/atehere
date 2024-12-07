@@ -12,9 +12,20 @@ type (
 		InvokeTime() time.Time
 	}
 
+	DomainEventHandler[TEvent DomainEvent] interface {
+		HandleDomainEvent(event TEvent) error
+	}
+)
+
+type (
 	BaseEvent struct {
 		id         uuid.UUID
 		invokeTime time.Time
+	}
+
+	SessionClosedEvent struct {
+		BaseEvent
+		sessionID uuid.UUID
 	}
 )
 
@@ -31,4 +42,15 @@ func (be BaseEvent) ID() uuid.UUID {
 
 func (be BaseEvent) InvokeTime() time.Time {
 	return be.invokeTime
+}
+
+func NewSessionClosedEvent(sessionID uuid.UUID) SessionClosedEvent {
+	return SessionClosedEvent{
+		BaseEvent: NewDomainEvent(),
+		sessionID: sessionID,
+	}
+}
+
+func (sc SessionClosedEvent) SessionID() uuid.UUID {
+	return sc.sessionID
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/config"
-	"github.com/mechatron-x/atehere/internal/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

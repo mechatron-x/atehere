@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"github.com/mechatron-x/atehere/internal/session/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/session/dto"
@@ -11,39 +11,35 @@ import (
 	"go.uber.org/zap"
 )
 
-type Session struct {
-	repository     port.SessionRepository
-	viewRepository port.SessionViewRepository
-	authenticator  port.Authenticator
-	eventNotifier  port.EventNotifier
-	events         chan core.DomainEvent
-	log            *zap.Logger
+type SessionService struct {
+	repository                  port.SessionRepository
+	viewRepository              port.SessionViewRepository
+	authenticator               port.Authenticator
+	orderCreatedEventPublisher  port.OrderCreatedEventPublisher
+	sessionClosedEventPublisher port.SessionClosedEventPublisher
+	log                         *zap.Logger
 }
 
 func NewSession(
 	repository port.SessionRepository,
 	viewRepository port.SessionViewRepository,
 	authenticator port.Authenticator,
-	eventPusher port.EventNotifier,
-	eventBusSize int,
-) *Session {
-	session := &Session{
-		repository:     repository,
-		viewRepository: viewRepository,
-		authenticator:  authenticator,
-		eventNotifier:  eventPusher,
-		events:         make(chan core.DomainEvent, eventBusSize),
-		log:            logger.Instance(),
-	}
-
-	for i := 0; i < eventBusSize; i++ {
-		session.processEventsAsync()
+	orderCreatedEventPublisher port.OrderCreatedEventPublisher,
+	sessionClosedEventPublisher port.SessionClosedEventPublisher,
+) *SessionService {
+	session := &SessionService{
+		repository:                  repository,
+		viewRepository:              viewRepository,
+		authenticator:               authenticator,
+		orderCreatedEventPublisher:  orderCreatedEventPublisher,
+		sessionClosedEventPublisher: sessionClosedEventPublisher,
+		log:                         logger.Instance(),
 	}
 
 	return session
 }
 
-func (ss *Session) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) error {
+func (ss *SessionService) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
@@ -72,11 +68,10 @@ func (ss *Session) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOr
 	}
 
 	ss.pushEventsAsync(session.Events())
-
 	return nil
 }
 
-func (ss *Session) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
+func (ss *SessionService) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -106,7 +101,7 @@ func (ss *Session) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, 
 	return ordersView, nil
 }
 
-func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
+func (ss *SessionService) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
 	_, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -121,7 +116,7 @@ func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, e
 	if err != nil {
 		return nil, err
 	}
-  
+
 	ordersView := &dto.OrderList{
 		Orders: dto.FromManagerOrdersView(managerOrders),
 	}
@@ -134,7 +129,7 @@ func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, e
 	return ordersView, nil
 }
 
-func (ss *Session) TableOrdersView(tableID string) (*dto.OrderList, error) {
+func (ss *SessionService) TableOrdersView(tableID string) (*dto.OrderList, error) {
 	verifiedTableID, err := uuid.Parse(tableID)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -157,7 +152,7 @@ func (ss *Session) TableOrdersView(tableID string) (*dto.OrderList, error) {
 	return ordersView, nil
 }
 
-func (ss *Session) Checkout(idToken, tableID string) error {
+func (ss *SessionService) Checkout(idToken, tableID string) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
@@ -189,7 +184,7 @@ func (ss *Session) Checkout(idToken, tableID string) error {
 	return nil
 }
 
-func (ss *Session) getActiveSession(tableID uuid.UUID) *aggregate.Session {
+func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session {
 	session, err := ss.repository.GetByTableID(tableID)
 	if err != nil {
 		session = aggregate.NewSession()
@@ -200,56 +195,16 @@ func (ss *Session) getActiveSession(tableID uuid.UUID) *aggregate.Session {
 	return session
 }
 
-func (ss *Session) pushEventsAsync(events []core.DomainEvent) {
+func (ss *SessionService) pushEventsAsync(events []core.DomainEvent) {
 	go func(events []core.DomainEvent) {
-		for _, event := range events {
-			ss.events <- event
-		}
-	}(events)
-}
-
-func (ss *Session) processEventsAsync() {
-	go func(eventChan <-chan core.DomainEvent) {
-		for e := range eventChan {
+		for _, e := range events {
 			if orderCreatedEvent, ok := e.(event.OrderCreated); ok {
-				_ = ss.processOrderCreatedEvent(orderCreatedEvent)
-			} else if sessionClosedEvent, ok := e.(event.SessionClosed); ok {
-				_ = ss.processSessionClosedEvent(sessionClosedEvent)
+				ss.orderCreatedEventPublisher.NotifyEvent(orderCreatedEvent)
+			} else if sessionClosedEvent, ok := e.(core.SessionClosedEvent); ok {
+				ss.sessionClosedEventPublisher.NotifyEvent(sessionClosedEvent)
 			} else {
 				ss.log.Warn("unsupported event type skipping event processing")
 			}
 		}
-	}(ss.events)
-}
-
-func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
-	orderCreatedEventView, err := ss.viewRepository.OrderCreatedEventView(event.SessionID(), event.OrderID())
-	if err != nil {
-		return err
-	}
-
-	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
-	orderCreatedEventView.ID = event.ID()
-	err = ss.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (ss *Session) processSessionClosedEvent(event event.SessionClosed) error {
-	sessionClosedEventView, err := ss.viewRepository.SessionClosedEventView(event.SessionID())
-	if err != nil {
-		return err
-	}
-
-	sessionClosedEventView.InvokeTime = event.InvokeTime().Unix()
-	sessionClosedEventView.ID = event.ID()
-	err = ss.eventNotifier.NotifySessionClosedEvent(sessionClosedEventView)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	}(events)
 }

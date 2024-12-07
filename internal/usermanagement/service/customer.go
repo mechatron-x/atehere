@@ -3,14 +3,14 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/usermanagement/dto"
 	"github.com/mechatron-x/atehere/internal/usermanagement/port"
 )
 
-type Customer struct {
+type CustomerService struct {
 	customerRepo port.CustomerRepository
 	authService  port.Authenticator
 }
@@ -18,14 +18,14 @@ type Customer struct {
 func NewCustomer(
 	customerRepository port.CustomerRepository,
 	authService port.Authenticator,
-) *Customer {
-	return &Customer{
+) *CustomerService {
+	return &CustomerService{
 		customerRepo: customerRepository,
 		authService:  authService,
 	}
 }
 
-func (cs *Customer) SignUp(customerDto *dto.CustomerSignUp) (*dto.Customer, error) {
+func (cs *CustomerService) SignUp(customerDto *dto.CustomerSignUp) (*dto.Customer, error) {
 	customer, err := customerDto.Validate()
 	if err != nil {
 		logger.Error("Cannot map customer dto to aggregate", err)
@@ -56,7 +56,7 @@ func (cs *Customer) SignUp(customerDto *dto.CustomerSignUp) (*dto.Customer, erro
 	}, nil
 }
 
-func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
+func (cs *CustomerService) GetProfile(idToken string) (*dto.Customer, error) {
 	customer, err := cs.getCustomer(idToken)
 	if err != nil {
 		logger.Error("Cannot get customer with id token", err)
@@ -71,7 +71,7 @@ func (cs *Customer) GetProfile(idToken string) (*dto.Customer, error) {
 	}, nil
 }
 
-func (cs *Customer) UpdateProfile(idToken string, customerDto *dto.Customer) (*dto.Customer, error) {
+func (cs *CustomerService) UpdateProfile(idToken string, customerDto *dto.Customer) (*dto.Customer, error) {
 	customer, err := cs.getCustomer(idToken)
 	if err != nil {
 		logger.Error("Cannot get customer with id token", err)
@@ -98,7 +98,7 @@ func (cs *Customer) UpdateProfile(idToken string, customerDto *dto.Customer) (*d
 	}, nil
 }
 
-func (cs *Customer) getCustomer(idToken string) (*aggregate.Customer, error) {
+func (cs *CustomerService) getCustomer(idToken string) (*aggregate.Customer, error) {
 	id, err := cs.authService.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)

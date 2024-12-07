@@ -2,25 +2,25 @@ package repository
 
 import (
 	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/mapper"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/restaurant/domain/aggregate"
-	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
-	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"gorm.io/gorm"
 )
 
-type Restaurant struct {
+type RestaurantRepository struct {
 	db     *gorm.DB
 	mapper mapper.Restaurant
 }
 
-func NewRestaurant(db *gorm.DB) *Restaurant {
-	return &Restaurant{
+func NewRestaurant(db *gorm.DB) *RestaurantRepository {
+	return &RestaurantRepository{
 		db:     db,
 		mapper: mapper.Restaurant{},
 	}
 }
 
-func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
+func (r *RestaurantRepository) Save(restaurant *aggregate.Restaurant) error {
 	restaurantModel := r.mapper.FromAggregate(restaurant)
 
 	tx := r.db.Begin()
@@ -55,7 +55,7 @@ func (r *Restaurant) Save(restaurant *aggregate.Restaurant) error {
 	return result.Error
 }
 
-func (r *Restaurant) GetByID(id uuid.UUID) (*aggregate.Restaurant, error) {
+func (r *RestaurantRepository) GetByID(id uuid.UUID) (*aggregate.Restaurant, error) {
 	restaurantModel := new(model.Restaurant)
 
 	result := r.db.
@@ -69,7 +69,7 @@ func (r *Restaurant) GetByID(id uuid.UUID) (*aggregate.Restaurant, error) {
 	return r.mapper.FromModel(restaurantModel)
 }
 
-func (r *Restaurant) GetAll() ([]*aggregate.Restaurant, error) {
+func (r *RestaurantRepository) GetAll() ([]*aggregate.Restaurant, error) {
 	restaurantModels := make([]model.Restaurant, 0)
 
 	result := r.db.
@@ -83,7 +83,7 @@ func (r *Restaurant) GetAll() ([]*aggregate.Restaurant, error) {
 	return r.mapper.FromModels(restaurantModels)
 }
 
-func (r *Restaurant) GetByOwnerID(ownerID uuid.UUID) ([]*aggregate.Restaurant, error) {
+func (r *RestaurantRepository) GetByOwnerID(ownerID uuid.UUID) ([]*aggregate.Restaurant, error) {
 	models := make([]model.Restaurant, 0)
 
 	result := r.db.

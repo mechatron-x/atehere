@@ -12,7 +12,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/restaurant/port"
 )
 
-type Restaurant struct {
+type RestaurantService struct {
 	repository    port.RestaurantRepository
 	authenticator port.Authenticator
 	imageStorage  port.ImageStorage
@@ -24,8 +24,8 @@ func NewRestaurant(
 	authenticator port.Authenticator,
 	fileService port.ImageStorage,
 	apiConf config.Api,
-) *Restaurant {
-	return &Restaurant{
+) *RestaurantService {
+	return &RestaurantService{
 		repository:    repository,
 		authenticator: authenticator,
 		imageStorage:  fileService,
@@ -33,7 +33,7 @@ func NewRestaurant(
 	}
 }
 
-func (rs *Restaurant) Create(idToken string, createDto *dto.RestaurantCreate) (*dto.Restaurant, error) {
+func (rs *RestaurantService) Create(idToken string, createDto *dto.RestaurantCreate) (*dto.Restaurant, error) {
 	restaurant, err := createDto.ToAggregate()
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -71,7 +71,7 @@ func (rs *Restaurant) Create(idToken string, createDto *dto.RestaurantCreate) (*
 	return &restaurantDto, nil
 }
 
-func (rs *Restaurant) GetOneForCustomer(id string) (*dto.RestaurantSummary, error) {
+func (rs *RestaurantService) GetOneForCustomer(id string) (*dto.RestaurantSummary, error) {
 	verifiedID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -86,7 +86,7 @@ func (rs *Restaurant) GetOneForCustomer(id string) (*dto.RestaurantSummary, erro
 	return &summaryDto, nil
 }
 
-func (rs *Restaurant) ListForManager(idToken string) ([]dto.Restaurant, error) {
+func (rs *RestaurantService) ListForManager(idToken string) ([]dto.Restaurant, error) {
 	managerID, err := rs.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -105,7 +105,7 @@ func (rs *Restaurant) ListForManager(idToken string) ([]dto.Restaurant, error) {
 	return dto.ToRestaurantList(restaurants, rs.createImageURL), nil
 }
 
-func (rs *Restaurant) ListForCustomer(filterDto *dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
+func (rs *RestaurantService) ListForCustomer(filterDto *dto.RestaurantFilter) ([]dto.RestaurantSummary, error) {
 	restaurants, err := rs.repository.GetAll()
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
@@ -116,7 +116,7 @@ func (rs *Restaurant) ListForCustomer(filterDto *dto.RestaurantFilter) ([]dto.Re
 	return dto.ToRestaurantSummaryList(filteredRestaurants, rs.createImageURL), nil
 }
 
-func (rs Restaurant) Delete(idToken, restaurantID string) error {
+func (rs RestaurantService) Delete(idToken, restaurantID string) error {
 	managerID, err := rs.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
@@ -146,19 +146,19 @@ func (rs Restaurant) Delete(idToken, restaurantID string) error {
 	return rs.repository.Save(restaurant)
 }
 
-func (rs *Restaurant) AvailableWorkingDays() []string {
+func (rs *RestaurantService) AvailableWorkingDays() []string {
 	return valueobject.AvailableWeekdays()
 }
 
-func (rs *Restaurant) FoundationYearFormat() string {
+func (rs *RestaurantService) FoundationYearFormat() string {
 	return valueobject.FoundationYearFormat
 }
 
-func (rs *Restaurant) WorkingTimeFormat() string {
+func (rs *RestaurantService) WorkingTimeFormat() string {
 	return valueobject.WorkingTimeFormat
 }
 
-func (rs *Restaurant) createImageURL(imageName valueobject.Image) string {
+func (rs *RestaurantService) createImageURL(imageName valueobject.Image) string {
 	if core.IsEmptyString(imageName.String()) {
 		return ""
 	}

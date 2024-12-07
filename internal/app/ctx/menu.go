@@ -3,14 +3,14 @@ package ctx
 import (
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/repository"
 	"github.com/mechatron-x/atehere/internal/menu/port"
 	"github.com/mechatron-x/atehere/internal/menu/service"
-	"github.com/mechatron-x/atehere/internal/sqldb/repository"
 	"gorm.io/gorm"
 )
 
 type Menu struct {
-	handler handler.Menu
+	handler handler.MenuHandler
 }
 
 func NewMenu(
@@ -21,13 +21,13 @@ func NewMenu(
 ) Menu {
 	repo := repository.NewMenu(db)
 	ms := service.NewMenu(repo, authenticator, imageStorage, apiConf)
-	handler := handler.NewMenuHandler(*ms)
+	handler := handler.NewMenu(*ms)
 
 	return Menu{
 		handler: handler,
 	}
 }
 
-func (m Menu) Handler() handler.Menu {
+func (m Menu) Handler() handler.MenuHandler {
 	return m.handler
 }
