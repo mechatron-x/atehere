@@ -1,4 +1,4 @@
-package infrastructure
+package authenticator
 
 import (
 	"encoding/json"
@@ -37,7 +37,7 @@ type (
 	}
 )
 
-func NewMockAuthenticator(apiConf config.Api, fileManager FileManager) (*MockAuthenticator, error) {
+func NewMock(apiConf config.Api, fileManager FileManager) (*MockAuthenticator, error) {
 	path := fmt.Sprintf("%s/%s", apiConf.StaticRoot, authenticatorFilename)
 
 	mockAuthenticator := &MockAuthenticator{

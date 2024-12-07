@@ -2,25 +2,25 @@ package repository
 
 import (
 	"github.com/google/uuid"
-	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
-	"github.com/mechatron-x/atehere/internal/sqldb/model"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/mapper"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"gorm.io/gorm"
 )
 
-type Manager struct {
+type ManagerRepository struct {
 	db     *gorm.DB
 	mapper mapper.Manager
 }
 
-func NewManager(db *gorm.DB) *Manager {
-	return &Manager{
+func NewManager(db *gorm.DB) *ManagerRepository {
+	return &ManagerRepository{
 		db:     db,
 		mapper: mapper.NewManager(),
 	}
 }
 
-func (m *Manager) Save(manager *aggregate.Manager) error {
+func (m *ManagerRepository) Save(manager *aggregate.Manager) error {
 	model := m.mapper.FromAggregate(manager)
 
 	result := m.db.Save(model)
@@ -28,7 +28,7 @@ func (m *Manager) Save(manager *aggregate.Manager) error {
 	return result.Error
 }
 
-func (m *Manager) GetByID(id uuid.UUID) (*aggregate.Manager, error) {
+func (m *ManagerRepository) GetByID(id uuid.UUID) (*aggregate.Manager, error) {
 	managerModel := new(model.Manager)
 
 	result := m.db.

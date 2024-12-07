@@ -1,4 +1,4 @@
-package infrastructure
+package notifier
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 )
 
 type (
-	FirebaseEventNotifier struct {
+	FirestoreNotifier struct {
 		app *firebase.App
 	}
 )
 
-func NewFirecloudEventNotifier(conf config.Firebase) (*FirebaseEventNotifier, error) {
+func NewFirestore(conf config.Firebase) (*FirestoreNotifier, error) {
 	bytes, err := json.Marshal(conf)
 	if err != nil {
 		return nil, err
@@ -29,12 +29,12 @@ func NewFirecloudEventNotifier(conf config.Firebase) (*FirebaseEventNotifier, er
 		return nil, err
 	}
 
-	return &FirebaseEventNotifier{
+	return &FirestoreNotifier{
 		app: app,
 	}, nil
 }
 
-func (fen *FirebaseEventNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEvent) error {
+func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEvent) error {
 	client, err := fen.app.Firestore(context.Background())
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (fen *FirebaseEventNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreate
 	return err
 }
 
-func (fen *FirebaseEventNotifier) NotifySessionClosedEvent(event *dto.SessionClosedEvent) error {
+func (fen *FirestoreNotifier) NotifySessionClosedEvent(event *dto.SessionClosedEvent) error {
 	client, err := fen.app.Firestore(context.Background())
 	if err != nil {
 		return err

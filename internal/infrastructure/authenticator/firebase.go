@@ -1,4 +1,4 @@
-package infrastructure
+package authenticator
 
 import (
 	"context"
@@ -16,7 +16,7 @@ type (
 	}
 )
 
-func NewFirebaseAuthenticator(conf config.Firebase) (*FirebaseAuthenticator, error) {
+func NewFirebase(conf config.Firebase) (*FirebaseAuthenticator, error) {
 	bytes, err := json.Marshal(conf)
 	if err != nil {
 		return nil, err

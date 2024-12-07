@@ -2,26 +2,26 @@ package repository
 
 import (
 	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/mapper"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/session/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/session/dto"
-	"github.com/mechatron-x/atehere/internal/sqldb/mapper"
-	"github.com/mechatron-x/atehere/internal/sqldb/model"
 	"gorm.io/gorm"
 )
 
-type Session struct {
+type SessionRepository struct {
 	db     *gorm.DB
 	mapper mapper.Session
 }
 
-func NewSession(db *gorm.DB) *Session {
-	return &Session{
+func NewSession(db *gorm.DB) *SessionRepository {
+	return &SessionRepository{
 		db:     db,
 		mapper: mapper.Session{},
 	}
 }
 
-func (s *Session) Save(session *aggregate.Session) error {
+func (s *SessionRepository) Save(session *aggregate.Session) error {
 	sessionModel := s.mapper.FromAggregate(session)
 
 	tx := s.db.Begin()
@@ -56,7 +56,7 @@ func (s *Session) Save(session *aggregate.Session) error {
 	return result.Error
 }
 
-func (s *Session) GetByTableID(tableID uuid.UUID) (*aggregate.Session, error) {
+func (s *SessionRepository) GetByTableID(tableID uuid.UUID) (*aggregate.Session, error) {
 	sessionModel := new(model.Session)
 
 	result := s.db.

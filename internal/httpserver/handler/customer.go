@@ -10,15 +10,15 @@ import (
 	"github.com/mechatron-x/atehere/internal/usermanagement/service"
 )
 
-type Customer struct {
-	cs service.Customer
+type CustomerHandler struct {
+	cs service.CustomerService
 }
 
-func NewCustomerHandler(cs service.Customer) Customer {
-	return Customer{cs}
+func NewCustomer(cs service.CustomerService) CustomerHandler {
+	return CustomerHandler{cs}
 }
 
-func (ch Customer) SignUp(w http.ResponseWriter, r *http.Request) {
+func (ch CustomerHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	reqBody := &dto.CustomerSignUp{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
@@ -35,7 +35,7 @@ func (ch Customer) SignUp(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, customer, nil, http.StatusCreated)
 }
 
-func (ch Customer) GetProfile(w http.ResponseWriter, r *http.Request) {
+func (ch CustomerHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
 		response.Encode(w, nil, err)
@@ -51,7 +51,7 @@ func (ch Customer) GetProfile(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, customer, err)
 }
 
-func (ch Customer) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+func (ch CustomerHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
 		response.Encode(w, nil, err)

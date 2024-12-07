@@ -8,10 +8,12 @@ import (
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/httpserver"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
-	"github.com/mechatron-x/atehere/internal/infrastructure"
-	"github.com/mechatron-x/atehere/internal/logger"
-	"github.com/mechatron-x/atehere/internal/sqldb"
-	"github.com/mechatron-x/atehere/internal/sqldb/model"
+	"github.com/mechatron-x/atehere/internal/infrastructure/authenticator"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/notifier"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
+	"github.com/mechatron-x/atehere/internal/infrastructure/storage"
 	"github.com/mechatron-x/atehere/internal/usermanagement/port"
 )
 
@@ -43,36 +45,36 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	diskFileManager := infrastructure.NewDiskFileManager()
-	imageStorage, err := infrastructure.NewImageStorage(diskFileManager, conf.Api.StaticRoot)
+	diskFileManager := storage.NewDiskFileManager()
+	imageStorage, err := storage.NewImage(diskFileManager, conf.Api.StaticRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	var authenticator port.Authenticator
+	var auth port.Authenticator
 
 	if conf.Environment == config.PROD {
-		authenticator, err = infrastructure.NewFirebaseAuthenticator(conf.Firebase)
+		auth, err = authenticator.NewFirebase(conf.Firebase)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		authenticator, err = infrastructure.NewMockAuthenticator(conf.Api, diskFileManager)
+		auth, err = authenticator.NewMock(conf.Api, diskFileManager)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	eventNotifier, err := infrastructure.NewFirecloudEventNotifier(conf.Firebase)
+	eventNotifier, err := notifier.NewFirestore(conf.Firebase)
 	if err != nil {
 		return nil, err
 	}
 
-	customerCtx := ctx.NewCustomer(db, authenticator)
-	managerCtx := ctx.NewManager(db, authenticator)
-	restaurantCtx := ctx.NewRestaurant(db, authenticator, imageStorage, conf.Api)
-	menuCtx := ctx.NewMenu(db, authenticator, imageStorage, conf.Api)
-	sessionCtx := ctx.NewSession(db, authenticator, eventNotifier)
+	customerCtx := ctx.NewCustomer(db, auth)
+	managerCtx := ctx.NewManager(db, auth)
+	restaurantCtx := ctx.NewRestaurant(db, auth, imageStorage, conf.Api)
+	menuCtx := ctx.NewMenu(db, auth, imageStorage, conf.Api)
+	sessionCtx := ctx.NewSession(db, auth, eventNotifier)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,

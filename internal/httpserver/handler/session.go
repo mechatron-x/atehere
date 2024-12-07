@@ -10,15 +10,15 @@ import (
 	"github.com/mechatron-x/atehere/internal/session/service"
 )
 
-type Session struct {
-	ss service.Session
+type SessionHandler struct {
+	ss service.SessionService
 }
 
-func NewSessionHandler(ss service.Session) Session {
-	return Session{ss}
+func NewSession(ss service.SessionService) SessionHandler {
+	return SessionHandler{ss}
 }
 
-func (sh Session) PlaceOrders(w http.ResponseWriter, r *http.Request) {
+func (sh SessionHandler) PlaceOrders(w http.ResponseWriter, r *http.Request) {
 	tableID := r.PathValue("table_id")
 
 	reqBody := &dto.PlaceOrders{}
@@ -41,7 +41,7 @@ func (sh Session) PlaceOrders(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (sh Session) Checkout(w http.ResponseWriter, r *http.Request) {
+func (sh SessionHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 	tableID := r.PathValue("table_id")
 
 	token, err := header.GetBearerToken(r.Header)
@@ -57,7 +57,7 @@ func (sh Session) Checkout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (sh Session) CustomerOrdersView(w http.ResponseWriter, r *http.Request) {
+func (sh SessionHandler) CustomerOrdersView(w http.ResponseWriter, r *http.Request) {
 	tableID := r.PathValue("table_id")
 
 	token, err := header.GetBearerToken(r.Header)
@@ -75,7 +75,7 @@ func (sh Session) CustomerOrdersView(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, orders, nil)
 }
 
-func (sh Session) ManagerOrdersView(w http.ResponseWriter, r *http.Request) {
+func (sh SessionHandler) ManagerOrdersView(w http.ResponseWriter, r *http.Request) {
 	table_id := r.PathValue("table_id")
 
 	token, err := header.GetBearerToken(r.Header)
@@ -83,7 +83,7 @@ func (sh Session) ManagerOrdersView(w http.ResponseWriter, r *http.Request) {
 		response.Encode(w, nil, err)
 		return
 	}
-  
+
 	orders, err := sh.ss.ManagerOrdersView(token, table_id)
 	if err != nil {
 		response.Encode(w, nil, err)
@@ -93,7 +93,7 @@ func (sh Session) ManagerOrdersView(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, orders, nil)
 }
 
-func (sh Session) TableOrdersView(w http.ResponseWriter, r *http.Request) {
+func (sh SessionHandler) TableOrdersView(w http.ResponseWriter, r *http.Request) {
 	table_id := r.PathValue("table_id")
 
 	orders, err := sh.ss.TableOrdersView(table_id)

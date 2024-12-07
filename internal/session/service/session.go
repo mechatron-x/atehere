@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"github.com/mechatron-x/atehere/internal/session/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/session/dto"
@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type Session struct {
+type SessionService struct {
 	repository     port.SessionRepository
 	viewRepository port.SessionViewRepository
 	authenticator  port.Authenticator
@@ -26,8 +26,8 @@ func NewSession(
 	authenticator port.Authenticator,
 	eventPusher port.EventNotifier,
 	eventBusSize int,
-) *Session {
-	session := &Session{
+) *SessionService {
+	session := &SessionService{
 		repository:     repository,
 		viewRepository: viewRepository,
 		authenticator:  authenticator,
@@ -43,7 +43,7 @@ func NewSession(
 	return session
 }
 
-func (ss *Session) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) error {
+func (ss *SessionService) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
@@ -76,7 +76,7 @@ func (ss *Session) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOr
 	return nil
 }
 
-func (ss *Session) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
+func (ss *SessionService) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -106,7 +106,7 @@ func (ss *Session) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, 
 	return ordersView, nil
 }
 
-func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
+func (ss *SessionService) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
 	_, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -121,7 +121,7 @@ func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, e
 	if err != nil {
 		return nil, err
 	}
-  
+
 	ordersView := &dto.OrderList{
 		Orders: dto.FromManagerOrdersView(managerOrders),
 	}
@@ -134,7 +134,7 @@ func (ss *Session) ManagerOrdersView(idToken, tableID string) (*dto.OrderList, e
 	return ordersView, nil
 }
 
-func (ss *Session) TableOrdersView(tableID string) (*dto.OrderList, error) {
+func (ss *SessionService) TableOrdersView(tableID string) (*dto.OrderList, error) {
 	verifiedTableID, err := uuid.Parse(tableID)
 	if err != nil {
 		return nil, core.NewValidationFailureError(err)
@@ -157,7 +157,7 @@ func (ss *Session) TableOrdersView(tableID string) (*dto.OrderList, error) {
 	return ordersView, nil
 }
 
-func (ss *Session) Checkout(idToken, tableID string) error {
+func (ss *SessionService) Checkout(idToken, tableID string) error {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return core.NewUnauthorizedError(err)
@@ -189,7 +189,7 @@ func (ss *Session) Checkout(idToken, tableID string) error {
 	return nil
 }
 
-func (ss *Session) getActiveSession(tableID uuid.UUID) *aggregate.Session {
+func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session {
 	session, err := ss.repository.GetByTableID(tableID)
 	if err != nil {
 		session = aggregate.NewSession()
@@ -200,7 +200,7 @@ func (ss *Session) getActiveSession(tableID uuid.UUID) *aggregate.Session {
 	return session
 }
 
-func (ss *Session) pushEventsAsync(events []core.DomainEvent) {
+func (ss *SessionService) pushEventsAsync(events []core.DomainEvent) {
 	go func(events []core.DomainEvent) {
 		for _, event := range events {
 			ss.events <- event
@@ -208,7 +208,7 @@ func (ss *Session) pushEventsAsync(events []core.DomainEvent) {
 	}(events)
 }
 
-func (ss *Session) processEventsAsync() {
+func (ss *SessionService) processEventsAsync() {
 	go func(eventChan <-chan core.DomainEvent) {
 		for e := range eventChan {
 			if orderCreatedEvent, ok := e.(event.OrderCreated); ok {
@@ -222,7 +222,7 @@ func (ss *Session) processEventsAsync() {
 	}(ss.events)
 }
 
-func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
+func (ss *SessionService) processOrderCreatedEvent(event event.OrderCreated) error {
 	orderCreatedEventView, err := ss.viewRepository.OrderCreatedEventView(event.SessionID(), event.OrderID())
 	if err != nil {
 		return err
@@ -238,7 +238,7 @@ func (ss *Session) processOrderCreatedEvent(event event.OrderCreated) error {
 	return nil
 }
 
-func (ss *Session) processSessionClosedEvent(event event.SessionClosed) error {
+func (ss *SessionService) processSessionClosedEvent(event event.SessionClosed) error {
 	sessionClosedEventView, err := ss.viewRepository.SessionClosedEventView(event.SessionID())
 	if err != nil {
 		return err

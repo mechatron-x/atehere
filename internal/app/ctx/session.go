@@ -2,14 +2,14 @@ package ctx
 
 import (
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/repository"
 	"github.com/mechatron-x/atehere/internal/session/port"
 	"github.com/mechatron-x/atehere/internal/session/service"
-	"github.com/mechatron-x/atehere/internal/sqldb/repository"
 	"gorm.io/gorm"
 )
 
 type Session struct {
-	handler handler.Session
+	handler handler.SessionHandler
 }
 
 func NewSession(
@@ -28,12 +28,12 @@ func NewSession(
 		10,
 	)
 
-	handler := handler.NewSessionHandler(*service)
+	handler := handler.NewSession(*service)
 	return Session{
 		handler: handler,
 	}
 }
 
-func (s Session) Handler() handler.Session {
+func (s Session) Handler() handler.SessionHandler {
 	return s.handler
 }
