@@ -2,7 +2,6 @@ package port
 
 import (
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/session/dto"
 )
 
@@ -13,7 +12,7 @@ type (
 	}
 
 	OrderCreatedEventPublisher interface {
-		NotifyEvent(event event.OrderCreated)
+		NotifyEvent(event core.OrderCreatedEvent)
 	}
 
 	SessionClosedEventPublisher interface {

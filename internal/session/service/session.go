@@ -5,7 +5,6 @@ import (
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"github.com/mechatron-x/atehere/internal/session/domain/aggregate"
-	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/session/dto"
 	"github.com/mechatron-x/atehere/internal/session/port"
 	"go.uber.org/zap"
@@ -198,7 +197,7 @@ func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session
 func (ss *SessionService) pushEventsAsync(events []core.DomainEvent) {
 	go func(events []core.DomainEvent) {
 		for _, e := range events {
-			if orderCreatedEvent, ok := e.(event.OrderCreated); ok {
+			if orderCreatedEvent, ok := e.(core.OrderCreatedEvent); ok {
 				ss.orderCreatedEventPublisher.NotifyEvent(orderCreatedEvent)
 			} else if sessionClosedEvent, ok := e.(core.SessionClosedEvent); ok {
 				ss.sessionClosedEventPublisher.NotifyEvent(sessionClosedEvent)

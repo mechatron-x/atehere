@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	"github.com/mechatron-x/atehere/internal/session/domain/event"
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/session/port"
 )
 
@@ -20,7 +20,7 @@ func NotifyOrder(
 	}
 }
 
-func (rcv *NotifyOrderConsumer) ProcessEvent(event event.OrderCreated) error {
+func (rcv *NotifyOrderConsumer) ProcessEvent(event core.OrderCreatedEvent) error {
 	orderCreatedEventView, err := rcv.sessionViewRepository.OrderCreatedEventView(event.SessionID(), event.OrderID())
 	if err != nil {
 		return err

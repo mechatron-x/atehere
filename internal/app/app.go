@@ -17,7 +17,6 @@ import (
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/infrastructure/storage"
-	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/usermanagement/port"
 )
 
@@ -74,7 +73,7 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	orderCreatedPublisher := broker.NewPublisher[event.OrderCreated]()
+	orderCreatedPublisher := broker.NewPublisher[core.OrderCreatedEvent]()
 	sessionClosedPublisher := broker.NewPublisher[core.SessionClosedEvent]()
 
 	createBillConsumer := consumer.CreateBill()

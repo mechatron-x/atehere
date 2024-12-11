@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/session/domain/entity"
-	"github.com/mechatron-x/atehere/internal/session/domain/event"
 )
 
 type Session struct {
@@ -69,7 +68,7 @@ func (s *Session) PlaceOrders(orders ...entity.Order) error {
 		}
 
 		s.orders = append(s.orders, o)
-		s.RaiseEvent(event.NewOrderCreated(s.ID(), o.ID(), o.Quantity().Int()))
+		s.RaiseEvent(core.NewOrderCreatedEvent(s.ID(), o.ID(), o.Quantity().Int()))
 	}
 
 	if len(errs) != 0 {
@@ -87,7 +86,7 @@ func (s *Session) Close(customerID uuid.UUID) error {
 
 	s.SetDeletedAt(time.Now())
 	s.endTime = time.Now()
-	s.RaiseEvent(core.NewSessionClosedEvent(s.ID()))
+	s.RaiseEvent(core.NewSessionClosedEvent(s.ID(), s.toEventOrders()))
 	s.orders = make([]entity.Order, 0)
 
 	return nil
@@ -110,4 +109,17 @@ func (s *Session) closeSessionPolicy(customerID uuid.UUID) error {
 	}
 
 	return errors.New("the session cannot be closed because, specified customer is not a participant")
+}
+
+func (s *Session) toEventOrders() []core.Order {
+	eventOrders := make([]core.Order, 0)
+	for _, o := range s.orders {
+		eventOrders = append(eventOrders, core.Order{
+			MenuItemID: o.MenuItemID(),
+			OrderedBy:  o.OrderedBy(),
+			Quantity:   o.Quantity().Int(),
+		})
+	}
+
+	return eventOrders
 }

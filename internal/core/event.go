@@ -11,46 +11,84 @@ type (
 		ID() uuid.UUID
 		InvokeTime() time.Time
 	}
+)
 
-	DomainEventHandler[TEvent DomainEvent] interface {
-		HandleDomainEvent(event TEvent) error
+type (
+	Order struct {
+		MenuItemID uuid.UUID
+		OrderedBy  uuid.UUID
+		Quantity   int
 	}
 )
 
 type (
-	BaseEvent struct {
+	domainEvent struct {
 		id         uuid.UUID
 		invokeTime time.Time
 	}
 
 	SessionClosedEvent struct {
-		BaseEvent
+		domainEvent
 		sessionID uuid.UUID
+		orders    []Order
+	}
+
+	OrderCreatedEvent struct {
+		domainEvent
+		sessionID uuid.UUID
+		orderID   uuid.UUID
+		quantity  int
 	}
 )
 
-func NewDomainEvent() BaseEvent {
-	return BaseEvent{
+func newDomainEvent() domainEvent {
+	return domainEvent{
 		id:         uuid.New(),
 		invokeTime: time.Now(),
 	}
 }
 
-func (be BaseEvent) ID() uuid.UUID {
-	return be.id
+func (rcv domainEvent) ID() uuid.UUID {
+	return rcv.id
 }
 
-func (be BaseEvent) InvokeTime() time.Time {
-	return be.invokeTime
+func (rcv domainEvent) InvokeTime() time.Time {
+	return rcv.invokeTime
 }
 
-func NewSessionClosedEvent(sessionID uuid.UUID) SessionClosedEvent {
+func NewSessionClosedEvent(sessionID uuid.UUID, orders []Order) SessionClosedEvent {
 	return SessionClosedEvent{
-		BaseEvent: NewDomainEvent(),
-		sessionID: sessionID,
+		domainEvent: newDomainEvent(),
+		sessionID:   sessionID,
+		orders:      orders,
 	}
 }
 
-func (sc SessionClosedEvent) SessionID() uuid.UUID {
-	return sc.sessionID
+func (rcv SessionClosedEvent) SessionID() uuid.UUID {
+	return rcv.sessionID
+}
+
+func (rcv SessionClosedEvent) Orders() []Order {
+	return rcv.orders
+}
+
+func NewOrderCreatedEvent(sessionID, orderID uuid.UUID, quantity int) OrderCreatedEvent {
+	return OrderCreatedEvent{
+		domainEvent: newDomainEvent(),
+		sessionID:   sessionID,
+		orderID:     orderID,
+		quantity:    quantity,
+	}
+}
+
+func (rcv OrderCreatedEvent) SessionID() uuid.UUID {
+	return rcv.sessionID
+}
+
+func (rcv OrderCreatedEvent) OrderID() uuid.UUID {
+	return rcv.orderID
+}
+
+func (rcv OrderCreatedEvent) Quantity() int {
+	return rcv.quantity
 }

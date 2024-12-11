@@ -6,7 +6,6 @@ import (
 	"github.com/mechatron-x/atehere/internal/infrastructure/broker"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/repository"
 	"github.com/mechatron-x/atehere/internal/session/consumer"
-	"github.com/mechatron-x/atehere/internal/session/domain/event"
 	"github.com/mechatron-x/atehere/internal/session/port"
 	"github.com/mechatron-x/atehere/internal/session/service"
 	"gorm.io/gorm"
@@ -20,7 +19,7 @@ func NewSession(
 	db *gorm.DB,
 	authenticator port.Authenticator,
 	eventNotifier port.EventNotifier,
-	orderCreatedEventPublisher *broker.Publisher[event.OrderCreated],
+	orderCreatedEventPublisher *broker.Publisher[core.OrderCreatedEvent],
 	sessionClosedEventPublisher *broker.Publisher[core.SessionClosedEvent],
 ) Session {
 	repo := repository.NewSession(db)
