@@ -7,6 +7,7 @@ import (
 
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/view"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -31,7 +32,19 @@ func Connect(config config.DB) (*gorm.DB, error) {
 }
 
 func Migrate(db *gorm.DB, model ...any) error {
-	return db.AutoMigrate(model...)
+	if err := db.AutoMigrate(); err != nil {
+		return err
+	}
+
+	if err := db.Migrator().CreateView("table_orders", gorm.ViewOption{Query: view.TableOrdersView(db), Replace: true}); err != nil {
+		return err
+	}
+
+	if err := db.Migrator().CreateView("manager_orders", gorm.ViewOption{Query: view.ManagerOrdersView(db), Replace: true}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createDsn(config config.DB) string {

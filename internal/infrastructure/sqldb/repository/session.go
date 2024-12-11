@@ -139,28 +139,9 @@ func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.Session
 func (sv *SessionView) GetTableOrdersView(tableID uuid.UUID) ([]dto.TableOrderView, error) {
 	var orders []dto.TableOrderView
 
-	result := sv.db.Table("session_orders").
-		Select(`
-			customers.id AS customer_id,
-			customers.full_name AS customer_full_name,
-			menu_items.name AS menu_item_name,
-			SUM(session_orders.quantity) AS quantity,
-			menu_items.price_amount AS unit_price,
-			menu_items.price_amount * SUM(session_orders.quantity) AS total_price,
-			menu_items.price_currency AS currency
-		`).Joins("INNER JOIN sessions ON session_orders.session_id = sessions.id").
-		Joins("INNER JOIN menu_items ON session_orders.menu_item_id = menu_items.id").
-		Joins("INNER JOIN customers ON session_orders.ordered_by = customers.id").
-		Where("sessions.table_id = ?", tableID.String()).
-		Group(`
-			menu_items.name,
-			menu_items.price_amount,
-			menu_items.price_currency,
-			customers.full_name,
-			customers.id
-		`).Order("customers.full_name").
+	result := sv.db.Table("table_orders").
+		Where("table_id = ?", tableID.String()).
 		Scan(&orders)
-
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -171,21 +152,9 @@ func (sv *SessionView) GetTableOrdersView(tableID uuid.UUID) ([]dto.TableOrderVi
 func (sv *SessionView) GetManagerOrdersView(tableID uuid.UUID) ([]dto.ManagerOrderView, error) {
 	var orders []dto.ManagerOrderView
 
-	result := sv.db.Table("session_orders").
-		Select(`
-			menu_items.name AS menu_item_name,
-			SUM(session_orders.quantity) AS quantity,
-			menu_items.price_amount AS unit_price,
-			menu_items.price_amount * SUM(session_orders.quantity) AS total_price,
-			menu_items.price_currency AS currency
-		`).Joins("INNER JOIN sessions ON session_orders.session_id = sessions.id").
-		Joins("INNER JOIN menu_items ON session_orders.menu_item_id = menu_items.id").
-		Where("sessions.table_id = ?", tableID.String()).
-		Group(`
-			menu_items.name,
-			menu_items.price_amount,
-			menu_items.price_currency
-		`).Scan(&orders)
+	result := sv.db.Table("manager_orders").
+		Where("table_id = ?", tableID.String()).
+		Scan(&orders)
 	if result.Error != nil {
 		return nil, result.Error
 	}
