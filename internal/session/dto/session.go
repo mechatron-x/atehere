@@ -14,7 +14,7 @@ type (
 		InvokeTime   int64
 	}
 
-	Checkout struct {
+	Session struct {
 		SessionID string `json:"session_id"`
 	}
 )

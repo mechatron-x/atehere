@@ -34,11 +34,13 @@ func (sh SessionHandler) PlaceOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sh.ss.PlaceOrders(token, tableID, reqBody)
+	session, err := sh.ss.PlaceOrders(token, tableID, reqBody)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return
 	}
+
+	response.Encode(w, session, nil)
 }
 
 func (sh SessionHandler) Checkout(w http.ResponseWriter, r *http.Request) {
@@ -50,13 +52,13 @@ func (sh SessionHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionClosed, err := sh.ss.Checkout(token, tableID)
+	session, err := sh.ss.Checkout(token, tableID)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return
 	}
 
-	response.Encode(w, sessionClosed, nil, http.StatusAccepted)
+	response.Encode(w, session, nil, http.StatusAccepted)
 }
 
 func (sh SessionHandler) CustomerOrdersView(w http.ResponseWriter, r *http.Request) {

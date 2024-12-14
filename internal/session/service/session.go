@@ -41,36 +41,36 @@ func NewSession(
 	return session
 }
 
-func (ss *SessionService) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) error {
+func (ss *SessionService) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) (*dto.Session, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
-		return core.NewUnauthorizedError(err)
+		return nil, core.NewUnauthorizedError(err)
 	}
 
 	verifiedTableID, err := uuid.Parse(tableID)
 	if err != nil {
-		return core.NewValidationFailureError(err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
 	orders, err := placeOrders.ToEntities(customerID)
 	if err != nil {
-		return core.NewValidationFailureError(err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
 	session := ss.getActiveSession(verifiedTableID)
 	fmt.Println(session.EndTime().Format(time.ANSIC))
 	err = session.PlaceOrders(orders...)
 	if err != nil {
-		return core.NewDomainIntegrityViolationError(err)
+		return nil, core.NewDomainIntegrityViolationError(err)
 	}
 
 	err = ss.repository.Save(session)
 	if err != nil {
-		return core.NewPersistenceFailureError(err)
+		return nil, core.NewPersistenceFailureError(err)
 	}
 
 	ss.pushEventsAsync(session.Events())
-	return nil
+	return &dto.Session{SessionID: session.ID().String()}, nil
 }
 
 func (ss *SessionService) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
@@ -154,7 +154,7 @@ func (ss *SessionService) TableOrdersView(tableID string) (*dto.OrderList, error
 	return ordersView, nil
 }
 
-func (ss *SessionService) Checkout(idToken, tableID string) (*dto.Checkout, error) {
+func (ss *SessionService) Checkout(idToken, tableID string) (*dto.Session, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)
@@ -183,7 +183,7 @@ func (ss *SessionService) Checkout(idToken, tableID string) (*dto.Checkout, erro
 
 	ss.pushEventsAsync(session.Events())
 
-	return &dto.Checkout{SessionID: session.ID().String()}, nil
+	return &dto.Session{SessionID: session.ID().String()}, nil
 }
 
 func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session {
