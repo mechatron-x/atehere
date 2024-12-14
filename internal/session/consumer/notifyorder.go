@@ -26,6 +26,7 @@ func (rcv *NotifyOrderConsumer) ProcessEvent(event core.OrderCreatedEvent) error
 		return err
 	}
 
+	orderCreatedEventView.Quantity = event.Quantity()
 	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
 	orderCreatedEventView.ID = event.ID()
 	err = rcv.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)

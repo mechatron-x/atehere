@@ -20,7 +20,7 @@ func NewSession(
 	authenticator port.Authenticator,
 	eventNotifier port.EventNotifier,
 	orderCreatedEventPublisher *broker.Publisher[core.OrderCreatedEvent],
-	sessionClosedEventPublisher *broker.Publisher[core.SessionClosedEvent],
+	sessionClosedEventPublisher *broker.Publisher[core.CheckoutEvent],
 ) Session {
 	repo := repository.NewSession(db)
 	viewRepo := repository.NewSessionView(db)

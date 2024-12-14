@@ -7,16 +7,20 @@ import (
 )
 
 type (
-	SessionClosedEvent struct {
+	CheckoutEvent struct {
 		ID           uuid.UUID
 		RestaurantID string
 		Table        string
 		InvokeTime   int64
 	}
+
+	Checkout struct {
+		SessionID string `json:"session_id"`
+	}
 )
 
-func (scv SessionClosedEvent) Message() string {
-	return fmt.Sprintf("Session of table %s has been closed",
+func (scv CheckoutEvent) Message() string {
+	return fmt.Sprintf("Table %s has requested checkout",
 		scv.Table,
 	)
 }

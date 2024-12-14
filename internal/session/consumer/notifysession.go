@@ -20,15 +20,15 @@ func NewNotifySession(
 	}
 }
 
-func (rcv *NotifySessionConsumer) ProcessEvent(event core.SessionClosedEvent) error {
-	sessionClosedEvent, err := rcv.sessionViewRepository.SessionClosedEventView(event.SessionID())
+func (rcv *NotifySessionConsumer) ProcessEvent(event core.CheckoutEvent) error {
+	checkoutEvent, err := rcv.sessionViewRepository.CheckoutEventView(event.SessionID())
 	if err != nil {
 		return err
 	}
 
-	sessionClosedEvent.InvokeTime = event.InvokeTime().Unix()
-	sessionClosedEvent.ID = event.ID()
-	err = rcv.eventNotifier.NotifySessionClosedEvent(sessionClosedEvent)
+	checkoutEvent.InvokeTime = event.InvokeTime().Unix()
+	checkoutEvent.ID = event.ID()
+	err = rcv.eventNotifier.NotifyCheckoutEvent(checkoutEvent)
 	if err != nil {
 		return err
 	}

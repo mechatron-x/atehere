@@ -51,6 +51,8 @@ func (s Session) FromModel(model *model.Session) (*aggregate.Session, error) {
 		order.SetMenuItemID(menuItemID)
 		order.SetOrderedBy(orderedBy)
 		order.SetQuantity(quantity)
+		order.SetCreatedAt(o.CreatedAt)
+		order.SetUpdatedAt(o.UpdatedAt)
 
 		orders = append(orders, order)
 	}
@@ -93,6 +95,8 @@ func (s Session) FromAggregate(aggregate *aggregate.Session) *model.Session {
 			MenuItemID: o.MenuItemID().String(),
 			OrderedBy:  o.OrderedBy().String(),
 			Quantity:   o.Quantity().Int(),
+			CreatedAt:  o.CreatedAt(),
+			UpdatedAt:  o.UpdatedAt(),
 		}
 
 		orders = append(orders, order)

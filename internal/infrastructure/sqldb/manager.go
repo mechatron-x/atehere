@@ -32,7 +32,7 @@ func Connect(config config.DB) (*gorm.DB, error) {
 }
 
 func Migrate(db *gorm.DB, model ...any) error {
-	if err := db.AutoMigrate(); err != nil {
+	if err := db.AutoMigrate(model...); err != nil {
 		return err
 	}
 

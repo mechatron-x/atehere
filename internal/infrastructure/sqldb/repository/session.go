@@ -118,7 +118,7 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 	}, nil
 }
 
-func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEvent, error) {
+func (sv *SessionView) CheckoutEventView(sessionID uuid.UUID) (*dto.CheckoutEvent, error) {
 	sessionModel := new(model.Session)
 
 	result := sv.db.
@@ -130,7 +130,7 @@ func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.Session
 		return nil, result.Error
 	}
 
-	return &dto.SessionClosedEvent{
+	return &dto.CheckoutEvent{
 		RestaurantID: sessionModel.Table.RestaurantID,
 		Table:        sessionModel.Table.Name,
 	}, nil

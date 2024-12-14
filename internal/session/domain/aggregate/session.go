@@ -61,14 +61,14 @@ func (s *Session) SetOrders(orders []entity.Order) {
 func (s *Session) PlaceOrders(orders ...entity.Order) error {
 	errs := make([]error, 0)
 
-	for _, o := range orders {
-		if err := s.placeOrderPolicy(o); err != nil {
-			errs = append(errs, err)
-			continue
-		}
+	if !s.endTime.IsZero() {
+		return errors.New("checkout requested for this session")
+	}
 
-		s.orders = append(s.orders, o)
-		s.RaiseEvent(core.NewOrderCreatedEvent(s.ID(), o.ID(), o.Quantity().Int()))
+	for _, o := range orders {
+		if err := s.placeOrder(o); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	if len(errs) != 0 {
@@ -78,17 +78,35 @@ func (s *Session) PlaceOrders(orders ...entity.Order) error {
 	return nil
 }
 
-func (s *Session) Close(customerID uuid.UUID) error {
-	err := s.closeSessionPolicy(customerID)
+func (s *Session) Checkout(customerID uuid.UUID) error {
+	err := s.checkoutPolicy(customerID)
 	if err != nil {
 		return err
 	}
 
-	s.SetDeletedAt(time.Now())
 	s.endTime = time.Now()
-	s.RaiseEvent(core.NewSessionClosedEvent(s.ID(), s.toEventOrders()))
-	s.orders = make([]entity.Order, 0)
+	s.RaiseEvent(core.NewCheckoutEvent(s.ID(), s.toEventOrders()))
 
+	return nil
+}
+
+func (s *Session) placeOrder(newOrder entity.Order) error {
+	if err := s.placeOrderPolicy(newOrder); err != nil {
+		return err
+	}
+
+	if i, err := s.findPreviousOrder(newOrder.MenuItemID(), newOrder.OrderedBy()); err == nil {
+		order := s.orders[i]
+		if err := order.AddQuantity(newOrder.Quantity()); err != nil {
+			return err
+		}
+		s.orders[i] = order
+		s.RaiseEvent(core.NewOrderCreatedEvent(s.ID(), order.ID(), newOrder.Quantity().Int()))
+		return nil
+	}
+
+	s.orders = append(s.orders, newOrder)
+	s.RaiseEvent(core.NewOrderCreatedEvent(s.ID(), newOrder.ID(), newOrder.Quantity().Int()))
 	return nil
 }
 
@@ -98,10 +116,23 @@ func (s *Session) placeOrderPolicy(order entity.Order) error {
 			return fmt.Errorf("order with id %s already exists", order.ID())
 		}
 	}
+
 	return nil
 }
 
-func (s *Session) closeSessionPolicy(customerID uuid.UUID) error {
+func (s *Session) findPreviousOrder(menuItemID, orderedBy uuid.UUID) (int, error) {
+	for i, o := range s.orders {
+		if o.OrderedBy() != orderedBy || o.MenuItemID() != menuItemID {
+			continue
+		}
+
+		return i, nil
+	}
+
+	return -1, fmt.Errorf("order with %s menu item id and %s customer id not found", menuItemID, orderedBy)
+}
+
+func (s *Session) checkoutPolicy(customerID uuid.UUID) error {
 	for _, order := range s.orders {
 		if order.OrderedBy() == customerID {
 			return nil
@@ -114,11 +145,8 @@ func (s *Session) closeSessionPolicy(customerID uuid.UUID) error {
 func (s *Session) toEventOrders() []core.Order {
 	eventOrders := make([]core.Order, 0)
 	for _, o := range s.orders {
-		eventOrders = append(eventOrders, core.Order{
-			MenuItemID: o.MenuItemID(),
-			OrderedBy:  o.OrderedBy(),
-			Quantity:   o.Quantity().Int(),
-		})
+		order := core.NewOrder(o.MenuItemID(), o.OrderedBy(), o.Quantity().Int())
+		eventOrders = append(eventOrders, order)
 	}
 
 	return eventOrders

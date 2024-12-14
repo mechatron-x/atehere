@@ -50,11 +50,13 @@ func (sh SessionHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sh.ss.Checkout(token, tableID)
+	sessionClosed, err := sh.ss.Checkout(token, tableID)
 	if err != nil {
 		response.Encode(w, nil, err)
 		return
 	}
+
+	response.Encode(w, sessionClosed, nil, http.StatusAccepted)
 }
 
 func (sh SessionHandler) CustomerOrdersView(w http.ResponseWriter, r *http.Request) {

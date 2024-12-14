@@ -25,5 +25,7 @@ type (
 		OrderedBy  string
 		Customer   Customer `gorm:"foreignKey:OrderedBy"`
 		Quantity   int      `gorm:"not null"`
+		CreatedAt  time.Time
+		UpdatedAt  time.Time
 	}
 )

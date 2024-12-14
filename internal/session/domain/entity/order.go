@@ -42,3 +42,14 @@ func (o *Order) SetOrderedBy(orderedBy uuid.UUID) {
 func (o *Order) SetQuantity(quantity valueobject.Quantity) {
 	o.quantity = quantity
 }
+
+func (o *Order) AddQuantity(quantity valueobject.Quantity) error {
+	newQuantity := o.quantity.Int() + quantity.Int()
+	verifiedQuantity, err := valueobject.NewQuantity(newQuantity)
+	if err != nil {
+		return err
+	}
+
+	o.quantity = verifiedQuantity
+	return nil
+}

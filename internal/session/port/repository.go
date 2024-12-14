@@ -16,6 +16,6 @@ type (
 		OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEvent, error)
 		GetTableOrdersView(tableID uuid.UUID) ([]dto.TableOrderView, error)
 		GetManagerOrdersView(tableID uuid.UUID) ([]dto.ManagerOrderView, error)
-		SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEvent, error)
+		CheckoutEventView(sessionID uuid.UUID) (*dto.CheckoutEvent, error)
 	}
 )

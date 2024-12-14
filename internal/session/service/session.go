@@ -1,6 +1,9 @@
 package service
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
@@ -55,7 +58,7 @@ func (ss *SessionService) PlaceOrders(idToken, tableID string, placeOrders *dto.
 	}
 
 	session := ss.getActiveSession(verifiedTableID)
-
+	fmt.Println(session.EndTime().Format(time.ANSIC))
 	err = session.PlaceOrders(orders...)
 	if err != nil {
 		return core.NewDomainIntegrityViolationError(err)
@@ -151,36 +154,36 @@ func (ss *SessionService) TableOrdersView(tableID string) (*dto.OrderList, error
 	return ordersView, nil
 }
 
-func (ss *SessionService) Checkout(idToken, tableID string) error {
+func (ss *SessionService) Checkout(idToken, tableID string) (*dto.Checkout, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
-		return core.NewUnauthorizedError(err)
+		return nil, core.NewUnauthorizedError(err)
 	}
 
 	verifiedCustomerID, err := uuid.Parse(customerID)
 	if err != nil {
-		return core.NewValidationFailureError(err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
 	verifiedTableID, err := uuid.Parse(tableID)
 	if err != nil {
-		return core.NewValidationFailureError(err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
 	session := ss.getActiveSession(verifiedTableID)
-	err = session.Close(verifiedCustomerID)
+	err = session.Checkout(verifiedCustomerID)
 	if err != nil {
-		return core.NewDomainIntegrityViolationError(err)
+		return nil, core.NewDomainIntegrityViolationError(err)
 	}
 
 	err = ss.repository.Save(session)
 	if err != nil {
-		return core.NewPersistenceFailureError(err)
+		return nil, core.NewPersistenceFailureError(err)
 	}
 
 	ss.pushEventsAsync(session.Events())
 
-	return nil
+	return &dto.Checkout{SessionID: session.ID().String()}, nil
 }
 
 func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session {
@@ -199,7 +202,7 @@ func (ss *SessionService) pushEventsAsync(events []core.DomainEvent) {
 		for _, e := range events {
 			if orderCreatedEvent, ok := e.(core.OrderCreatedEvent); ok {
 				ss.orderCreatedEventPublisher.NotifyEvent(orderCreatedEvent)
-			} else if sessionClosedEvent, ok := e.(core.SessionClosedEvent); ok {
+			} else if sessionClosedEvent, ok := e.(core.CheckoutEvent); ok {
 				ss.sessionClosedEventPublisher.NotifyEvent(sessionClosedEvent)
 			} else {
 				ss.log.Warn("unsupported event type skipping event processing")

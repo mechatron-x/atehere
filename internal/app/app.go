@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/mechatron-x/atehere/internal/app/ctx"
-	"github.com/mechatron-x/atehere/internal/billing/consumer"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/httpserver"
@@ -43,6 +42,7 @@ func New(conf *config.App) (*App, error) {
 		&model.MenuItem{},
 		&model.Session{},
 		&model.SessionOrder{},
+		&model.PostOrder{},
 	)
 	if err != nil {
 		return nil, err
@@ -74,16 +74,14 @@ func New(conf *config.App) (*App, error) {
 	}
 
 	orderCreatedPublisher := broker.NewPublisher[core.OrderCreatedEvent]()
-	sessionClosedPublisher := broker.NewPublisher[core.SessionClosedEvent]()
-
-	createBillConsumer := consumer.CreateBill()
-	sessionClosedPublisher.AddConsumer(createBillConsumer)
+	sessionClosedPublisher := broker.NewPublisher[core.CheckoutEvent]()
 
 	customerCtx := ctx.NewCustomer(db, auth)
 	managerCtx := ctx.NewManager(db, auth)
 	restaurantCtx := ctx.NewRestaurant(db, auth, imageStorage, conf.Api)
 	menuCtx := ctx.NewMenu(db, auth, imageStorage, conf.Api)
 	sessionCtx := ctx.NewSession(db, auth, eventNotifier, orderCreatedPublisher, sessionClosedPublisher)
+	_ = ctx.NewPostOrder(db, sessionClosedPublisher)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,

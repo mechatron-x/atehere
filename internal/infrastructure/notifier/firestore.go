@@ -53,7 +53,7 @@ func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEve
 	return err
 }
 
-func (fen *FirestoreNotifier) NotifySessionClosedEvent(event *dto.SessionClosedEvent) error {
+func (fen *FirestoreNotifier) NotifyCheckoutEvent(event *dto.CheckoutEvent) error {
 	client, err := fen.app.Firestore(context.Background())
 	if err != nil {
 		return err
