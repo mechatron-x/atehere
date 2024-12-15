@@ -20,7 +20,7 @@ func NotifyOrder(
 	}
 }
 
-func (rcv *NotifyOrderConsumer) ProcessEvent(event core.OrderCreatedEvent) error {
+func (rcv *NotifyOrderConsumer) ProcessEvent(event core.NewOrderEvent) error {
 	orderCreatedEventView, err := rcv.sessionViewRepository.OrderCreatedEventView(event.SessionID(), event.OrderID())
 	if err != nil {
 		return err

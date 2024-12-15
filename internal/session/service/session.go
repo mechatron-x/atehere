@@ -200,7 +200,7 @@ func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session
 func (ss *SessionService) pushEventsAsync(events []core.DomainEvent) {
 	go func(events []core.DomainEvent) {
 		for _, e := range events {
-			if orderCreatedEvent, ok := e.(core.OrderCreatedEvent); ok {
+			if orderCreatedEvent, ok := e.(core.NewOrderEvent); ok {
 				ss.orderCreatedEventPublisher.NotifyEvent(orderCreatedEvent)
 			} else if sessionClosedEvent, ok := e.(core.CheckoutEvent); ok {
 				ss.sessionClosedEventPublisher.NotifyEvent(sessionClosedEvent)

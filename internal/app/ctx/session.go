@@ -19,7 +19,7 @@ func NewSession(
 	db *gorm.DB,
 	authenticator port.Authenticator,
 	eventNotifier port.EventNotifier,
-	orderCreatedEventPublisher *broker.Publisher[core.OrderCreatedEvent],
+	orderCreatedEventPublisher *broker.Publisher[core.NewOrderEvent],
 	sessionClosedEventPublisher *broker.Publisher[core.CheckoutEvent],
 ) Session {
 	repo := repository.NewSession(db)
@@ -28,7 +28,7 @@ func NewSession(
 	notifyOrderCreatedEvent := consumer.NotifyOrder(viewRepo, eventNotifier)
 	orderCreatedEventPublisher.AddConsumer(notifyOrderCreatedEvent)
 
-	notifyConsumer := consumer.NewNotifySession(viewRepo, eventNotifier)
+	notifyConsumer := consumer.NewNotifyCheckout(viewRepo, eventNotifier)
 	sessionClosedEventPublisher.AddConsumer(notifyConsumer)
 
 	service := service.NewSession(

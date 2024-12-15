@@ -5,22 +5,22 @@ import (
 	"github.com/mechatron-x/atehere/internal/session/port"
 )
 
-type NotifySessionConsumer struct {
+type NotifyCheckoutConsumer struct {
 	sessionViewRepository port.SessionViewRepository
 	eventNotifier         port.EventNotifier
 }
 
-func NewNotifySession(
+func NewNotifyCheckout(
 	sessionViewRepository port.SessionViewRepository,
 	eventNotifier port.EventNotifier,
-) *NotifySessionConsumer {
-	return &NotifySessionConsumer{
+) *NotifyCheckoutConsumer {
+	return &NotifyCheckoutConsumer{
 		sessionViewRepository: sessionViewRepository,
 		eventNotifier:         eventNotifier,
 	}
 }
 
-func (rcv *NotifySessionConsumer) ProcessEvent(event core.CheckoutEvent) error {
+func (rcv *NotifyCheckoutConsumer) ProcessEvent(event core.CheckoutEvent) error {
 	checkoutEvent, err := rcv.sessionViewRepository.CheckoutEventView(event.SessionID())
 	if err != nil {
 		return err

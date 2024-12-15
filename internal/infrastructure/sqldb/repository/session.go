@@ -85,7 +85,7 @@ func NewSessionView(db *gorm.DB) *SessionView {
 	}
 }
 
-func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEvent, error) {
+func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.NewOrderEvent, error) {
 	sessionModel := new(model.Session)
 	orderModel := new(model.SessionOrder)
 
@@ -109,7 +109,7 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 		return nil, result.Error
 	}
 
-	return &dto.OrderCreatedEvent{
+	return &dto.NewOrderEvent{
 		RestaurantID: sessionModel.Table.RestaurantID,
 		Table:        sessionModel.Table.Name,
 		OrderedBy:    orderModel.Customer.FullName,

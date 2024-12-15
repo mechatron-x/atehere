@@ -59,20 +59,14 @@ func (s *Session) SetOrders(orders []entity.Order) {
 }
 
 func (s *Session) PlaceOrders(orders ...entity.Order) error {
-	errs := make([]error, 0)
-
-	if !s.endTime.IsZero() {
-		return errors.New("checkout requested for this session")
-	}
-
 	for _, o := range orders {
-		if err := s.placeOrder(o); err != nil {
-			errs = append(errs, err)
+		if err := s.placeOrderPolicy(o); err != nil {
+			return err
 		}
-	}
 
-	if len(errs) != 0 {
-		return errors.Join(errs...)
+		if err := s.placeOrder(o); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -91,10 +85,6 @@ func (s *Session) Checkout(customerID uuid.UUID) error {
 }
 
 func (s *Session) placeOrder(newOrder entity.Order) error {
-	if err := s.placeOrderPolicy(newOrder); err != nil {
-		return err
-	}
-
 	if i, err := s.findPreviousOrder(newOrder.MenuItemID(), newOrder.OrderedBy()); err == nil {
 		order := s.orders[i]
 		if err := order.AddQuantity(newOrder.Quantity()); err != nil {
@@ -111,6 +101,10 @@ func (s *Session) placeOrder(newOrder entity.Order) error {
 }
 
 func (s *Session) placeOrderPolicy(order entity.Order) error {
+	if s.isSessionEnded() {
+		return errors.New("checkout requested for this session")
+	}
+
 	for _, o := range s.orders {
 		if o.ID() == order.ID() {
 			return fmt.Errorf("order with id %s already exists", order.ID())
@@ -118,6 +112,10 @@ func (s *Session) placeOrderPolicy(order entity.Order) error {
 	}
 
 	return nil
+}
+
+func (s *Session) isSessionEnded() bool {
+	return !s.endTime.IsZero()
 }
 
 func (s *Session) findPreviousOrder(menuItemID, orderedBy uuid.UUID) (int, error) {
@@ -145,7 +143,11 @@ func (s *Session) checkoutPolicy(customerID uuid.UUID) error {
 func (s *Session) toEventOrders() []core.Order {
 	eventOrders := make([]core.Order, 0)
 	for _, o := range s.orders {
-		order := core.NewOrder(o.MenuItemID(), o.OrderedBy(), o.Quantity().Int())
+		order := core.Order{
+			MenuItemID: o.MenuItemID(),
+			OrderedBy:  o.OrderedBy(),
+			Quantity:   o.Quantity().Int(),
+		}
 		eventOrders = append(eventOrders, order)
 	}
 

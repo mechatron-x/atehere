@@ -34,7 +34,7 @@ func NewFirestore(conf config.Firebase) (*FirestoreNotifier, error) {
 	}, nil
 }
 
-func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEvent) error {
+func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.NewOrderEvent) error {
 	client, err := fen.app.Firestore(context.Background())
 	if err != nil {
 		return err

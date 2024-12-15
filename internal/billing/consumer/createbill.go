@@ -51,10 +51,10 @@ func (rcv *CreatePostOrdersConsumer) toPostOrders(event core.CheckoutEvent) ([]*
 func (rcv *CreatePostOrdersConsumer) toPostOrder(sessionID uuid.UUID, order core.Order) (*aggregate.PostOrder, error) {
 	postOrder := aggregate.NewPostOrder()
 	postOrder.SetSessionID(sessionID)
-	postOrder.SetMenuItemID(order.MenuItemID())
-	postOrder.SetOrderedBy(order.OrderedBy())
+	postOrder.SetMenuItemID(order.MenuItemID)
+	postOrder.SetOrderedBy(order.OrderedBy)
 
-	verifiedQuantity, err := valueobject.NewQuantity(order.Quantity())
+	verifiedQuantity, err := valueobject.NewQuantity(order.Quantity)
 	if err != nil {
 		return nil, err
 	}

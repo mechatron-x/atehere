@@ -1,8 +1,6 @@
 package dto
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/session/domain/entity"
 	"github.com/mechatron-x/atehere/internal/session/domain/valueobject"
@@ -17,16 +15,6 @@ type (
 
 	PlaceOrders struct {
 		Orders []CreateOrder `json:"orders"`
-	}
-
-	OrderCreatedEvent struct {
-		ID           uuid.UUID
-		RestaurantID string
-		Table        string
-		OrderedBy    string
-		MenuItem     string
-		Quantity     int
-		InvokeTime   int64
 	}
 
 	Order struct {
@@ -82,15 +70,6 @@ func (rcv *PlaceOrders) ToEntities(orderedBy string) ([]entity.Order, error) {
 	}
 
 	return orders, nil
-}
-
-func (rcv OrderCreatedEvent) Message() string {
-	return fmt.Sprintf("%s ordered %s x%d from table %s",
-		rcv.OrderedBy,
-		rcv.MenuItem,
-		rcv.Quantity,
-		rcv.Table,
-	)
 }
 
 func (rcv *OrderList) CalculateTotalPrice() {

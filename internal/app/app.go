@@ -73,7 +73,7 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	orderCreatedPublisher := broker.NewPublisher[core.OrderCreatedEvent]()
+	orderCreatedPublisher := broker.NewPublisher[core.NewOrderEvent]()
 	sessionClosedPublisher := broker.NewPublisher[core.CheckoutEvent]()
 
 	customerCtx := ctx.NewCustomer(db, auth)
