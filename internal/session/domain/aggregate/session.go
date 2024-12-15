@@ -96,6 +96,17 @@ func (s *Session) Checkout(customerID uuid.UUID) error {
 	return nil
 }
 
+func (s *Session) Close() error {
+	if err := s.closePolicy(); err != nil {
+		return err
+	}
+
+	s.SetDeletedAt(time.Now())
+	s.SetOrders([]entity.Order{})
+	s.state = valueobject.Completed
+	return nil
+}
+
 func (s *Session) placeOrder(newOrder entity.Order) error {
 	if i, err := s.findPreviousOrder(newOrder.MenuItemID(), newOrder.OrderedBy()); err == nil {
 		order := s.orders[i]
@@ -138,6 +149,14 @@ func (s *Session) checkoutPolicy(customerID uuid.UUID) error {
 	}
 
 	return errors.New("checkout cannot be proceed: specified customer is not a participant")
+}
+
+func (s *Session) closePolicy() error {
+	if s.state != valueobject.CheckoutPending {
+		return errors.New("session cannot be closed: checkout needed")
+	}
+
+	return nil
 }
 
 func (s *Session) findPreviousOrder(menuItemID, orderedBy uuid.UUID) (int, error) {

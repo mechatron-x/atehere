@@ -25,8 +25,8 @@ func (rcv *BillItemBuilder) SetID(id uuid.UUID) *BillItemBuilder {
 	return rcv
 }
 
-func (rcv *BillItemBuilder) SetName(name string) *BillItemBuilder {
-	rcv.billItem.name = name
+func (rcv *BillItemBuilder) SetItemName(itemName string) *BillItemBuilder {
+	rcv.billItem.itemName = itemName
 	return rcv
 }
 
@@ -36,7 +36,7 @@ func (rcv *BillItemBuilder) SetQuantity(quantity valueobject.Quantity) *BillItem
 }
 
 func (rcv *BillItemBuilder) SetPrice(price valueobject.Price) *BillItemBuilder {
-	rcv.billItem.price = price
+	rcv.billItem.unitPrice = price
 	return rcv
 }
 
