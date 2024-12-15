@@ -1,9 +1,17 @@
 package port
 
-import "github.com/mechatron-x/atehere/internal/billing/domain/aggregate"
+import (
+	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/billing/domain/aggregate"
+	"github.com/mechatron-x/atehere/internal/billing/dto"
+)
 
 type (
-	PostOrderRepository interface {
-		Save(postOrder *aggregate.PostOrder) error
+	BillRepository interface {
+		Save(bill *aggregate.Bill) error
+	}
+
+	BillViewRepository interface {
+		GetPostOrders(sessionID uuid.UUID) ([]dto.PostOrder, error)
 	}
 )

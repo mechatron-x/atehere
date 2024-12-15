@@ -44,6 +44,10 @@ func Migrate(db *gorm.DB, model ...any) error {
 		return err
 	}
 
+	if err := db.Migrator().CreateView("post_orders", gorm.ViewOption{Query: view.PostOrdersView(db), Replace: true}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

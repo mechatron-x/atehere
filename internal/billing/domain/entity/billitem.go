@@ -8,15 +8,15 @@ import (
 
 type BillItem struct {
 	core.Entity
-	owner      uuid.UUID
+	ownerID    uuid.UUID
 	itemName   string
 	quantity   valueobject.Quantity
 	unitPrice  valueobject.Price
 	paidAmount valueobject.Price
 }
 
-func (rcv *BillItem) Owner() uuid.UUID {
-	return rcv.owner
+func (rcv *BillItem) OwnerID() uuid.UUID {
+	return rcv.ownerID
 }
 
 func (rcv *BillItem) ItemName() string {
@@ -44,5 +44,5 @@ func (rcv *BillItem) TotalDue() valueobject.Price {
 }
 
 func (rcv *BillItem) PayAll() {
-	rcv.paidAmount = valueobject.NewPrice(0, rcv.unitPrice.Currency())
+	rcv.paidAmount = rcv.TotalDue()
 }

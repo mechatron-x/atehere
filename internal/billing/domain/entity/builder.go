@@ -1,27 +1,47 @@
 package entity
 
 import (
+	"errors"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/billing/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/core"
 )
 
 type BillItemBuilder struct {
-	billItem BillItem
+	billItem *BillItem
 	errs     []error
 }
 
 func NewBillItemBuilder() *BillItemBuilder {
 	return &BillItemBuilder{
-		billItem: BillItem{
+		billItem: &BillItem{
 			Entity: core.NewEntity(),
 		},
 		errs: make([]error, 0),
 	}
 }
 
-func (rcv *BillItemBuilder) SetID(id uuid.UUID) *BillItemBuilder {
-	rcv.billItem.SetID(id)
+func (rcv *BillItemBuilder) SetID(id string) *BillItemBuilder {
+	verifiedID, err := uuid.Parse(id)
+	if err != nil {
+		rcv.addError(err)
+		return rcv
+	}
+
+	rcv.billItem.SetID(verifiedID)
+	return rcv
+}
+
+func (rcv *BillItemBuilder) SetOwnerID(owner string) *BillItemBuilder {
+	verifiedOwnerID, err := uuid.Parse(owner)
+	if err != nil {
+		rcv.addError(err)
+		return rcv
+	}
+
+	rcv.billItem.ownerID = verifiedOwnerID
 	return rcv
 }
 
@@ -40,6 +60,27 @@ func (rcv *BillItemBuilder) SetPrice(price valueobject.Price) *BillItemBuilder {
 	return rcv
 }
 
-func (rcv *BillItemBuilder) Build() BillItem {
-	return rcv.billItem
+func (rcv *BillItemBuilder) SetPaidPrice(price valueobject.Price) *BillItemBuilder {
+	rcv.billItem.paidAmount = price
+	return rcv
+}
+
+func (rcv *BillItemBuilder) SetCreatedAt(createdAt time.Time) {
+	rcv.billItem.SetCreatedAt(createdAt)
+}
+
+func (rcv *BillItemBuilder) SetUpdatedAt(updatedAt time.Time) {
+	rcv.billItem.SetUpdatedAt(updatedAt)
+}
+
+func (rcv *BillItemBuilder) Build() (*BillItem, error) {
+	if len(rcv.errs) != 0 {
+		return nil, errors.Join(rcv.errs...)
+	}
+
+	return rcv.billItem, nil
+}
+
+func (rcv *BillItemBuilder) addError(err error) {
+	rcv.errs = append(rcv.errs, err)
 }

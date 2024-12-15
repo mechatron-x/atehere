@@ -42,7 +42,8 @@ func New(conf *config.App) (*App, error) {
 		&model.MenuItem{},
 		&model.Session{},
 		&model.SessionOrder{},
-		&model.PostOrder{},
+		&model.Bill{},
+		&model.BillItem{},
 	)
 	if err != nil {
 		return nil, err
@@ -89,7 +90,7 @@ func New(conf *config.App) (*App, error) {
 	)
 	checkoutEventPublisher.AddConsumer(
 		ctx.NewCheckoutConsumer(db, eventNotifier),
-		ctx.NewCreatePostOrdersConsumer(db),
+		ctx.NewCreateBillConsumer(db),
 	)
 
 	mux := httpserver.NewServeMux(

@@ -8,7 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewCreatePostOrdersConsumer(db *gorm.DB) broker.Consumer[core.CheckoutEvent] {
-	postOrdersRepository := repository.NewPostOrder(db)
-	return consumer.NewCreatePostOrders(postOrdersRepository)
+func NewCreateBillConsumer(db *gorm.DB) broker.Consumer[core.CheckoutEvent] {
+	billingRepository := repository.NewBill(db)
+	billingViewRepository := repository.NewBillView(db)
+	return consumer.NewCreateBill(billingRepository, billingViewRepository)
 }

@@ -92,7 +92,7 @@ func (s *Session) Checkout(customerID uuid.UUID) error {
 	s.endTime = time.Now()
 	s.state = valueobject.CheckoutPending
 
-	s.RaiseEvent(core.NewCheckoutEvent(s.ID(), s.toEventOrders()))
+	s.RaiseEvent(core.NewCheckoutEvent(s.ID()))
 	return nil
 }
 
@@ -169,18 +169,4 @@ func (s *Session) findPreviousOrder(menuItemID, orderedBy uuid.UUID) (int, error
 	}
 
 	return -1, fmt.Errorf("order with %s menu item id and %s customer id not found", menuItemID, orderedBy)
-}
-
-func (s *Session) toEventOrders() []core.Order {
-	eventOrders := make([]core.Order, 0)
-	for _, o := range s.orders {
-		order := core.Order{
-			MenuItemID: o.MenuItemID(),
-			OrderedBy:  o.OrderedBy(),
-			Quantity:   o.Quantity().Int(),
-		}
-		eventOrders = append(eventOrders, order)
-	}
-
-	return eventOrders
 }
