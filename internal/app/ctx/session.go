@@ -18,25 +18,18 @@ type Session struct {
 func NewSession(
 	db *gorm.DB,
 	authenticator port.Authenticator,
-	eventNotifier port.EventNotifier,
-	orderCreatedEventPublisher *broker.Publisher[core.NewOrderEvent],
-	sessionClosedEventPublisher *broker.Publisher[core.CheckoutEvent],
+	newOrderEventPublisher *broker.Publisher[core.NewOrderEvent],
+	checkoutEventPublisher *broker.Publisher[core.CheckoutEvent],
 ) Session {
 	repo := repository.NewSession(db)
 	viewRepo := repository.NewSessionView(db)
-
-	notifyOrderCreatedEvent := consumer.NotifyOrder(viewRepo, eventNotifier)
-	orderCreatedEventPublisher.AddConsumer(notifyOrderCreatedEvent)
-
-	notifyConsumer := consumer.NewNotifyCheckout(viewRepo, eventNotifier)
-	sessionClosedEventPublisher.AddConsumer(notifyConsumer)
 
 	service := service.NewSession(
 		repo,
 		viewRepo,
 		authenticator,
-		orderCreatedEventPublisher,
-		sessionClosedEventPublisher,
+		newOrderEventPublisher,
+		checkoutEventPublisher,
 	)
 
 	handler := handler.NewSession(*service)
@@ -47,4 +40,24 @@ func NewSession(
 
 func (s Session) Handler() handler.SessionHandler {
 	return s.handler
+}
+
+func NewNotifyOrderConsumer(
+	db *gorm.DB,
+	eventNotifier port.EventNotifier,
+) broker.Consumer[core.NewOrderEvent] {
+	viewRepo := repository.NewSessionView(db)
+	notifyOrderConsumer := consumer.NewNotifyOrder(viewRepo, eventNotifier)
+
+	return notifyOrderConsumer
+}
+
+func NewCheckoutConsumer(
+	db *gorm.DB,
+	eventNotifier port.EventNotifier,
+) broker.Consumer[core.CheckoutEvent] {
+	viewRepo := repository.NewSessionView(db)
+	notifyCheckout := consumer.NewNotifyCheckout(viewRepo, eventNotifier)
+
+	return notifyCheckout
 }

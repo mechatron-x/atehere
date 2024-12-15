@@ -48,7 +48,7 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	diskFileManager := storage.NewDiskFileManager()
+	diskFileManager := storage.NewFile()
 	imageStorage, err := storage.NewImage(diskFileManager, conf.Api.StaticRoot)
 	if err != nil {
 		return nil, err
@@ -73,15 +73,24 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	orderCreatedPublisher := broker.NewPublisher[core.NewOrderEvent]()
-	sessionClosedPublisher := broker.NewPublisher[core.CheckoutEvent]()
+	// Publishers
+	newOrderEventPublisher := broker.NewPublisher[core.NewOrderEvent]()
+	checkoutEventPublisher := broker.NewPublisher[core.CheckoutEvent]()
 
 	customerCtx := ctx.NewCustomer(db, auth)
 	managerCtx := ctx.NewManager(db, auth)
 	restaurantCtx := ctx.NewRestaurant(db, auth, imageStorage, conf.Api)
 	menuCtx := ctx.NewMenu(db, auth, imageStorage, conf.Api)
-	sessionCtx := ctx.NewSession(db, auth, eventNotifier, orderCreatedPublisher, sessionClosedPublisher)
-	_ = ctx.NewPostOrder(db, sessionClosedPublisher)
+	sessionCtx := ctx.NewSession(db, auth, newOrderEventPublisher, checkoutEventPublisher)
+
+	// Consumers
+	newOrderEventPublisher.AddConsumer(
+		ctx.NewNotifyOrderConsumer(db, eventNotifier),
+	)
+	checkoutEventPublisher.AddConsumer(
+		ctx.NewCheckoutConsumer(db, eventNotifier),
+		ctx.NewCreatePostOrdersConsumer(db),
+	)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,

@@ -14,28 +14,28 @@ import (
 )
 
 type SessionService struct {
-	repository                  port.SessionRepository
-	viewRepository              port.SessionViewRepository
-	authenticator               port.Authenticator
-	orderCreatedEventPublisher  port.OrderCreatedEventPublisher
-	sessionClosedEventPublisher port.SessionClosedEventPublisher
-	log                         *zap.Logger
+	repository             port.SessionRepository
+	viewRepository         port.SessionViewRepository
+	authenticator          port.Authenticator
+	newOrderEventPublisher port.NewOrderEventPublisher
+	checkoutEventPublisher port.CheckoutEventPublisher
+	log                    *zap.Logger
 }
 
 func NewSession(
 	repository port.SessionRepository,
 	viewRepository port.SessionViewRepository,
 	authenticator port.Authenticator,
-	orderCreatedEventPublisher port.OrderCreatedEventPublisher,
-	sessionClosedEventPublisher port.SessionClosedEventPublisher,
+	newOrderEventPublisher port.NewOrderEventPublisher,
+	checkoutEventPublisher port.CheckoutEventPublisher,
 ) *SessionService {
 	session := &SessionService{
-		repository:                  repository,
-		viewRepository:              viewRepository,
-		authenticator:               authenticator,
-		orderCreatedEventPublisher:  orderCreatedEventPublisher,
-		sessionClosedEventPublisher: sessionClosedEventPublisher,
-		log:                         logger.Instance(),
+		repository:             repository,
+		viewRepository:         viewRepository,
+		authenticator:          authenticator,
+		newOrderEventPublisher: newOrderEventPublisher,
+		checkoutEventPublisher: checkoutEventPublisher,
+		log:                    logger.Instance(),
 	}
 
 	return session
@@ -200,10 +200,10 @@ func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session
 func (ss *SessionService) pushEventsAsync(events []core.DomainEvent) {
 	go func(events []core.DomainEvent) {
 		for _, e := range events {
-			if orderCreatedEvent, ok := e.(core.NewOrderEvent); ok {
-				ss.orderCreatedEventPublisher.NotifyEvent(orderCreatedEvent)
-			} else if sessionClosedEvent, ok := e.(core.CheckoutEvent); ok {
-				ss.sessionClosedEventPublisher.NotifyEvent(sessionClosedEvent)
+			if newOrderEvent, ok := e.(core.NewOrderEvent); ok {
+				ss.newOrderEventPublisher.NotifyEvent(newOrderEvent)
+			} else if checkoutEvent, ok := e.(core.CheckoutEvent); ok {
+				ss.checkoutEventPublisher.NotifyEvent(checkoutEvent)
 			} else {
 				ss.log.Warn("unsupported event type skipping event processing")
 			}

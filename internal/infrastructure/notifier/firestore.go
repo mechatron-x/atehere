@@ -43,7 +43,6 @@ func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.NewOrderEvent) 
 	notificationData := map[string]interface{}{
 		"invoke_time": event.InvokeTime,
 		"message":     event.Message(),
-		"table_name":  event.Table,
 	}
 
 	_, err = client.Collection(event.RestaurantID).
@@ -62,7 +61,6 @@ func (fen *FirestoreNotifier) NotifyCheckoutEvent(event *dto.CheckoutEvent) erro
 	notificationData := map[string]interface{}{
 		"invoke_time": event.InvokeTime,
 		"message":     event.Message(),
-		"table_name":  event.Table,
 	}
 
 	_, err = client.Collection(event.RestaurantID).

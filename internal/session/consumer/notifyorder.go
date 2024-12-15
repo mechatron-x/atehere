@@ -10,7 +10,7 @@ type NotifyOrderConsumer struct {
 	eventNotifier         port.EventNotifier
 }
 
-func NotifyOrder(
+func NewNotifyOrder(
 	sessionViewRepository port.SessionViewRepository,
 	eventNotifier port.EventNotifier,
 ) *NotifyOrderConsumer {

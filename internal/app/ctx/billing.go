@@ -8,13 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type PostOrderCtx struct {
-}
-
-func NewPostOrder(db *gorm.DB, sessionClosedPublisher *broker.Publisher[core.CheckoutEvent]) PostOrderCtx {
+func NewCreatePostOrdersConsumer(db *gorm.DB) broker.Consumer[core.CheckoutEvent] {
 	postOrdersRepository := repository.NewPostOrder(db)
-	createPostOrdersConsumer := consumer.NewCreatePostOrders(postOrdersRepository)
-
-	sessionClosedPublisher.AddConsumer(createPostOrdersConsumer)
-	return PostOrderCtx{}
+	return consumer.NewCreatePostOrders(postOrdersRepository)
 }

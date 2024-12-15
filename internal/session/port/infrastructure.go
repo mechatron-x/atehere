@@ -11,11 +11,11 @@ type (
 		NotifyCheckoutEvent(event *dto.CheckoutEvent) error
 	}
 
-	OrderCreatedEventPublisher interface {
+	NewOrderEventPublisher interface {
 		NotifyEvent(event core.NewOrderEvent)
 	}
 
-	SessionClosedEventPublisher interface {
+	CheckoutEventPublisher interface {
 		NotifyEvent(event core.CheckoutEvent)
 	}
 
