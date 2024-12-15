@@ -14,8 +14,8 @@ type (
 
 	SessionViewRepository interface {
 		OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.NewOrderEvent, error)
-		GetTableOrdersView(tableID uuid.UUID) ([]dto.TableOrderView, error)
-		GetManagerOrdersView(tableID uuid.UUID) ([]dto.ManagerOrderView, error)
+		GetTableOrdersView(sessionID uuid.UUID) ([]dto.TableOrderView, error)
+		GetManagerOrdersView(sessionID uuid.UUID) ([]dto.ManagerOrderView, error)
 		CheckoutEventView(sessionID uuid.UUID) (*dto.CheckoutEvent, error)
 	}
 )

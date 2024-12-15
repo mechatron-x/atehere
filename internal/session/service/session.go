@@ -84,7 +84,9 @@ func (ss *SessionService) CustomerOrdersView(idToken, tableID string) (*dto.Orde
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	orders, err := ss.viewRepository.GetTableOrdersView(verifiedTableID)
+	session := ss.getActiveSession(verifiedTableID)
+
+	orders, err := ss.viewRepository.GetTableOrdersView(session.ID())
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +116,9 @@ func (ss *SessionService) ManagerOrdersView(idToken, tableID string) (*dto.Order
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	managerOrders, err := ss.viewRepository.GetManagerOrdersView(verifiedTableID)
+	session := ss.getActiveSession(verifiedTableID)
+
+	managerOrders, err := ss.viewRepository.GetManagerOrdersView(session.ID())
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +141,9 @@ func (ss *SessionService) TableOrdersView(tableID string) (*dto.OrderList, error
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	tableOrders, err := ss.viewRepository.GetTableOrdersView(verifiedTableID)
+	session := ss.getActiveSession(verifiedTableID)
+
+	tableOrders, err := ss.viewRepository.GetTableOrdersView(session.ID())
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}

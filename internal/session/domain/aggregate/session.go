@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/session/domain/entity"
+	"github.com/mechatron-x/atehere/internal/session/domain/valueobject"
 )
 
 type Session struct {
@@ -15,6 +16,7 @@ type Session struct {
 	tableID   uuid.UUID
 	startTime time.Time
 	endTime   time.Time
+	state     valueobject.SessionState
 	orders    []entity.Order
 }
 
@@ -22,6 +24,7 @@ func NewSession() *Session {
 	return &Session{
 		Aggregate: core.NewAggregate(),
 		startTime: time.Now(),
+		state:     valueobject.Active,
 		orders:    make([]entity.Order, 0),
 	}
 }
@@ -38,6 +41,10 @@ func (s *Session) EndTime() time.Time {
 	return s.endTime
 }
 
+func (s *Session) State() valueobject.SessionState {
+	return s.state
+}
+
 func (s *Session) Orders() []entity.Order {
 	return s.orders
 }
@@ -52,6 +59,10 @@ func (s *Session) SetStartTime(startTime time.Time) {
 
 func (s *Session) SetEndTime(endTime time.Time) {
 	s.endTime = endTime
+}
+
+func (s *Session) SetState(state valueobject.SessionState) {
+	s.state = state
 }
 
 func (s *Session) SetOrders(orders []entity.Order) {
@@ -79,8 +90,9 @@ func (s *Session) Checkout(customerID uuid.UUID) error {
 	}
 
 	s.endTime = time.Now()
-	s.RaiseEvent(core.NewCheckoutEvent(s.ID(), s.toEventOrders()))
+	s.state = valueobject.CheckoutPending
 
+	s.RaiseEvent(core.NewCheckoutEvent(s.ID(), s.toEventOrders()))
 	return nil
 }
 
@@ -101,21 +113,31 @@ func (s *Session) placeOrder(newOrder entity.Order) error {
 }
 
 func (s *Session) placeOrderPolicy(order entity.Order) error {
-	if s.isSessionEnded() {
-		return errors.New("checkout requested for this session")
+	if s.state != valueobject.Active {
+		return fmt.Errorf("order cannot be placed: session is not in '%s' state", valueobject.Active)
 	}
 
 	for _, o := range s.orders {
 		if o.ID() == order.ID() {
-			return fmt.Errorf("order with id %s already exists", order.ID())
+			return fmt.Errorf("order cannot be placed: order with id %s already exists", order.ID())
 		}
 	}
 
 	return nil
 }
 
-func (s *Session) isSessionEnded() bool {
-	return !s.endTime.IsZero()
+func (s *Session) checkoutPolicy(customerID uuid.UUID) error {
+	if s.state == valueobject.CheckoutPending {
+		return errors.New("checkout cannot be proceed: checkout has already been requested for this session")
+	}
+
+	for _, order := range s.orders {
+		if order.OrderedBy() == customerID {
+			return nil
+		}
+	}
+
+	return errors.New("checkout cannot be proceed: specified customer is not a participant")
 }
 
 func (s *Session) findPreviousOrder(menuItemID, orderedBy uuid.UUID) (int, error) {
@@ -128,16 +150,6 @@ func (s *Session) findPreviousOrder(menuItemID, orderedBy uuid.UUID) (int, error
 	}
 
 	return -1, fmt.Errorf("order with %s menu item id and %s customer id not found", menuItemID, orderedBy)
-}
-
-func (s *Session) checkoutPolicy(customerID uuid.UUID) error {
-	for _, order := range s.orders {
-		if order.OrderedBy() == customerID {
-			return nil
-		}
-	}
-
-	return errors.New("the session cannot be closed because, specified customer is not a participant")
 }
 
 func (s *Session) toEventOrders() []core.Order {
