@@ -21,6 +21,20 @@ func NewBill(db *gorm.DB) *BillRepository {
 	}
 }
 
+func (rcv *BillRepository) GetBySessionID(sessionID uuid.UUID) (*aggregate.Bill, error) {
+	billModel := new(model.Bill)
+
+	result := rcv.db.
+		Preload("BillItems").
+		Where(&model.Bill{SessionID: sessionID.String()}).
+		First(billModel)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return rcv.mapper.FromModel(billModel)
+}
+
 func (rcv *BillRepository) Save(bill *aggregate.Bill) error {
 	billModel := rcv.mapper.FromAggregate(bill)
 

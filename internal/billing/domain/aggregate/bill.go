@@ -1,6 +1,8 @@
 package aggregate
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/billing/domain/entity"
 	"github.com/mechatron-x/atehere/internal/billing/domain/valueobject"
@@ -21,12 +23,21 @@ func (rcv *Bill) BillItems() []entity.BillItem {
 	return rcv.billItems
 }
 
-func (rcv *Bill) TotalDue(currency valueobject.Currency) valueobject.Price {
-	totalDueAmount := valueobject.NewPrice(0, currency)
+func (rcv *Bill) Pay(paidBy, billItemID uuid.UUID, quantity valueobject.Quantity) error {
+	for i, bi := range rcv.billItems {
+		if bi.ID() != billItemID {
+			continue
+		}
 
-	for _, i := range rcv.billItems {
-		totalDueAmount = totalDueAmount.Add(i.TotalDue())
+		err := bi.Pay(paidBy, quantity)
+		if err != nil {
+			return err
+		}
+
+		rcv.billItems[i] = bi
+
+		return nil
 	}
 
-	return totalDueAmount
+	return fmt.Errorf("bill item with id %s not found", billItemID)
 }

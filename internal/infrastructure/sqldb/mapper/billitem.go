@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/mechatron-x/atehere/internal/billing/domain/entity"
 	"github.com/mechatron-x/atehere/internal/billing/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
@@ -14,32 +15,46 @@ func NewBillItem() BillItem {
 }
 
 func (bi BillItem) FromModel(model *model.BillItem) (*entity.BillItem, error) {
-	builder := entity.NewBillItemBuilder()
-	builder.SetID(model.ID)
-	builder.SetOwnerID(model.OwnerID)
-
 	verifiedQuantity, err := valueobject.NewQuantity(model.Quantity)
 	if err != nil {
 		return nil, err
 	}
-	builder.SetQuantity(verifiedQuantity)
 
 	verifiedCurrency, err := valueobject.ParseCurrency(model.Currency)
 	if err != nil {
 		return nil, err
 	}
 
-	verifiedPrice := valueobject.NewPrice(model.UnitPrice, verifiedCurrency)
-	builder.SetPrice(verifiedPrice)
+	verifiedPrice, err := valueobject.NewPrice(model.UnitPrice, verifiedCurrency)
+	if err != nil {
+		return nil, err
+	}
 
-	verifiedPaidPrice := valueobject.NewPrice(model.PaidPrice, verifiedCurrency)
-	builder.SetPaidPrice(verifiedPaidPrice)
+	verifiedPaidQuantity, err := valueobject.NewQuantity(model.PaidQuantity)
+	if err != nil {
+		return nil, err
+	}
 
-	builder.SetItemName(model.ItemName)
-	builder.SetCreatedAt(model.CreatedAt)
-	builder.SetUpdatedAt(model.UpdatedAt)
+	verifiedPaiBy := make([]uuid.UUID, 0)
+	for _, i := range model.PaidBy {
+		id, err := uuid.Parse(i)
+		if err != nil {
+			return nil, err
+		}
+		verifiedPaiBy = append(verifiedPaiBy, id)
+	}
 
-	return builder.Build()
+	return entity.NewBillItemBuilder().
+		SetID(model.ID).
+		SetOwnerID(model.OwnerID).
+		SetItemName(model.ItemName).
+		SetPrice(verifiedPrice).
+		SetQuantity(verifiedQuantity).
+		SetPaidQuantity(verifiedPaidQuantity).
+		SetPaidBy(verifiedPaiBy).
+		SetCreatedAt(model.CreatedAt).
+		SetUpdatedAt(model.UpdatedAt).
+		Build()
 }
 
 func (bi BillItem) FromModels(models []model.BillItem) ([]entity.BillItem, error) {
@@ -56,15 +71,16 @@ func (bi BillItem) FromModels(models []model.BillItem) ([]entity.BillItem, error
 
 func (bi BillItem) FromEntity(billID uuid.UUID, entity *entity.BillItem) *model.BillItem {
 	return &model.BillItem{
-		ID:        entity.ID().String(),
-		OwnerID:   entity.OwnerID().String(),
-		ItemName:  entity.ItemName(),
-		Quantity:  entity.Quantity().Int(),
-		UnitPrice: entity.UnitPrice().Amount(),
-		PaidPrice: entity.PaidAmount().Amount(),
-		Currency:  entity.UnitPrice().Currency().String(),
-		CreatedAt: entity.CreatedAt(),
-		UpdatedAt: entity.UpdatedAt(),
+		ID:           entity.ID().String(),
+		OwnerID:      entity.OwnerID().String(),
+		ItemName:     entity.ItemName(),
+		UnitPrice:    entity.UnitPrice().Amount(),
+		Currency:     entity.UnitPrice().Currency().String(),
+		Quantity:     entity.Quantity().Int(),
+		PaidQuantity: entity.PaidAmount().Int(),
+		PaidBy:       pq.StringArray(entity.PaidBy().Strings()),
+		CreatedAt:    entity.CreatedAt(),
+		UpdatedAt:    entity.UpdatedAt(),
 	}
 }
 

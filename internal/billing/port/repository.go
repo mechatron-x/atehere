@@ -9,6 +9,7 @@ import (
 type (
 	BillRepository interface {
 		Save(bill *aggregate.Bill) error
+		GetBySessionID(sessionID uuid.UUID) (*aggregate.Bill, error)
 	}
 
 	BillViewRepository interface {

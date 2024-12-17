@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -15,15 +16,16 @@ type (
 	}
 
 	BillItem struct {
-		ID        string `gorm:"primarykey;type:uuid"`
-		BillID    string
-		OwnerID   string `gorm:"type:uuid"`
-		ItemName  string
-		Quantity  int
-		UnitPrice float64 `gorm:"not null;numeric;precision:10;scale:2"`
-		PaidPrice float64 `gorm:"not null;numeric;precision:10;scale:2"`
-		Currency  string  `gorm:"not null;size:5"`
-		CreatedAt time.Time
-		UpdatedAt time.Time
+		ID           string `gorm:"primarykey;type:uuid"`
+		BillID       string `gorm:"type:uuid"`
+		OwnerID      string `gorm:"type:uuid"`
+		ItemName     string
+		UnitPrice    float64        `gorm:"not null;numeric;precision:10;scale:2"`
+		Currency     string         `gorm:"not null;size:5"`
+		Quantity     int            `gorm:"not null"`
+		PaidQuantity int            `gorm:"not null;numeric;"`
+		PaidBy       pq.StringArray `gorm:"type:text[]"`
+		CreatedAt    time.Time
+		UpdatedAt    time.Time
 	}
 )

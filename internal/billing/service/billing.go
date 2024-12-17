@@ -1,12 +1,69 @@
 package service
 
+import (
+	"errors"
+
+	"github.com/google/uuid"
+	"github.com/mechatron-x/atehere/internal/billing/domain/valueobject"
+	"github.com/mechatron-x/atehere/internal/billing/dto"
+	"github.com/mechatron-x/atehere/internal/billing/port"
+	"github.com/mechatron-x/atehere/internal/core"
+)
+
 type BillingService struct {
+	authenticator port.Authenticator
+	repository    port.BillRepository
 }
 
-func NewBilling() *BillingService {
-	return &BillingService{}
+func NewBilling(authenticator port.Authenticator, repository port.BillRepository) *BillingService {
+	return &BillingService{
+		authenticator: authenticator,
+		repository:    repository,
+	}
 }
 
-func (rcv *BillingService) CreateBill(billingMethod string) {
+func (rcv *BillingService) Pay(idToken string, sessionID string, billItems *dto.PayBillItems) error {
+	paidBy, err := rcv.authenticator.GetUserID(idToken)
+	if err != nil {
+		return core.NewUnauthorizedError(err)
+	}
 
+	verifiedPaidBy, err := uuid.Parse(paidBy)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
+
+	verifiedSessionID, err := uuid.Parse(sessionID)
+	if err != nil {
+		return core.NewValidationFailureError(err)
+	}
+
+	bill, err := rcv.repository.GetBySessionID(verifiedSessionID)
+	if err != nil {
+		return core.NewResourceNotFoundError(err)
+	}
+
+	errs := make([]error, 0)
+	for _, bi := range billItems.BillItems {
+		verifiedBillItemID, err := uuid.Parse(bi.BillItemID)
+		if err != nil {
+			continue
+		}
+
+		verifiedQuantity, err := valueobject.NewQuantity(bi.Quantity)
+		if err != nil {
+			continue
+		}
+
+		err = bill.Pay(verifiedPaidBy, verifiedBillItemID, verifiedQuantity)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) != 0 {
+		return core.NewDomainIntegrityViolationError(errors.Join(errs...))
+	}
+
+	return rcv.repository.Save(bill)
 }

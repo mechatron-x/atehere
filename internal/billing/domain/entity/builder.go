@@ -18,6 +18,7 @@ func NewBillItemBuilder() *BillItemBuilder {
 	return &BillItemBuilder{
 		billItem: &BillItem{
 			Entity: core.NewEntity(),
+			paidBy: make([]uuid.UUID, 0),
 		},
 		errs: make([]error, 0),
 	}
@@ -60,17 +61,24 @@ func (rcv *BillItemBuilder) SetPrice(price valueobject.Price) *BillItemBuilder {
 	return rcv
 }
 
-func (rcv *BillItemBuilder) SetPaidPrice(price valueobject.Price) *BillItemBuilder {
-	rcv.billItem.paidAmount = price
+func (rcv *BillItemBuilder) SetPaidQuantity(quantity valueobject.Quantity) *BillItemBuilder {
+	rcv.billItem.paidQuantity = quantity
 	return rcv
 }
 
-func (rcv *BillItemBuilder) SetCreatedAt(createdAt time.Time) {
-	rcv.billItem.SetCreatedAt(createdAt)
+func (rcv *BillItemBuilder) SetPaidBy(paidBy []uuid.UUID) *BillItemBuilder {
+	rcv.billItem.paidBy = paidBy
+	return rcv
 }
 
-func (rcv *BillItemBuilder) SetUpdatedAt(updatedAt time.Time) {
+func (rcv *BillItemBuilder) SetCreatedAt(createdAt time.Time) *BillItemBuilder {
+	rcv.billItem.SetCreatedAt(createdAt)
+	return rcv
+}
+
+func (rcv *BillItemBuilder) SetUpdatedAt(updatedAt time.Time) *BillItemBuilder {
 	rcv.billItem.SetUpdatedAt(updatedAt)
+	return rcv
 }
 
 func (rcv *BillItemBuilder) Build() (*BillItem, error) {

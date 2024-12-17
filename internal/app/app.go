@@ -83,6 +83,7 @@ func New(conf *config.App) (*App, error) {
 	restaurantCtx := ctx.NewRestaurant(db, auth, imageStorage, conf.Api)
 	menuCtx := ctx.NewMenu(db, auth, imageStorage, conf.Api)
 	sessionCtx := ctx.NewSession(db, auth, newOrderEventPublisher, checkoutEventPublisher)
+	billingCtx := ctx.NewBilling(db, auth)
 
 	// Consumers
 	newOrderEventPublisher.AddConsumer(
@@ -102,6 +103,7 @@ func New(conf *config.App) (*App, error) {
 		restaurantCtx.Handler(),
 		menuCtx.Handler(),
 		sessionCtx.Handler(),
+		billingCtx.Handler(),
 	)
 
 	httpServer, err := httpserver.New(conf.Api, mux)

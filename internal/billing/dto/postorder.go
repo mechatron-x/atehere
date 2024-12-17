@@ -21,7 +21,11 @@ func (o PostOrder) ToBillItem() (*entity.BillItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	price := valueobject.NewPrice(o.UnitPrice, verifiedCurrency)
+
+	verifiedPrice, err := valueobject.NewPrice(o.UnitPrice, verifiedCurrency)
+	if err != nil {
+		return nil, err
+	}
 
 	verifiedQuantity, err := valueobject.NewQuantity(o.Quantity)
 	if err != nil {
@@ -31,7 +35,7 @@ func (o PostOrder) ToBillItem() (*entity.BillItem, error) {
 	return billItemBuilder.
 		SetOwnerID(o.CustomerID).
 		SetItemName(o.MenuItemName).
-		SetPrice(price).
+		SetPrice(verifiedPrice).
 		SetQuantity(verifiedQuantity).
 		Build()
 }

@@ -14,7 +14,9 @@ type Price struct {
 }
 
 const (
-	TRY Currency = iota
+	UNKNOWN Currency = iota
+	TRY
+	USD
 )
 
 func ParseCurrency(currency string) (Currency, error) {
@@ -24,6 +26,8 @@ func ParseCurrency(currency string) (Currency, error) {
 	switch currency {
 	case "try":
 		return TRY, nil
+	case "usd":
+		return USD, nil
 	default:
 		return -1, errors.New("unsupported currency")
 	}
@@ -39,16 +43,21 @@ func (c Currency) String() string {
 	switch c {
 	case TRY:
 		return "TRY"
+	case USD:
+		return "USD"
 	default:
 		return ""
 	}
 }
 
-func NewPrice(amount float64, currency Currency) Price {
+func NewPrice(amount float64, currency Currency) (Price, error) {
+	if amount < 0 {
+		return Price{}, errors.New("price cannot be smaller than 0")
+	}
 	return Price{
 		amount:   amount,
 		currency: currency,
-	}
+	}, nil
 }
 
 func (p Price) Amount() float64 {
@@ -67,20 +76,16 @@ func (p Price) Equals(price Price) bool {
 	return p.amount == price.amount
 }
 
-func (p Price) Add(price Price) Price {
+func (p Price) Add(price Price) (Price, error) {
 	return NewPrice(p.amount+price.amount, price.currency)
 }
 
-func (p Price) Subtract(price Price) Price {
+func (p Price) Subtract(price Price) (Price, error) {
 	remaining := p.amount - price.amount
-	if remaining < 0 {
-		remaining = 0
-	}
-
 	return NewPrice(remaining, price.currency)
 }
 
-func (p Price) Multiply(factor float64) Price {
+func (p Price) Multiply(factor float64) (Price, error) {
 	return NewPrice(p.amount*factor, p.currency)
 }
 
