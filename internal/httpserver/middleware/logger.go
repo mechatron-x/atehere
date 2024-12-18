@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/mechatron-x/atehere/internal/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"go.uber.org/zap"
 )
 

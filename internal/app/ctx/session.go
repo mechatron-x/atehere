@@ -1,21 +1,25 @@
 package ctx
 
 import (
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/infrastructure/broker"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/repository"
+	"github.com/mechatron-x/atehere/internal/session/consumer"
 	"github.com/mechatron-x/atehere/internal/session/port"
 	"github.com/mechatron-x/atehere/internal/session/service"
-	"github.com/mechatron-x/atehere/internal/sqldb/repository"
 	"gorm.io/gorm"
 )
 
 type Session struct {
-	handler handler.Session
+	handler handler.SessionHandler
 }
 
 func NewSession(
 	db *gorm.DB,
 	authenticator port.Authenticator,
-	eventNotifier port.EventNotifier,
+	newOrderEventPublisher *broker.Publisher[core.NewOrderEvent],
+	checkoutEventPublisher *broker.Publisher[core.CheckoutEvent],
 ) Session {
 	repo := repository.NewSession(db)
 	viewRepo := repository.NewSessionView(db)
@@ -24,16 +28,36 @@ func NewSession(
 		repo,
 		viewRepo,
 		authenticator,
-		eventNotifier,
-		10,
+		newOrderEventPublisher,
+		checkoutEventPublisher,
 	)
 
-	handler := handler.NewSessionHandler(*service)
+	handler := handler.NewSession(*service)
 	return Session{
 		handler: handler,
 	}
 }
 
-func (s Session) Handler() handler.Session {
+func (s Session) Handler() handler.SessionHandler {
 	return s.handler
+}
+
+func NewNotifyOrderConsumer(
+	db *gorm.DB,
+	eventNotifier port.EventNotifier,
+) broker.Consumer[core.NewOrderEvent] {
+	viewRepo := repository.NewSessionView(db)
+	notifyOrderConsumer := consumer.NewNotifyOrder(viewRepo, eventNotifier)
+
+	return notifyOrderConsumer
+}
+
+func NewCheckoutConsumer(
+	db *gorm.DB,
+	eventNotifier port.EventNotifier,
+) broker.Consumer[core.CheckoutEvent] {
+	viewRepo := repository.NewSessionView(db)
+	notifyCheckout := consumer.NewNotifyCheckout(viewRepo, eventNotifier)
+
+	return notifyCheckout
 }

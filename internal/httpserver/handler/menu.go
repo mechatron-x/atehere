@@ -10,15 +10,15 @@ import (
 	"github.com/mechatron-x/atehere/internal/menu/service"
 )
 
-type Menu struct {
-	ms service.Menu
+type MenuHandler struct {
+	ms service.MenuService
 }
 
-func NewMenuHandler(ms service.Menu) Menu {
-	return Menu{ms: ms}
+func NewMenu(ms service.MenuService) MenuHandler {
+	return MenuHandler{ms: ms}
 }
 
-func (mh Menu) Create(w http.ResponseWriter, r *http.Request) {
+func (mh MenuHandler) Create(w http.ResponseWriter, r *http.Request) {
 	reqBody := &dto.MenuCreate{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
@@ -40,7 +40,7 @@ func (mh Menu) Create(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, menu, nil, http.StatusCreated)
 }
 
-func (mh Menu) AddMenuItem(w http.ResponseWriter, r *http.Request) {
+func (mh MenuHandler) AddMenuItem(w http.ResponseWriter, r *http.Request) {
 	reqBody := &dto.MenuItemCreate{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
@@ -64,7 +64,7 @@ func (mh Menu) AddMenuItem(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, menu, nil)
 }
 
-func (mh Menu) ListForCustomer(w http.ResponseWriter, r *http.Request) {
+func (mh MenuHandler) ListForCustomer(w http.ResponseWriter, r *http.Request) {
 	restaurantID := r.PathValue("restaurant_id")
 	menuFilter := &dto.MenuFilter{
 		RestaurantID: restaurantID,

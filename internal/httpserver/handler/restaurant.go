@@ -10,15 +10,15 @@ import (
 	"github.com/mechatron-x/atehere/internal/restaurant/service"
 )
 
-type Restaurant struct {
-	rs service.Restaurant
+type RestaurantHandler struct {
+	rs service.RestaurantService
 }
 
-func NewRestaurantHandler(rs service.Restaurant) Restaurant {
-	return Restaurant{rs}
+func NewRestaurant(rs service.RestaurantService) RestaurantHandler {
+	return RestaurantHandler{rs}
 }
 
-func (rh Restaurant) Create(w http.ResponseWriter, r *http.Request) {
+func (rh RestaurantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	reqBody := &dto.RestaurantCreate{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
@@ -41,7 +41,7 @@ func (rh Restaurant) Create(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, restaurant, nil, http.StatusCreated)
 }
 
-func (rh Restaurant) GetOneForCustomer(w http.ResponseWriter, r *http.Request) {
+func (rh RestaurantHandler) GetOneForCustomer(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("restaurant_id")
 
 	restaurantSummary, err := rh.rs.GetOneForCustomer(id)
@@ -59,7 +59,7 @@ func (rh Restaurant) GetOneForCustomer(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, resp, nil)
 }
 
-func (rh Restaurant) ListForManager(w http.ResponseWriter, r *http.Request) {
+func (rh RestaurantHandler) ListForManager(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
 		response.Encode(w, nil, err)
@@ -81,7 +81,7 @@ func (rh Restaurant) ListForManager(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, resp, nil)
 }
 
-func (rh Restaurant) ListForCustomer(w http.ResponseWriter, r *http.Request) {
+func (rh RestaurantHandler) ListForCustomer(w http.ResponseWriter, r *http.Request) {
 	reqBody := &dto.RestaurantFilter{}
 	err := request.Decode(r, w, reqBody)
 	if err != nil {
@@ -103,7 +103,7 @@ func (rh Restaurant) ListForCustomer(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, resp, nil)
 }
 
-func (rh Restaurant) Delete(w http.ResponseWriter, r *http.Request) {
+func (rh RestaurantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("restaurant_id")
 
 	token, err := header.GetBearerToken(r.Header)

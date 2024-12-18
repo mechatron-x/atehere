@@ -3,14 +3,14 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/aggregate"
 	"github.com/mechatron-x/atehere/internal/usermanagement/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/usermanagement/dto"
 	"github.com/mechatron-x/atehere/internal/usermanagement/port"
 )
 
-type Manager struct {
+type ManagerService struct {
 	managerRepo port.ManagerRepository
 	authService port.Authenticator
 }
@@ -18,14 +18,14 @@ type Manager struct {
 func NewManager(
 	managerRepository port.ManagerRepository,
 	authService port.Authenticator,
-) *Manager {
-	return &Manager{
+) *ManagerService {
+	return &ManagerService{
 		managerRepo: managerRepository,
 		authService: authService,
 	}
 }
 
-func (ms *Manager) SignUp(signUpDto *dto.ManagerSignUp) (*dto.Manager, error) {
+func (ms *ManagerService) SignUp(signUpDto *dto.ManagerSignUp) (*dto.Manager, error) {
 	manager, err := signUpDto.Validate()
 	if err != nil {
 		logger.Error("Cannot map manager dto to aggregate", err)
@@ -57,7 +57,7 @@ func (ms *Manager) SignUp(signUpDto *dto.ManagerSignUp) (*dto.Manager, error) {
 	}, nil
 }
 
-func (ms *Manager) GetProfile(idToken string) (*dto.Manager, error) {
+func (ms *ManagerService) GetProfile(idToken string) (*dto.Manager, error) {
 	manager, err := ms.getManager(idToken)
 	if err != nil {
 		logger.Error("Cannot get manager with id token", err)
@@ -71,7 +71,7 @@ func (ms *Manager) GetProfile(idToken string) (*dto.Manager, error) {
 	}, nil
 }
 
-func (ms *Manager) UpdateProfile(idToken string, updateDto *dto.Manager) (*dto.Manager, error) {
+func (ms *ManagerService) UpdateProfile(idToken string, updateDto *dto.Manager) (*dto.Manager, error) {
 	manager, err := ms.getManager(idToken)
 	if err != nil {
 		logger.Error("Cannot get manager with id token", err)
@@ -97,7 +97,7 @@ func (ms *Manager) UpdateProfile(idToken string, updateDto *dto.Manager) (*dto.M
 	}, nil
 }
 
-func (ms *Manager) getManager(idToken string) (*aggregate.Manager, error) {
+func (ms *ManagerService) getManager(idToken string) (*aggregate.Manager, error) {
 	id, err := ms.authService.GetUserID(idToken)
 	if err != nil {
 		return nil, core.NewUnauthorizedError(err)

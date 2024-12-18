@@ -7,13 +7,13 @@ import (
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
 )
 
-type Default struct {
+type DefaultHandler struct {
 }
 
-func NewDefault() Default {
-	return Default{}
+func NewDefault() DefaultHandler {
+	return DefaultHandler{}
 }
 
-func (dh Default) NoHandler(w http.ResponseWriter, r *http.Request) {
+func (dh DefaultHandler) NoHandler(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, nil, errors.New("no handler found"), http.StatusForbidden)
 }
