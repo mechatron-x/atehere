@@ -10,7 +10,7 @@ type NotifyOrderConsumer struct {
 	eventNotifier         port.EventNotifier
 }
 
-func NotifyOrder(
+func NewNotifyOrder(
 	sessionViewRepository port.SessionViewRepository,
 	eventNotifier port.EventNotifier,
 ) *NotifyOrderConsumer {
@@ -20,12 +20,13 @@ func NotifyOrder(
 	}
 }
 
-func (rcv *NotifyOrderConsumer) ProcessEvent(event core.OrderCreatedEvent) error {
+func (rcv *NotifyOrderConsumer) ProcessEvent(event core.NewOrderEvent) error {
 	orderCreatedEventView, err := rcv.sessionViewRepository.OrderCreatedEventView(event.SessionID(), event.OrderID())
 	if err != nil {
 		return err
 	}
 
+	orderCreatedEventView.Quantity = event.Quantity()
 	orderCreatedEventView.InvokeTime = event.InvokeTime().Unix()
 	orderCreatedEventView.ID = event.ID()
 	err = rcv.eventNotifier.NotifyOrderCreatedEvent(orderCreatedEventView)

@@ -13,6 +13,7 @@ type (
 		Table     RestaurantTable `gorm:"foreignKey:TableID"`
 		StartTime time.Time
 		EndTime   time.Time
+		State     string `gorm:"not null"`
 		Orders    []SessionOrder
 		gorm.Model
 	}
@@ -25,5 +26,7 @@ type (
 		OrderedBy  string
 		Customer   Customer `gorm:"foreignKey:OrderedBy"`
 		Quantity   int      `gorm:"not null"`
+		CreatedAt  time.Time
+		UpdatedAt  time.Time
 	}
 )

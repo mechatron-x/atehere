@@ -14,26 +14,17 @@ type (
 )
 
 type (
-	Order struct {
-		MenuItemID uuid.UUID
-		OrderedBy  uuid.UUID
-		Quantity   int
-	}
-)
-
-type (
 	domainEvent struct {
 		id         uuid.UUID
 		invokeTime time.Time
 	}
 
-	SessionClosedEvent struct {
+	CheckoutEvent struct {
 		domainEvent
 		sessionID uuid.UUID
-		orders    []Order
 	}
 
-	OrderCreatedEvent struct {
+	NewOrderEvent struct {
 		domainEvent
 		sessionID uuid.UUID
 		orderID   uuid.UUID
@@ -56,24 +47,19 @@ func (rcv domainEvent) InvokeTime() time.Time {
 	return rcv.invokeTime
 }
 
-func NewSessionClosedEvent(sessionID uuid.UUID, orders []Order) SessionClosedEvent {
-	return SessionClosedEvent{
+func NewCheckoutEvent(sessionID uuid.UUID) CheckoutEvent {
+	return CheckoutEvent{
 		domainEvent: newDomainEvent(),
 		sessionID:   sessionID,
-		orders:      orders,
 	}
 }
 
-func (rcv SessionClosedEvent) SessionID() uuid.UUID {
+func (rcv CheckoutEvent) SessionID() uuid.UUID {
 	return rcv.sessionID
 }
 
-func (rcv SessionClosedEvent) Orders() []Order {
-	return rcv.orders
-}
-
-func NewOrderCreatedEvent(sessionID, orderID uuid.UUID, quantity int) OrderCreatedEvent {
-	return OrderCreatedEvent{
+func NewOrderCreatedEvent(sessionID, orderID uuid.UUID, quantity int) NewOrderEvent {
+	return NewOrderEvent{
 		domainEvent: newDomainEvent(),
 		sessionID:   sessionID,
 		orderID:     orderID,
@@ -81,14 +67,14 @@ func NewOrderCreatedEvent(sessionID, orderID uuid.UUID, quantity int) OrderCreat
 	}
 }
 
-func (rcv OrderCreatedEvent) SessionID() uuid.UUID {
+func (rcv NewOrderEvent) SessionID() uuid.UUID {
 	return rcv.sessionID
 }
 
-func (rcv OrderCreatedEvent) OrderID() uuid.UUID {
+func (rcv NewOrderEvent) OrderID() uuid.UUID {
 	return rcv.orderID
 }
 
-func (rcv OrderCreatedEvent) Quantity() int {
+func (rcv NewOrderEvent) Quantity() int {
 	return rcv.quantity
 }

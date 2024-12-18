@@ -34,7 +34,7 @@ func NewFirestore(conf config.Firebase) (*FirestoreNotifier, error) {
 	}, nil
 }
 
-func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEvent) error {
+func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.NewOrderEvent) error {
 	client, err := fen.app.Firestore(context.Background())
 	if err != nil {
 		return err
@@ -43,7 +43,6 @@ func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEve
 	notificationData := map[string]interface{}{
 		"invoke_time": event.InvokeTime,
 		"message":     event.Message(),
-		"table_name":  event.Table,
 	}
 
 	_, err = client.Collection(event.RestaurantID).
@@ -53,7 +52,7 @@ func (fen *FirestoreNotifier) NotifyOrderCreatedEvent(event *dto.OrderCreatedEve
 	return err
 }
 
-func (fen *FirestoreNotifier) NotifySessionClosedEvent(event *dto.SessionClosedEvent) error {
+func (fen *FirestoreNotifier) NotifyCheckoutEvent(event *dto.CheckoutEvent) error {
 	client, err := fen.app.Firestore(context.Background())
 	if err != nil {
 		return err
@@ -62,7 +61,6 @@ func (fen *FirestoreNotifier) NotifySessionClosedEvent(event *dto.SessionClosedE
 	notificationData := map[string]interface{}{
 		"invoke_time": event.InvokeTime,
 		"message":     event.Message(),
-		"table_name":  event.Table,
 	}
 
 	_, err = client.Collection(event.RestaurantID).

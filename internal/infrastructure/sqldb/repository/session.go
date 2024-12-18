@@ -85,7 +85,7 @@ func NewSessionView(db *gorm.DB) *SessionView {
 	}
 }
 
-func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.OrderCreatedEvent, error) {
+func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto.NewOrderEvent, error) {
 	sessionModel := new(model.Session)
 	orderModel := new(model.SessionOrder)
 
@@ -109,7 +109,7 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 		return nil, result.Error
 	}
 
-	return &dto.OrderCreatedEvent{
+	return &dto.NewOrderEvent{
 		RestaurantID: sessionModel.Table.RestaurantID,
 		Table:        sessionModel.Table.Name,
 		OrderedBy:    orderModel.Customer.FullName,
@@ -118,7 +118,7 @@ func (sv *SessionView) OrderCreatedEventView(sessionID, orderID uuid.UUID) (*dto
 	}, nil
 }
 
-func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.SessionClosedEvent, error) {
+func (sv *SessionView) CheckoutEventView(sessionID uuid.UUID) (*dto.CheckoutEvent, error) {
 	sessionModel := new(model.Session)
 
 	result := sv.db.
@@ -130,17 +130,17 @@ func (sv *SessionView) SessionClosedEventView(sessionID uuid.UUID) (*dto.Session
 		return nil, result.Error
 	}
 
-	return &dto.SessionClosedEvent{
+	return &dto.CheckoutEvent{
 		RestaurantID: sessionModel.Table.RestaurantID,
 		Table:        sessionModel.Table.Name,
 	}, nil
 }
 
-func (sv *SessionView) GetTableOrdersView(tableID uuid.UUID) ([]dto.TableOrderView, error) {
+func (sv *SessionView) GetTableOrdersView(sessionID uuid.UUID) ([]dto.TableOrderView, error) {
 	var orders []dto.TableOrderView
 
 	result := sv.db.Table("table_orders").
-		Where("table_id = ?", tableID.String()).
+		Where("session_id = ?", sessionID.String()).
 		Scan(&orders)
 	if result.Error != nil {
 		return nil, result.Error
@@ -149,11 +149,11 @@ func (sv *SessionView) GetTableOrdersView(tableID uuid.UUID) ([]dto.TableOrderVi
 	return orders, nil
 }
 
-func (sv *SessionView) GetManagerOrdersView(tableID uuid.UUID) ([]dto.ManagerOrderView, error) {
+func (sv *SessionView) GetManagerOrdersView(sessionID uuid.UUID) ([]dto.ManagerOrderView, error) {
 	var orders []dto.ManagerOrderView
 
 	result := sv.db.Table("manager_orders").
-		Where("table_id = ?", tableID.String()).
+		Where("session_id = ?", sessionID.String()).
 		Scan(&orders)
 	if result.Error != nil {
 		return nil, result.Error

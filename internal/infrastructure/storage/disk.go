@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 )
 
-type DiskFileManager struct{}
+type FileStorage struct{}
 
-func NewDiskFileManager() DiskFileManager {
-	return DiskFileManager{}
+func NewFile() *FileStorage {
+	return &FileStorage{}
 }
 
-func (dfs DiskFileManager) Save(savePath string, data []byte) error {
+func (rcv *FileStorage) Save(savePath string, data []byte) error {
 	savePath = filepath.Clean(savePath)
 
 	imageFile, err := os.Create(savePath)
@@ -29,13 +29,13 @@ func (dfs DiskFileManager) Save(savePath string, data []byte) error {
 	return nil
 }
 
-func (fds DiskFileManager) Delete(deletePath string) error {
+func (rcv *FileStorage) Delete(deletePath string) error {
 	deletePath = filepath.Clean(deletePath)
 
 	return os.Remove(deletePath)
 }
 
-func (fds DiskFileManager) Read(readPath string) ([]byte, error) {
+func (rcv *FileStorage) Read(readPath string) ([]byte, error) {
 	readPath = filepath.Clean(readPath)
 
 	fileInfo, err := os.Stat(readPath)

@@ -32,7 +32,7 @@ func Connect(config config.DB) (*gorm.DB, error) {
 }
 
 func Migrate(db *gorm.DB, model ...any) error {
-	if err := db.AutoMigrate(); err != nil {
+	if err := db.AutoMigrate(model...); err != nil {
 		return err
 	}
 
@@ -41,6 +41,10 @@ func Migrate(db *gorm.DB, model ...any) error {
 	}
 
 	if err := db.Migrator().CreateView("manager_orders", gorm.ViewOption{Query: view.ManagerOrdersView(db), Replace: true}); err != nil {
+		return err
+	}
+
+	if err := db.Migrator().CreateView("post_orders", gorm.ViewOption{Query: view.PostOrdersView(db), Replace: true}); err != nil {
 		return err
 	}
 

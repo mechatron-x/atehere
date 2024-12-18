@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/mechatron-x/atehere/internal/app/ctx"
-	"github.com/mechatron-x/atehere/internal/billing/consumer"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/httpserver"
@@ -43,12 +42,15 @@ func New(conf *config.App) (*App, error) {
 		&model.MenuItem{},
 		&model.Session{},
 		&model.SessionOrder{},
+		&model.Bill{},
+		&model.BillItem{},
+		&model.BillItemPayments{},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	diskFileManager := storage.NewDiskFileManager()
+	diskFileManager := storage.NewFile()
 	imageStorage, err := storage.NewImage(diskFileManager, conf.Api.StaticRoot)
 	if err != nil {
 		return nil, err
@@ -73,17 +75,25 @@ func New(conf *config.App) (*App, error) {
 		return nil, err
 	}
 
-	orderCreatedPublisher := broker.NewPublisher[core.OrderCreatedEvent]()
-	sessionClosedPublisher := broker.NewPublisher[core.SessionClosedEvent]()
-
-	createBillConsumer := consumer.CreateBill()
-	sessionClosedPublisher.AddConsumer(createBillConsumer)
+	// Publishers
+	newOrderEventPublisher := broker.NewPublisher[core.NewOrderEvent]()
+	checkoutEventPublisher := broker.NewPublisher[core.CheckoutEvent]()
 
 	customerCtx := ctx.NewCustomer(db, auth)
 	managerCtx := ctx.NewManager(db, auth)
 	restaurantCtx := ctx.NewRestaurant(db, auth, imageStorage, conf.Api)
 	menuCtx := ctx.NewMenu(db, auth, imageStorage, conf.Api)
-	sessionCtx := ctx.NewSession(db, auth, eventNotifier, orderCreatedPublisher, sessionClosedPublisher)
+	sessionCtx := ctx.NewSession(db, auth, newOrderEventPublisher, checkoutEventPublisher)
+	billingCtx := ctx.NewBilling(db, auth)
+
+	// Consumers
+	newOrderEventPublisher.AddConsumer(
+		ctx.NewNotifyOrderConsumer(db, eventNotifier),
+	)
+	checkoutEventPublisher.AddConsumer(
+		ctx.NewCheckoutConsumer(db, eventNotifier),
+		ctx.NewCreateBillConsumer(db),
+	)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,
@@ -94,6 +104,7 @@ func New(conf *config.App) (*App, error) {
 		restaurantCtx.Handler(),
 		menuCtx.Handler(),
 		sessionCtx.Handler(),
+		billingCtx.Handler(),
 	)
 
 	httpServer, err := httpserver.New(conf.Api, mux)

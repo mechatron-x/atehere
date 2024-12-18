@@ -1,6 +1,9 @@
 package service
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
@@ -11,63 +14,63 @@ import (
 )
 
 type SessionService struct {
-	repository                  port.SessionRepository
-	viewRepository              port.SessionViewRepository
-	authenticator               port.Authenticator
-	orderCreatedEventPublisher  port.OrderCreatedEventPublisher
-	sessionClosedEventPublisher port.SessionClosedEventPublisher
-	log                         *zap.Logger
+	repository             port.SessionRepository
+	viewRepository         port.SessionViewRepository
+	authenticator          port.Authenticator
+	newOrderEventPublisher port.NewOrderEventPublisher
+	checkoutEventPublisher port.CheckoutEventPublisher
+	log                    *zap.Logger
 }
 
 func NewSession(
 	repository port.SessionRepository,
 	viewRepository port.SessionViewRepository,
 	authenticator port.Authenticator,
-	orderCreatedEventPublisher port.OrderCreatedEventPublisher,
-	sessionClosedEventPublisher port.SessionClosedEventPublisher,
+	newOrderEventPublisher port.NewOrderEventPublisher,
+	checkoutEventPublisher port.CheckoutEventPublisher,
 ) *SessionService {
 	session := &SessionService{
-		repository:                  repository,
-		viewRepository:              viewRepository,
-		authenticator:               authenticator,
-		orderCreatedEventPublisher:  orderCreatedEventPublisher,
-		sessionClosedEventPublisher: sessionClosedEventPublisher,
-		log:                         logger.Instance(),
+		repository:             repository,
+		viewRepository:         viewRepository,
+		authenticator:          authenticator,
+		newOrderEventPublisher: newOrderEventPublisher,
+		checkoutEventPublisher: checkoutEventPublisher,
+		log:                    logger.Instance(),
 	}
 
 	return session
 }
 
-func (ss *SessionService) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) error {
+func (ss *SessionService) PlaceOrders(idToken, tableID string, placeOrders *dto.PlaceOrders) (*dto.Session, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
-		return core.NewUnauthorizedError(err)
+		return nil, core.NewUnauthorizedError(err)
 	}
 
 	verifiedTableID, err := uuid.Parse(tableID)
 	if err != nil {
-		return core.NewValidationFailureError(err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
 	orders, err := placeOrders.ToEntities(customerID)
 	if err != nil {
-		return core.NewValidationFailureError(err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
 	session := ss.getActiveSession(verifiedTableID)
-
+	fmt.Println(session.EndTime().Format(time.ANSIC))
 	err = session.PlaceOrders(orders...)
 	if err != nil {
-		return core.NewDomainIntegrityViolationError(err)
+		return nil, core.NewDomainIntegrityViolationError(err)
 	}
 
 	err = ss.repository.Save(session)
 	if err != nil {
-		return core.NewPersistenceFailureError(err)
+		return nil, core.NewPersistenceFailureError(err)
 	}
 
 	ss.pushEventsAsync(session.Events())
-	return nil
+	return &dto.Session{SessionID: session.ID().String()}, nil
 }
 
 func (ss *SessionService) CustomerOrdersView(idToken, tableID string) (*dto.OrderList, error) {
@@ -81,7 +84,9 @@ func (ss *SessionService) CustomerOrdersView(idToken, tableID string) (*dto.Orde
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	orders, err := ss.viewRepository.GetTableOrdersView(verifiedTableID)
+	session := ss.getActiveSession(verifiedTableID)
+
+	orders, err := ss.viewRepository.GetTableOrdersView(session.ID())
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +116,9 @@ func (ss *SessionService) ManagerOrdersView(idToken, tableID string) (*dto.Order
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	managerOrders, err := ss.viewRepository.GetManagerOrdersView(verifiedTableID)
+	session := ss.getActiveSession(verifiedTableID)
+
+	managerOrders, err := ss.viewRepository.GetManagerOrdersView(session.ID())
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +141,9 @@ func (ss *SessionService) TableOrdersView(tableID string) (*dto.OrderList, error
 		return nil, core.NewValidationFailureError(err)
 	}
 
-	tableOrders, err := ss.viewRepository.GetTableOrdersView(verifiedTableID)
+	session := ss.getActiveSession(verifiedTableID)
+
+	tableOrders, err := ss.viewRepository.GetTableOrdersView(session.ID())
 	if err != nil {
 		return nil, core.NewResourceNotFoundError(err)
 	}
@@ -151,36 +160,36 @@ func (ss *SessionService) TableOrdersView(tableID string) (*dto.OrderList, error
 	return ordersView, nil
 }
 
-func (ss *SessionService) Checkout(idToken, tableID string) error {
+func (ss *SessionService) Checkout(idToken, tableID string) (*dto.Session, error) {
 	customerID, err := ss.authenticator.GetUserID(idToken)
 	if err != nil {
-		return core.NewUnauthorizedError(err)
+		return nil, core.NewUnauthorizedError(err)
 	}
 
 	verifiedCustomerID, err := uuid.Parse(customerID)
 	if err != nil {
-		return core.NewValidationFailureError(err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
 	verifiedTableID, err := uuid.Parse(tableID)
 	if err != nil {
-		return core.NewValidationFailureError(err)
+		return nil, core.NewValidationFailureError(err)
 	}
 
 	session := ss.getActiveSession(verifiedTableID)
-	err = session.Close(verifiedCustomerID)
+	err = session.Checkout(verifiedCustomerID)
 	if err != nil {
-		return core.NewDomainIntegrityViolationError(err)
+		return nil, core.NewDomainIntegrityViolationError(err)
 	}
 
 	err = ss.repository.Save(session)
 	if err != nil {
-		return core.NewPersistenceFailureError(err)
+		return nil, core.NewPersistenceFailureError(err)
 	}
 
 	ss.pushEventsAsync(session.Events())
 
-	return nil
+	return &dto.Session{SessionID: session.ID().String()}, nil
 }
 
 func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session {
@@ -197,10 +206,10 @@ func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session
 func (ss *SessionService) pushEventsAsync(events []core.DomainEvent) {
 	go func(events []core.DomainEvent) {
 		for _, e := range events {
-			if orderCreatedEvent, ok := e.(core.OrderCreatedEvent); ok {
-				ss.orderCreatedEventPublisher.NotifyEvent(orderCreatedEvent)
-			} else if sessionClosedEvent, ok := e.(core.SessionClosedEvent); ok {
-				ss.sessionClosedEventPublisher.NotifyEvent(sessionClosedEvent)
+			if newOrderEvent, ok := e.(core.NewOrderEvent); ok {
+				ss.newOrderEventPublisher.NotifyEvent(newOrderEvent)
+			} else if checkoutEvent, ok := e.(core.CheckoutEvent); ok {
+				ss.checkoutEventPublisher.NotifyEvent(checkoutEvent)
 			} else {
 				ss.log.Warn("unsupported event type skipping event processing")
 			}

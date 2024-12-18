@@ -7,16 +7,16 @@ import (
 
 type (
 	EventNotifier interface {
-		NotifyOrderCreatedEvent(event *dto.OrderCreatedEvent) error
-		NotifySessionClosedEvent(event *dto.SessionClosedEvent) error
+		NotifyOrderCreatedEvent(event *dto.NewOrderEvent) error
+		NotifyCheckoutEvent(event *dto.CheckoutEvent) error
 	}
 
-	OrderCreatedEventPublisher interface {
-		NotifyEvent(event core.OrderCreatedEvent)
+	NewOrderEventPublisher interface {
+		NotifyEvent(event core.NewOrderEvent)
 	}
 
-	SessionClosedEventPublisher interface {
-		NotifyEvent(event core.SessionClosedEvent)
+	CheckoutEventPublisher interface {
+		NotifyEvent(event core.CheckoutEvent)
 	}
 
 	Authenticator interface {

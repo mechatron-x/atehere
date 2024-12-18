@@ -24,6 +24,8 @@ func (s Session) FromModel(model *model.Session) (*aggregate.Session, error) {
 		return nil, err
 	}
 
+	state := valueobject.ParseSessionState(model.State)
+
 	orders := make([]entity.Order, 0)
 	for _, o := range model.Orders {
 		orderID, err := uuid.Parse(o.ID)
@@ -51,6 +53,8 @@ func (s Session) FromModel(model *model.Session) (*aggregate.Session, error) {
 		order.SetMenuItemID(menuItemID)
 		order.SetOrderedBy(orderedBy)
 		order.SetQuantity(quantity)
+		order.SetCreatedAt(o.CreatedAt)
+		order.SetUpdatedAt(o.UpdatedAt)
 
 		orders = append(orders, order)
 	}
@@ -59,6 +63,7 @@ func (s Session) FromModel(model *model.Session) (*aggregate.Session, error) {
 	session.SetTableID(tableID)
 	session.SetStartTime(model.StartTime)
 	session.SetEndTime(model.EndTime)
+	session.SetState(state)
 	session.SetOrders(orders)
 	session.SetCreatedAt(model.CreatedAt)
 	session.SetUpdatedAt(model.UpdatedAt)
@@ -93,6 +98,8 @@ func (s Session) FromAggregate(aggregate *aggregate.Session) *model.Session {
 			MenuItemID: o.MenuItemID().String(),
 			OrderedBy:  o.OrderedBy().String(),
 			Quantity:   o.Quantity().Int(),
+			CreatedAt:  o.CreatedAt(),
+			UpdatedAt:  o.UpdatedAt(),
 		}
 
 		orders = append(orders, order)
@@ -103,6 +110,7 @@ func (s Session) FromAggregate(aggregate *aggregate.Session) *model.Session {
 		TableID:   aggregate.TableID().String(),
 		StartTime: aggregate.StartTime(),
 		EndTime:   aggregate.EndTime(),
+		State:     aggregate.State().String(),
 		Orders:    orders,
 		Model: gorm.Model{
 			CreatedAt: aggregate.CreatedAt(),
