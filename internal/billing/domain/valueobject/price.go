@@ -60,6 +60,15 @@ func NewPrice(amount float64, currency Currency) (Price, error) {
 	}, nil
 }
 
+func MustPrice(amount float64, currency Currency) Price {
+	price, err := NewPrice(amount, currency)
+	if err != nil {
+		panic(err)
+	}
+
+	return price
+}
+
 func (p Price) Amount() float64 {
 	return p.amount
 }
@@ -76,8 +85,8 @@ func (p Price) Equals(price Price) bool {
 	return p.amount == price.amount
 }
 
-func (p Price) Add(price Price) (Price, error) {
-	return NewPrice(p.amount+price.amount, price.currency)
+func (p Price) Add(price Price) Price {
+	return MustPrice(p.amount+price.amount, price.currency)
 }
 
 func (p Price) Subtract(price Price) (Price, error) {
@@ -85,8 +94,8 @@ func (p Price) Subtract(price Price) (Price, error) {
 	return NewPrice(remaining, price.currency)
 }
 
-func (p Price) Multiply(factor float64) (Price, error) {
-	return NewPrice(p.amount*factor, p.currency)
+func (p Price) Multiply(factor float64) Price {
+	return MustPrice(p.amount*factor, p.currency)
 }
 
 func (p Price) String() string {

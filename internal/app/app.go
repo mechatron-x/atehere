@@ -44,6 +44,7 @@ func New(conf *config.App) (*App, error) {
 		&model.SessionOrder{},
 		&model.Bill{},
 		&model.BillItem{},
+		&model.BillItemPayments{},
 	)
 	if err != nil {
 		return nil, err

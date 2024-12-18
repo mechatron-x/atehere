@@ -35,7 +35,7 @@ func (o PostOrder) ToBillItem() (*entity.BillItem, error) {
 	return billItemBuilder.
 		SetOwnerID(o.CustomerID).
 		SetItemName(o.MenuItemName).
-		SetPrice(verifiedPrice).
+		SetUnitPrice(verifiedPrice).
 		SetQuantity(verifiedQuantity).
 		Build()
 }

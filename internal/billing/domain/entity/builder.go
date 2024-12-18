@@ -17,8 +17,8 @@ type BillItemBuilder struct {
 func NewBillItemBuilder() *BillItemBuilder {
 	return &BillItemBuilder{
 		billItem: &BillItem{
-			Entity: core.NewEntity(),
-			paidBy: make([]uuid.UUID, 0),
+			Entity:   core.NewEntity(),
+			payments: make(map[uuid.UUID]valueobject.Price),
 		},
 		errs: make([]error, 0),
 	}
@@ -56,18 +56,13 @@ func (rcv *BillItemBuilder) SetQuantity(quantity valueobject.Quantity) *BillItem
 	return rcv
 }
 
-func (rcv *BillItemBuilder) SetPrice(price valueobject.Price) *BillItemBuilder {
+func (rcv *BillItemBuilder) SetUnitPrice(price valueobject.Price) *BillItemBuilder {
 	rcv.billItem.unitPrice = price
 	return rcv
 }
 
-func (rcv *BillItemBuilder) SetPaidQuantity(quantity valueobject.Quantity) *BillItemBuilder {
-	rcv.billItem.paidQuantity = quantity
-	return rcv
-}
-
-func (rcv *BillItemBuilder) SetPaidBy(paidBy []uuid.UUID) *BillItemBuilder {
-	rcv.billItem.paidBy = paidBy
+func (rcv *BillItemBuilder) SetPayments(payments map[uuid.UUID]valueobject.Price) *BillItemBuilder {
+	rcv.billItem.payments = payments
 	return rcv
 }
 

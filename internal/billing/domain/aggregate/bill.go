@@ -23,19 +23,18 @@ func (rcv *Bill) BillItems() []entity.BillItem {
 	return rcv.billItems
 }
 
-func (rcv *Bill) Pay(paidBy, billItemID uuid.UUID, quantity valueobject.Quantity) error {
+func (rcv *Bill) Pay(paidBy, billItemID uuid.UUID, price valueobject.Price) error {
 	for i, bi := range rcv.billItems {
 		if bi.ID() != billItemID {
 			continue
 		}
 
-		err := bi.Pay(paidBy, quantity)
+		err := bi.Pay(paidBy, price)
 		if err != nil {
 			return err
 		}
 
 		rcv.billItems[i] = bi
-
 		return nil
 	}
 

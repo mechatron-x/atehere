@@ -6,17 +6,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type Bill struct {
-	bi BillItem
+type BillMapper struct {
+	bi BillItemMapper
 }
 
-func NewBill() Bill {
-	return Bill{
+func NewBill() BillMapper {
+	return BillMapper{
 		bi: NewBillItem(),
 	}
 }
 
-func (b Bill) FromModel(model *model.Bill) (*aggregate.Bill, error) {
+func (b BillMapper) FromModel(model *model.Bill) (*aggregate.Bill, error) {
 	builder := aggregate.NewBillBuilder()
 	builder.SetID(model.ID)
 	builder.SetSessionID(model.SessionID)
@@ -35,7 +35,7 @@ func (b Bill) FromModel(model *model.Bill) (*aggregate.Bill, error) {
 	return builder.Build()
 }
 
-func (b Bill) FromAggregate(aggregate *aggregate.Bill) *model.Bill {
+func (b BillMapper) FromAggregate(aggregate *aggregate.Bill) *model.Bill {
 	billItems := b.bi.FromEntities(aggregate.ID(), aggregate.BillItems())
 
 	return &model.Bill{

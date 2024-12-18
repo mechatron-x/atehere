@@ -22,6 +22,30 @@ func NewBilling(authenticator port.Authenticator, repository port.BillRepository
 	}
 }
 
+func (rcv *BillingService) Get(idToken string, sessionID string) (*dto.Bill, error) {
+	requesterID, err := rcv.authenticator.GetUserID(idToken)
+	if err != nil {
+		return nil, core.NewUnauthorizedError(err)
+	}
+
+	verifiedRequesterID, err := uuid.Parse(requesterID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	verifiedSessionID, err := uuid.Parse(sessionID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	bill, err := rcv.repository.GetBySessionID(verifiedSessionID)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	return dto.FromBill(verifiedRequesterID, bill), nil
+}
+
 func (rcv *BillingService) Pay(idToken string, sessionID string, billItems *dto.PayBillItems) error {
 	paidBy, err := rcv.authenticator.GetUserID(idToken)
 	if err != nil {
@@ -50,12 +74,17 @@ func (rcv *BillingService) Pay(idToken string, sessionID string, billItems *dto.
 			continue
 		}
 
-		verifiedQuantity, err := valueobject.NewQuantity(bi.Quantity)
+		verifiedCurrency, err := valueobject.ParseCurrency(bi.Currency)
 		if err != nil {
 			continue
 		}
 
-		err = bill.Pay(verifiedPaidBy, verifiedBillItemID, verifiedQuantity)
+		verifiedPrice, err := valueobject.NewPrice(bi.Amount, verifiedCurrency)
+		if err != nil {
+			continue
+		}
+
+		err = bill.Pay(verifiedPaidBy, verifiedBillItemID, verifiedPrice)
 		if err != nil {
 			errs = append(errs, err)
 		}

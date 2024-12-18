@@ -20,6 +20,24 @@ func NewBilling(service *service.BillingService) BillingHandler {
 	}
 }
 
+func (rcv BillingHandler) Get(w http.ResponseWriter, r *http.Request) {
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	sessionID := r.PathValue("session_id")
+
+	bill, err := rcv.service.Get(token, sessionID)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	response.Encode(w, bill, nil)
+}
+
 func (rcv BillingHandler) Pay(w http.ResponseWriter, r *http.Request) {
 	reqBody := &dto.PayBillItems{}
 	err := request.Decode(r, w, reqBody)

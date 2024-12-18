@@ -78,7 +78,8 @@ func NewServeMux(
 	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.TableOrdersView)
 
 	// Billing endpoints
-	versionMux.HandleFunc("POST /sessions/{session_id}/pay", bh.Pay)
+	versionMux.HandleFunc("GET /bills/{session_id}", bh.Get)
+	versionMux.HandleFunc("POST /bills/{session_id}", bh.Pay)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

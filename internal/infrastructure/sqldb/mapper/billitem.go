@@ -2,19 +2,18 @@ package mapper
 
 import (
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"github.com/mechatron-x/atehere/internal/billing/domain/entity"
 	"github.com/mechatron-x/atehere/internal/billing/domain/valueobject"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 )
 
-type BillItem struct{}
+type BillItemMapper struct{}
 
-func NewBillItem() BillItem {
-	return BillItem{}
+func NewBillItem() BillItemMapper {
+	return BillItemMapper{}
 }
 
-func (bi BillItem) FromModel(model *model.BillItem) (*entity.BillItem, error) {
+func (bi BillItemMapper) FromModel(model *model.BillItem) (*entity.BillItem, error) {
 	verifiedQuantity, err := valueobject.NewQuantity(model.Quantity)
 	if err != nil {
 		return nil, err
@@ -30,34 +29,39 @@ func (bi BillItem) FromModel(model *model.BillItem) (*entity.BillItem, error) {
 		return nil, err
 	}
 
-	verifiedPaidQuantity, err := valueobject.NewQuantity(model.PaidQuantity)
-	if err != nil {
-		return nil, err
-	}
-
-	verifiedPaiBy := make([]uuid.UUID, 0)
-	for _, i := range model.PaidBy {
-		id, err := uuid.Parse(i)
+	payments := make(map[uuid.UUID]valueobject.Price)
+	for _, p := range model.Payments {
+		verifiedCurrency, err := valueobject.ParseCurrency(p.Currency)
 		if err != nil {
 			return nil, err
 		}
-		verifiedPaiBy = append(verifiedPaiBy, id)
+
+		verifiedPrice, err := valueobject.NewPrice(p.PaidPrice, verifiedCurrency)
+		if err != nil {
+			return nil, err
+		}
+
+		verifiedCustomerID, err := uuid.Parse(p.CustomerID)
+		if err != nil {
+			return nil, err
+		}
+
+		payments[verifiedCustomerID] = verifiedPrice
 	}
 
 	return entity.NewBillItemBuilder().
 		SetID(model.ID).
 		SetOwnerID(model.OwnerID).
 		SetItemName(model.ItemName).
-		SetPrice(verifiedPrice).
+		SetUnitPrice(verifiedPrice).
 		SetQuantity(verifiedQuantity).
-		SetPaidQuantity(verifiedPaidQuantity).
-		SetPaidBy(verifiedPaiBy).
+		SetPayments(payments).
 		SetCreatedAt(model.CreatedAt).
 		SetUpdatedAt(model.UpdatedAt).
 		Build()
 }
 
-func (bi BillItem) FromModels(models []model.BillItem) ([]entity.BillItem, error) {
+func (bi BillItemMapper) FromModels(models []model.BillItem) ([]entity.BillItem, error) {
 	entities := make([]entity.BillItem, 0)
 	for _, model := range models {
 		entity, err := bi.FromModel(&model)
@@ -69,22 +73,34 @@ func (bi BillItem) FromModels(models []model.BillItem) ([]entity.BillItem, error
 	return entities, nil
 }
 
-func (bi BillItem) FromEntity(billID uuid.UUID, entity *entity.BillItem) *model.BillItem {
+func (bi BillItemMapper) FromEntity(billID uuid.UUID, entity *entity.BillItem) *model.BillItem {
+	payments := make([]model.BillItemPayments, 0)
+
+	for customerID, price := range entity.Payments() {
+		payment := model.BillItemPayments{
+			CustomerID: customerID.String(),
+			BillItemID: entity.ID().String(),
+			PaidPrice:  price.Amount(),
+			Currency:   price.Currency().String(),
+		}
+
+		payments = append(payments, payment)
+	}
+
 	return &model.BillItem{
-		ID:           entity.ID().String(),
-		OwnerID:      entity.OwnerID().String(),
-		ItemName:     entity.ItemName(),
-		UnitPrice:    entity.UnitPrice().Amount(),
-		Currency:     entity.UnitPrice().Currency().String(),
-		Quantity:     entity.Quantity().Int(),
-		PaidQuantity: entity.PaidAmount().Int(),
-		PaidBy:       pq.StringArray(entity.PaidBy().Strings()),
-		CreatedAt:    entity.CreatedAt(),
-		UpdatedAt:    entity.UpdatedAt(),
+		ID:        entity.ID().String(),
+		OwnerID:   entity.OwnerID().String(),
+		ItemName:  entity.ItemName(),
+		UnitPrice: entity.UnitPrice().Amount(),
+		Currency:  entity.UnitPrice().Currency().String(),
+		Quantity:  entity.Quantity().Int(),
+		Payments:  payments,
+		CreatedAt: entity.CreatedAt(),
+		UpdatedAt: entity.UpdatedAt(),
 	}
 }
 
-func (bi BillItem) FromEntities(billID uuid.UUID, entities []entity.BillItem) []model.BillItem {
+func (bi BillItemMapper) FromEntities(billID uuid.UUID, entities []entity.BillItem) []model.BillItem {
 	models := make([]model.BillItem, 0)
 	for _, entity := range entities {
 		billItem := bi.FromEntity(billID, &entity)

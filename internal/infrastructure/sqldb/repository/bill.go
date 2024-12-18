@@ -11,7 +11,7 @@ import (
 
 type BillRepository struct {
 	db     *gorm.DB
-	mapper mapper.Bill
+	mapper mapper.BillMapper
 }
 
 func NewBill(db *gorm.DB) *BillRepository {
@@ -25,7 +25,7 @@ func (rcv *BillRepository) GetBySessionID(sessionID uuid.UUID) (*aggregate.Bill,
 	billModel := new(model.Bill)
 
 	result := rcv.db.
-		Preload("BillItems").
+		Preload("BillItems.Payments").
 		Where(&model.Bill{SessionID: sessionID.String()}).
 		First(billModel)
 	if result.Error != nil {
