@@ -30,13 +30,14 @@ func New(apiConf config.Api, mux *http.ServeMux) (*http.Server, error) {
 
 func NewServeMux(
 	conf config.Api,
-	dh handler.Default,
-	hh handler.Health,
-	ch handler.Customer,
-	mh handler.Manager,
-	rh handler.Restaurant,
-	rmh handler.Menu,
-	sh handler.Session,
+	dh handler.DefaultHandler,
+	hh handler.HealthHandler,
+	ch handler.CustomerHandler,
+	mh handler.ManagerHandler,
+	rh handler.RestaurantHandler,
+	rmh handler.MenuHandler,
+	sh handler.SessionHandler,
+	bh handler.BillingHandler,
 ) *http.ServeMux {
 	mux := http.NewServeMux()
 	apiMux := http.NewServeMux()
@@ -75,6 +76,10 @@ func NewServeMux(
 	versionMux.HandleFunc("GET /tables/{table_id}/customers/orders", sh.CustomerOrdersView)
 	versionMux.HandleFunc("GET /tables/{table_id}/managers/orders", sh.ManagerOrdersView)
 	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.TableOrdersView)
+
+	// Billing endpoints
+	versionMux.HandleFunc("GET /bills/{session_id}", bh.Get)
+	versionMux.HandleFunc("POST /bills/{session_id}", bh.Pay)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)

@@ -14,7 +14,8 @@ type Price struct {
 }
 
 const (
-	TRY Currency = iota
+	UNKNOWN Currency = iota
+	TRY
 	USD
 )
 

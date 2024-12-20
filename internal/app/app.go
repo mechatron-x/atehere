@@ -6,12 +6,16 @@ import (
 
 	"github.com/mechatron-x/atehere/internal/app/ctx"
 	"github.com/mechatron-x/atehere/internal/config"
+	"github.com/mechatron-x/atehere/internal/core"
 	"github.com/mechatron-x/atehere/internal/httpserver"
 	"github.com/mechatron-x/atehere/internal/httpserver/handler"
-	"github.com/mechatron-x/atehere/internal/infrastructure"
-	"github.com/mechatron-x/atehere/internal/logger"
-	"github.com/mechatron-x/atehere/internal/sqldb"
-	"github.com/mechatron-x/atehere/internal/sqldb/model"
+	"github.com/mechatron-x/atehere/internal/infrastructure/authenticator"
+	"github.com/mechatron-x/atehere/internal/infrastructure/broker"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
+	"github.com/mechatron-x/atehere/internal/infrastructure/notifier"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
+	"github.com/mechatron-x/atehere/internal/infrastructure/storage"
 	"github.com/mechatron-x/atehere/internal/usermanagement/port"
 )
 
@@ -38,41 +42,63 @@ func New(conf *config.App) (*App, error) {
 		&model.MenuItem{},
 		&model.Session{},
 		&model.SessionOrder{},
+		&model.Bill{},
+		&model.BillItem{},
+		&model.BillItemPayments{},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	diskFileManager := infrastructure.NewDiskFileManager()
-	imageStorage, err := infrastructure.NewImageStorage(diskFileManager, conf.Api.StaticRoot)
+	diskFileManager := storage.NewFile()
+	imageStorage, err := storage.NewImage(diskFileManager, conf.Api.StaticRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	var authenticator port.Authenticator
+	var auth port.Authenticator
 
 	if conf.Environment == config.PROD {
-		authenticator, err = infrastructure.NewFirebaseAuthenticator(conf.Firebase)
+		auth, err = authenticator.NewFirebase(conf.Firebase)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		authenticator, err = infrastructure.NewMockAuthenticator(conf.Api, diskFileManager)
+		auth, err = authenticator.NewMock(conf.Api, diskFileManager)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	eventNotifier, err := infrastructure.NewFirecloudEventNotifier(conf.Firebase)
+	eventNotifier, err := notifier.NewFirestore(conf.Firebase)
 	if err != nil {
 		return nil, err
 	}
 
-	customerCtx := ctx.NewCustomer(db, authenticator)
-	managerCtx := ctx.NewManager(db, authenticator)
-	restaurantCtx := ctx.NewRestaurant(db, authenticator, imageStorage, conf.Api)
-	menuCtx := ctx.NewMenu(db, authenticator, imageStorage, conf.Api)
-	sessionCtx := ctx.NewSession(db, authenticator, eventNotifier)
+	// Publishers
+	newOrderEventPublisher := broker.NewPublisher[core.NewOrderEvent]()
+	checkoutEventPublisher := broker.NewPublisher[core.CheckoutEvent]()
+	allPaymentsDonePublisher := broker.NewPublisher[core.AllPaymentsDoneEvent]()
+
+	// Contexts
+	customerCtx := ctx.NewCustomer(db, auth)
+	managerCtx := ctx.NewManager(db, auth)
+	restaurantCtx := ctx.NewRestaurant(db, auth, imageStorage, conf.Api)
+	menuCtx := ctx.NewMenu(db, auth, imageStorage, conf.Api)
+	sessionCtx := ctx.NewSession(db, auth, newOrderEventPublisher, checkoutEventPublisher)
+	billingCtx := ctx.NewBilling(db, auth, allPaymentsDonePublisher)
+
+	// Consumers
+	newOrderEventPublisher.AddConsumer(
+		ctx.NewNotifyOrderConsumer(db, eventNotifier),
+	)
+	checkoutEventPublisher.AddConsumer(
+		ctx.NewCheckoutConsumer(db, eventNotifier),
+		ctx.NewCreateBillConsumer(db),
+	)
+	allPaymentsDonePublisher.AddConsumer(
+		ctx.NewSessionClosedConsumer(db),
+	)
 
 	mux := httpserver.NewServeMux(
 		conf.Api,
@@ -83,6 +109,7 @@ func New(conf *config.App) (*App, error) {
 		restaurantCtx.Handler(),
 		menuCtx.Handler(),
 		sessionCtx.Handler(),
+		billingCtx.Handler(),
 	)
 
 	httpServer, err := httpserver.New(conf.Api, mux)
