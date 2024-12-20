@@ -78,13 +78,15 @@ func New(conf *config.App) (*App, error) {
 	// Publishers
 	newOrderEventPublisher := broker.NewPublisher[core.NewOrderEvent]()
 	checkoutEventPublisher := broker.NewPublisher[core.CheckoutEvent]()
+	allPaymentsDonePublisher := broker.NewPublisher[core.AllPaymentsDoneEvent]()
 
+	// Contexts
 	customerCtx := ctx.NewCustomer(db, auth)
 	managerCtx := ctx.NewManager(db, auth)
 	restaurantCtx := ctx.NewRestaurant(db, auth, imageStorage, conf.Api)
 	menuCtx := ctx.NewMenu(db, auth, imageStorage, conf.Api)
 	sessionCtx := ctx.NewSession(db, auth, newOrderEventPublisher, checkoutEventPublisher)
-	billingCtx := ctx.NewBilling(db, auth)
+	billingCtx := ctx.NewBilling(db, auth, allPaymentsDonePublisher)
 
 	// Consumers
 	newOrderEventPublisher.AddConsumer(
@@ -93,6 +95,9 @@ func New(conf *config.App) (*App, error) {
 	checkoutEventPublisher.AddConsumer(
 		ctx.NewCheckoutConsumer(db, eventNotifier),
 		ctx.NewCreateBillConsumer(db),
+	)
+	allPaymentsDonePublisher.AddConsumer(
+		ctx.NewSessionClosedConsumer(db),
 	)
 
 	mux := httpserver.NewServeMux(

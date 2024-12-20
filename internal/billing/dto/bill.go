@@ -11,12 +11,13 @@ type (
 	Bill struct {
 		BillItems              []BillItem `json:"bill_items"`
 		TotalDue               float64    `json:"total_due"`
-		RemainingPrice         float64    `json:"remaining_amount"`
+		RemainingPrice         float64    `json:"remaining_price"`
 		IndividualPaymentTotal float64    `json:"individual_payment_total"`
 		Currency               string     `json:"currency"`
 	}
 
 	BillItem struct {
+		ID                string  `json:"id"`
 		OwnerID           string  `json:"owner_id"`
 		ItemName          string  `json:"item_name"`
 		UnitPrice         float64 `json:"unit_price"`
@@ -81,6 +82,7 @@ func FromBillItem(requesterID uuid.UUID, billItem entity.BillItem) BillItem {
 	}
 
 	return BillItem{
+		ID:                billItem.ID().String(),
 		OwnerID:           billItem.OwnerID().String(),
 		ItemName:          billItem.ItemName(),
 		UnitPrice:         billItem.UnitPrice().Amount(),
