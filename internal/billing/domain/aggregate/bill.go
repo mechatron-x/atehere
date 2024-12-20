@@ -24,6 +24,8 @@ func (rcv *Bill) BillItems() []entity.BillItem {
 }
 
 func (rcv *Bill) Pay(paidBy, billItemID uuid.UUID, price valueobject.Price) error {
+	defer rcv.allPaymentsDonePolicy()
+
 	for i, bi := range rcv.billItems {
 		if bi.ID() != billItemID {
 			continue
@@ -39,4 +41,16 @@ func (rcv *Bill) Pay(paidBy, billItemID uuid.UUID, price valueobject.Price) erro
 	}
 
 	return fmt.Errorf("bill item with id %s not found", billItemID)
+}
+
+func (rcv *Bill) allPaymentsDonePolicy() {
+	for _, bi := range rcv.billItems {
+		if !bi.IsPaid() {
+			return
+		}
+	}
+
+	print("all orders paid")
+	event := core.NewAllPaymentsDoneEvent(rcv.sessionID)
+	rcv.RaiseEvent(event)
 }

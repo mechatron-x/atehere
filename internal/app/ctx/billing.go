@@ -15,9 +15,9 @@ type BillingCtx struct {
 	handler handler.BillingHandler
 }
 
-func NewBilling(db *gorm.DB, authenticator port.Authenticator) BillingCtx {
+func NewBilling(db *gorm.DB, authenticator port.Authenticator, allPaymentsDonePublisher port.AllPaymentsDoneEventPublisher) BillingCtx {
 	billingRepo := repository.NewBill(db)
-	service := service.NewBilling(authenticator, billingRepo)
+	service := service.NewBilling(authenticator, billingRepo, allPaymentsDonePublisher)
 
 	handler := handler.NewBilling(service)
 

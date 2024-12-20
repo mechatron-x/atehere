@@ -10,6 +10,7 @@ type (
 	SessionRepository interface {
 		Save(session *aggregate.Session) error
 		GetByTableID(tableID uuid.UUID) (*aggregate.Session, error)
+		GetByID(ID uuid.UUID) (*aggregate.Session, error)
 	}
 
 	SessionViewRepository interface {

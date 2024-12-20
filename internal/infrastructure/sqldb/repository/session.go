@@ -75,6 +75,25 @@ func (s *SessionRepository) GetByTableID(tableID uuid.UUID) (*aggregate.Session,
 	return session, err
 }
 
+func (s *SessionRepository) GetByID(ID uuid.UUID) (*aggregate.Session, error) {
+	sessionModel := new(model.Session)
+
+	result := s.db.
+		Preload("Orders").
+		Where(&model.Session{ID: ID.String()}).
+		First(sessionModel)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	session, err := s.mapper.FromModel(sessionModel)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, err
+}
+
 type SessionView struct {
 	db *gorm.DB
 }

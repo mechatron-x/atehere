@@ -8,17 +8,27 @@ import (
 	"github.com/mechatron-x/atehere/internal/billing/dto"
 	"github.com/mechatron-x/atehere/internal/billing/port"
 	"github.com/mechatron-x/atehere/internal/core"
+	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
+	"go.uber.org/zap"
 )
 
 type BillingService struct {
-	authenticator port.Authenticator
-	repository    port.BillRepository
+	authenticator                 port.Authenticator
+	repository                    port.BillRepository
+	allPaymentsDoneEventPublisher port.AllPaymentsDoneEventPublisher
+	log                           *zap.Logger
 }
 
-func NewBilling(authenticator port.Authenticator, repository port.BillRepository) *BillingService {
+func NewBilling(
+	authenticator port.Authenticator,
+	repository port.BillRepository,
+	allPaymentsDoneEventPublisher port.AllPaymentsDoneEventPublisher,
+) *BillingService {
 	return &BillingService{
-		authenticator: authenticator,
-		repository:    repository,
+		authenticator:                 authenticator,
+		repository:                    repository,
+		allPaymentsDoneEventPublisher: allPaymentsDoneEventPublisher,
+		log:                           logger.Instance(),
 	}
 }
 
@@ -90,9 +100,22 @@ func (rcv *BillingService) Pay(idToken string, sessionID string, billItems *dto.
 		}
 	}
 
+	rcv.pushEventsAsync(bill.Events())
 	if len(errs) != 0 {
 		return core.NewDomainIntegrityViolationError(errors.Join(errs...))
 	}
 
 	return rcv.repository.Save(bill)
+}
+
+func (ss *BillingService) pushEventsAsync(events []core.DomainEvent) {
+	go func(events []core.DomainEvent) {
+		for _, e := range events {
+			if allPaymentsDoneEvent, ok := e.(core.AllPaymentsDoneEvent); ok {
+				ss.allPaymentsDoneEventPublisher.NotifyEvent(allPaymentsDoneEvent)
+			} else {
+				ss.log.Warn("unsupported event type skipping event processing")
+			}
+		}
+	}(events)
 }

@@ -61,3 +61,11 @@ func NewCheckoutConsumer(
 
 	return notifyCheckout
 }
+
+func NewSessionClosedConsumer(
+	db *gorm.DB,
+) broker.Consumer[core.AllPaymentsDoneEvent] {
+	repository := repository.NewSession(db)
+
+	return consumer.NewCloseSession(repository)
+}

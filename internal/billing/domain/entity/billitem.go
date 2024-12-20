@@ -84,3 +84,7 @@ func (rcv *BillItem) addCustomerPayments(paidBy uuid.UUID, price valueobject.Pri
 
 	rcv.payments[paidBy] = price
 }
+
+func (rcv *BillItem) IsPaid() bool {
+	return rcv.PaidAmount().Equals(rcv.TotalDue())
+}

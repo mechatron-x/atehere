@@ -30,6 +30,11 @@ type (
 		orderID   uuid.UUID
 		quantity  int
 	}
+
+	AllPaymentsDoneEvent struct {
+		domainEvent
+		sessionID uuid.UUID
+	}
 )
 
 func newDomainEvent() domainEvent {
@@ -77,4 +82,14 @@ func (rcv NewOrderEvent) OrderID() uuid.UUID {
 
 func (rcv NewOrderEvent) Quantity() int {
 	return rcv.quantity
+}
+
+func NewAllPaymentsDoneEvent(sessionId uuid.UUID) AllPaymentsDoneEvent {
+	return AllPaymentsDoneEvent{
+		sessionID: sessionId,
+	}
+}
+
+func (rcv AllPaymentsDoneEvent) SessionID() uuid.UUID {
+	return rcv.sessionID
 }
