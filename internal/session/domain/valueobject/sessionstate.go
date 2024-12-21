@@ -26,6 +26,14 @@ func ParseSessionState(state string) SessionState {
 	}
 }
 
+func (rcv SessionState) AvailableStates() []string {
+	return []string{
+		Active.String(),
+		CheckoutPending.String(),
+		Completed.String(),
+	}
+}
+
 func (rcv SessionState) String() string {
 	switch rcv {
 	case Active:
