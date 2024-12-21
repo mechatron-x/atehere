@@ -62,8 +62,8 @@ func NewServeMux(
 	versionMux.HandleFunc("DELETE /managers/restaurants/{restaurant_id}", rh.Delete)
 
 	// Restaurant endpoints
-	versionMux.HandleFunc("POST /restaurants", rh.ListForCustomer)
-	versionMux.HandleFunc("GET /restaurants/{restaurant_id}", rh.GetOneForCustomer)
+	versionMux.HandleFunc("POST /customers/restaurants", rh.ListForCustomer)
+	versionMux.HandleFunc("GET /customers/restaurants/{restaurant_id}", rh.GetOneForCustomer)
 
 	// Menu endpoints
 	versionMux.HandleFunc("POST /menus", rmh.Create)
@@ -72,14 +72,13 @@ func NewServeMux(
 
 	// Session endpoints
 	versionMux.HandleFunc("POST /tables/{table_id}/checkout", sh.Checkout)
-	versionMux.HandleFunc("PUT /tables/{table_id}/orders", sh.PlaceOrders)
-	versionMux.HandleFunc("GET /tables/{table_id}/customers/orders", sh.CustomerOrdersView)
-	versionMux.HandleFunc("GET /tables/{table_id}/managers/orders", sh.ManagerOrdersView)
-	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.TableOrdersView)
+	versionMux.HandleFunc("POST /tables/{table_id}/order", sh.PlaceOrders)
+	versionMux.HandleFunc("GET /tables/{table_id}/orders", sh.GetOrders)
+	versionMux.HandleFunc("GET /sessions/{session_id}/state", sh.GetSessionState)
 
 	// Billing endpoints
-	versionMux.HandleFunc("GET /bills/{session_id}", bh.Get)
-	versionMux.HandleFunc("POST /bills/{session_id}", bh.Pay)
+	versionMux.HandleFunc("GET /sessions/{session_id}/bills", bh.Get)
+	versionMux.HandleFunc("POST /sessions/{session_id}/pay", bh.Pay)
 
 	// Default handler
 	apiMux.HandleFunc("/", dh.NoHandler)
