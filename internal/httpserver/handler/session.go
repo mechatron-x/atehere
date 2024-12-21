@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
@@ -61,7 +62,25 @@ func (sh SessionHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 	response.Encode(w, session, nil, http.StatusAccepted)
 }
 
-func (sh SessionHandler) CustomerOrdersView(w http.ResponseWriter, r *http.Request) {
+func (sh SessionHandler) GetSessionState(w http.ResponseWriter, r *http.Request) {
+	sessionID := r.PathValue("session_id")
+
+	_, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	state, err := sh.ss.GetSessionState(sessionID)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	response.Encode(w, state, nil)
+}
+
+func (sh SessionHandler) GetOrders(w http.ResponseWriter, r *http.Request) {
 	tableID := r.PathValue("table_id")
 
 	token, err := header.GetBearerToken(r.Header)
@@ -70,41 +89,37 @@ func (sh SessionHandler) CustomerOrdersView(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	orders, err := sh.ss.CustomerOrdersView(token, tableID)
-	if err != nil {
-		response.Encode(w, nil, err)
+	queryValues := r.URL.Query()
+	if !queryValues.Has("role") {
+		orders, err := sh.ss.TableOrdersView(tableID)
+		if err != nil {
+			response.Encode(w, nil, err)
+			return
+		}
+
+		response.Encode(w, orders, nil)
 		return
 	}
 
-	response.Encode(w, orders, nil)
-}
+	role := queryValues.Get("role")
+	switch role {
+	case "customer":
+		orders, err := sh.ss.CustomerOrdersView(token, tableID)
+		if err != nil {
+			response.Encode(w, nil, err)
+			return
+		}
 
-func (sh SessionHandler) ManagerOrdersView(w http.ResponseWriter, r *http.Request) {
-	table_id := r.PathValue("table_id")
+		response.Encode(w, orders, nil)
+	case "manager":
+		orders, err := sh.ss.ManagerOrdersView(token, tableID)
+		if err != nil {
+			response.Encode(w, nil, err)
+			return
+		}
 
-	token, err := header.GetBearerToken(r.Header)
-	if err != nil {
-		response.Encode(w, nil, err)
-		return
+		response.Encode(w, orders, nil)
+	default:
+		response.Encode(w, nil, errors.New("unsupported tole type"), http.StatusBadRequest)
 	}
-
-	orders, err := sh.ss.ManagerOrdersView(token, table_id)
-	if err != nil {
-		response.Encode(w, nil, err)
-		return
-	}
-
-	response.Encode(w, orders, nil)
-}
-
-func (sh SessionHandler) TableOrdersView(w http.ResponseWriter, r *http.Request) {
-	table_id := r.PathValue("table_id")
-
-	orders, err := sh.ss.TableOrdersView(table_id)
-	if err != nil {
-		response.Encode(w, nil, err)
-		return
-	}
-
-	response.Encode(w, orders, nil)
 }

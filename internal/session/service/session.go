@@ -192,6 +192,23 @@ func (ss *SessionService) Checkout(idToken, tableID string) (*dto.Session, error
 	return &dto.Session{SessionID: session.ID().String()}, nil
 }
 
+func (ss *SessionService) GetSessionState(sessionID string) (*dto.SessionState, error) {
+	verifiedSessionID, err := uuid.Parse(sessionID)
+	if err != nil {
+		return nil, core.NewValidationFailureError(err)
+	}
+
+	session, err := ss.repository.GetByID(verifiedSessionID)
+	if err != nil {
+		return nil, core.NewResourceNotFoundError(err)
+	}
+
+	return &dto.SessionState{
+		State:           session.State().String(),
+		AvailableStates: session.State().AvailableStates(),
+	}, nil
+}
+
 func (ss *SessionService) getActiveSession(tableID uuid.UUID) *aggregate.Session {
 	session, err := ss.repository.GetByTableID(tableID)
 	if err != nil {

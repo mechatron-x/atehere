@@ -79,6 +79,7 @@ func (s *SessionRepository) GetByID(ID uuid.UUID) (*aggregate.Session, error) {
 	sessionModel := new(model.Session)
 
 	result := s.db.
+		Unscoped().
 		Preload("Orders").
 		Where(&model.Session{ID: ID.String()}).
 		First(sessionModel)
