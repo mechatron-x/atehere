@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
+	"github.com/mechatron-x/atehere/internal/handler/response"
 )
 
 type HealthHandler struct{}

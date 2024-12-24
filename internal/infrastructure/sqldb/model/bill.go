@@ -33,4 +33,16 @@ type (
 		PaidPrice  float64 `gorm:"not null;numeric;precision:10;scale:2"`
 		Currency   string  `gorm:"not null;size:5"`
 	}
+
+	PastBillsView struct {
+		BillID         string
+		OwnerID        string
+		RestaurantName string
+		ItemName       string
+		Quantity       int
+		UnitPrice      float64
+		OrderPrice     float64
+		PaidPrice      float64
+		Currency       string
+	}
 )

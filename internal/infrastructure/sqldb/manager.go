@@ -36,15 +36,19 @@ func Migrate(db *gorm.DB, model ...any) error {
 		return err
 	}
 
-	if err := db.Migrator().CreateView("table_orders", gorm.ViewOption{Query: view.TableOrdersView(db), Replace: true}); err != nil {
+	if err := db.Migrator().CreateView(view.TableOrders, gorm.ViewOption{Query: view.TableOrdersView(db), Replace: true}); err != nil {
 		return err
 	}
 
-	if err := db.Migrator().CreateView("manager_orders", gorm.ViewOption{Query: view.ManagerOrdersView(db), Replace: true}); err != nil {
+	if err := db.Migrator().CreateView(view.ManagerOrders, gorm.ViewOption{Query: view.ManagerOrdersView(db), Replace: true}); err != nil {
 		return err
 	}
 
-	if err := db.Migrator().CreateView("post_orders", gorm.ViewOption{Query: view.PostOrdersView(db), Replace: true}); err != nil {
+	if err := db.Migrator().CreateView(view.PostOrders, gorm.ViewOption{Query: view.PostOrdersView(db), Replace: true}); err != nil {
+		return err
+	}
+
+	if err := db.Migrator().CreateView(view.PastBillItems, gorm.ViewOption{Query: view.PastBillsItemsView(db), Replace: true}); err != nil {
 		return err
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/billing/dto"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/mapper"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
+	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/view"
 	"gorm.io/gorm"
 )
 
@@ -82,7 +83,7 @@ func NewBillView(db *gorm.DB) *BillViewRepository {
 func (rcv *BillViewRepository) GetPostOrders(sessionID uuid.UUID) ([]dto.PostOrder, error) {
 	var orders []dto.PostOrder
 
-	result := rcv.db.Table("post_orders").
+	result := rcv.db.Table(view.PostOrders).
 		Where("session_id = ?", sessionID.String()).
 		Scan(&orders)
 	if result.Error != nil {
@@ -90,4 +91,51 @@ func (rcv *BillViewRepository) GetPostOrders(sessionID uuid.UUID) ([]dto.PostOrd
 	}
 
 	return orders, nil
+}
+
+func (rcv *BillViewRepository) GetPastBills(customerID uuid.UUID) ([]dto.PastBill, error) {
+	var pastBillItems []model.PastBillsView
+
+	result := rcv.db.Table(view.PastBillItems).
+		Where(&model.PastBillsView{OwnerID: customerID.String()}).
+		Scan(&pastBillItems)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	pastBillsMap := make(map[string][]dto.PastBillItem)
+	pastBills := make([]dto.PastBill, 0)
+	for _, pb := range pastBillItems {
+		pastBillItem := dto.PastBillItem{
+			ItemName:   pb.ItemName,
+			Quantity:   pb.Quantity,
+			UnitPrice:  pb.UnitPrice,
+			OrderPrice: pb.OrderPrice,
+			PaidPrice:  pb.PaidPrice,
+			Currency:   pb.Currency,
+		}
+
+		_, ok := pastBillsMap[pb.BillID]
+		if !ok {
+			pastBillsMap[pb.BillID] = make([]dto.PastBillItem, 0)
+			pastBill := dto.PastBill{
+				BillID:         pb.BillID,
+				RestaurantName: pb.RestaurantName,
+			}
+			pastBills = append(pastBills, pastBill)
+		}
+
+		pastBillsMap[pb.BillID] = append(pastBillsMap[pb.BillID], pastBillItem)
+	}
+
+	for i, pb := range pastBills {
+		pastBillItems, ok := pastBillsMap[pb.BillID]
+		if !ok {
+			continue
+		}
+
+		pastBills[i].BillItems = pastBillItems
+	}
+
+	return pastBills, nil
 }
