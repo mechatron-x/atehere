@@ -26,15 +26,15 @@ type (
 
 	RestaurantTable struct {
 		ID           string `gorm:"primarykey;type:uuid"`
-		RestaurantID string
+		RestaurantID string `gorm:"type:uuid"`
 		Name         string `gorm:"not null;size:10"`
 		CreatedAt    time.Time
 		UpdatedAt    time.Time
 	}
 
 	RestaurantLocation struct {
-		RestaurantID string  `gorm:"type:uuid"`
-		Latitude     float64 `gorm:"not null;numeric;precision:10;scale:8"`
-		Longitude    float64 `gorm:"not null;numeric;precision:11;scale:8"`
+		RestaurantID string  `gorm:"primarykey;type:uuid"`
+		Latitude     float64 `gorm:"primarykey;numeric;precision:10;scale:8"`
+		Longitude    float64 `gorm:"primarykey;numeric;precision:11;scale:8"`
 	}
 )

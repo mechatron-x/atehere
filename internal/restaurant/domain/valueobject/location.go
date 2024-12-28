@@ -69,10 +69,10 @@ func (rcv Location) IsInRadius(target Location, radius float64) bool {
 
 func (rcv Locations) IsInRadius(target Location, radius float64) bool {
 	for _, l := range rcv {
-		if !l.IsInRadius(target, radius) {
-			return false
+		if l.IsInRadius(target, radius) {
+			return true
 		}
 	}
 
-	return true
+	return false
 }

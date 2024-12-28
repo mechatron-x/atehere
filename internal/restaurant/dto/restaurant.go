@@ -138,7 +138,6 @@ func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
 
 func (rf RestaurantFilter) ApplyFilter(restaurants []*aggregate.Restaurant) []*aggregate.Restaurant {
 	filteredRestaurants := make([]*aggregate.Restaurant, 0)
-
 	for _, restaurant := range restaurants {
 		if !core.IsEmptyString(rf.Name) {
 			if !strings.Contains(restaurant.Name().String(), rf.Name) {
