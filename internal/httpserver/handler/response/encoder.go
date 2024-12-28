@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/handler/header"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
 )
 
 func Encode(w http.ResponseWriter, data any, err error, status ...int) {

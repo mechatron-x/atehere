@@ -47,15 +47,6 @@ func (r *RestaurantRepository) Save(restaurant *aggregate.Restaurant) error {
 		return err
 	}
 
-	err = tx.Model(restaurantModel).
-		Association("Locations").
-		Unscoped().
-		Replace(restaurantModel.Locations)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
 	tx.Session(&gorm.Session{FullSaveAssociations: true}).Updates(restaurantModel)
 	if result.Error != nil {
 		tx.Rollback()
@@ -69,7 +60,6 @@ func (r *RestaurantRepository) GetByID(id uuid.UUID) (*aggregate.Restaurant, err
 
 	result := r.db.
 		Preload("Tables").
-		Preload("Locations").
 		Where(&model.Restaurant{ID: id.String()}).
 		First(restaurantModel)
 	if result.Error != nil {
@@ -84,7 +74,6 @@ func (r *RestaurantRepository) GetAll() ([]*aggregate.Restaurant, error) {
 
 	result := r.db.
 		Preload("Tables").
-		Preload("Locations").
 		Find(&restaurantModels)
 
 	if result.Error != nil {
@@ -99,7 +88,6 @@ func (r *RestaurantRepository) GetByOwnerID(ownerID uuid.UUID) ([]*aggregate.Res
 
 	result := r.db.
 		Preload("Tables").
-		Preload("Locations").
 		Where(&model.Restaurant{OwnerID: ownerID.String()}).
 		Find(&models)
 

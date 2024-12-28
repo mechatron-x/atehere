@@ -5,7 +5,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/billing/port"
 	"github.com/mechatron-x/atehere/internal/billing/service"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/handler"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler"
 	"github.com/mechatron-x/atehere/internal/infrastructure/broker"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/repository"
 	"gorm.io/gorm"
@@ -17,13 +17,7 @@ type BillingCtx struct {
 
 func NewBilling(db *gorm.DB, authenticator port.Authenticator, allPaymentsDonePublisher port.AllPaymentsDoneEventPublisher) BillingCtx {
 	billingRepo := repository.NewBill(db)
-	billingViewRepo := repository.NewBillView(db)
-	service := service.NewBilling(
-		authenticator,
-		billingRepo,
-		billingViewRepo,
-		allPaymentsDonePublisher,
-	)
+	service := service.NewBilling(authenticator, billingRepo, allPaymentsDonePublisher)
 
 	handler := handler.NewBilling(service)
 

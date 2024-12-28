@@ -2,12 +2,6 @@ package view
 
 import "gorm.io/gorm"
 
-const (
-	TableOrders   string = "table_orders"
-	ManagerOrders string = "manager_orders"
-	PostOrders    string = "post_orders"
-)
-
 func TableOrdersView(db *gorm.DB) *gorm.DB {
 	return db.Table("session_orders").
 		Select(`

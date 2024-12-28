@@ -21,7 +21,6 @@ type Restaurant struct {
 	workingDays    []time.Weekday
 	imageName      valueobject.Image
 	tables         []entity.Table
-	locations      valueobject.Locations
 }
 
 func NewRestaurant() *Restaurant {
@@ -29,7 +28,6 @@ func NewRestaurant() *Restaurant {
 		Aggregate:   core.NewAggregate(),
 		workingDays: make([]time.Weekday, 0),
 		tables:      make([]entity.Table, 0),
-		locations:   make(valueobject.Locations, 0),
 	}
 }
 
@@ -69,10 +67,6 @@ func (r *Restaurant) Tables() []entity.Table {
 	return r.tables
 }
 
-func (r *Restaurant) Locations() valueobject.Locations {
-	return r.locations
-}
-
 func (r *Restaurant) SetOwner(ownerID uuid.UUID) {
 	r.ownerID = ownerID
 }
@@ -109,20 +103,12 @@ func (r *Restaurant) AddTables(tables ...entity.Table) {
 	}
 }
 
-func (r *Restaurant) AddLocations(locations ...valueobject.Location) {
-	r.locations = append(r.locations, locations...)
-}
-
 func (r *Restaurant) SetImageName(imageName valueobject.Image) {
 	r.imageName = imageName
 }
 
 func (r *Restaurant) IsOwner(ownerID uuid.UUID) bool {
 	return r.ownerID == ownerID
-}
-
-func (r *Restaurant) IsInRadius(target valueobject.Location, radius float64) bool {
-	return r.locations.IsInRadius(target, radius)
 }
 
 func (r *Restaurant) DeleteNow() {

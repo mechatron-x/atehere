@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/mechatron-x/atehere/internal/config"
-	"github.com/mechatron-x/atehere/internal/handler"
-	"github.com/mechatron-x/atehere/internal/infrastructure/httpserver/middleware"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/httpserver/middleware"
 )
 
 type (
@@ -48,7 +48,6 @@ func NewServeMux(
 
 	// Customer endpoints
 	versionMux.HandleFunc("GET /customers", ch.GetProfile)
-	versionMux.HandleFunc("GET /customers/bills", bh.GetPastBills)
 	versionMux.HandleFunc("PATCH /customers", ch.UpdateProfile)
 	versionMux.HandleFunc("POST /customers/auth/signup", ch.SignUp)
 
@@ -78,7 +77,7 @@ func NewServeMux(
 	versionMux.HandleFunc("GET /sessions/{session_id}/state", sh.GetSessionState)
 
 	// Billing endpoints
-	versionMux.HandleFunc("GET /sessions/{session_id}/bills", bh.GetBill)
+	versionMux.HandleFunc("GET /sessions/{session_id}/bills", bh.Get)
 	versionMux.HandleFunc("POST /sessions/{session_id}/pay", bh.Pay)
 
 	// Default handler

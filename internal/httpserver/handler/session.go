@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/mechatron-x/atehere/internal/handler/header"
-	"github.com/mechatron-x/atehere/internal/handler/request"
-	"github.com/mechatron-x/atehere/internal/handler/response"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/request"
+	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
 	"github.com/mechatron-x/atehere/internal/session/dto"
 	"github.com/mechatron-x/atehere/internal/session/service"
 )

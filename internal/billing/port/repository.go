@@ -14,6 +14,5 @@ type (
 
 	BillViewRepository interface {
 		GetPostOrders(sessionID uuid.UUID) ([]dto.PostOrder, error)
-		GetPastBills(customerID uuid.UUID) ([]dto.PastBill, error)
 	}
 )

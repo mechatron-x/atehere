@@ -15,7 +15,6 @@ import (
 type BillingService struct {
 	authenticator                 port.Authenticator
 	repository                    port.BillRepository
-	viewRepo                      port.BillViewRepository
 	allPaymentsDoneEventPublisher port.AllPaymentsDoneEventPublisher
 	log                           *zap.Logger
 }
@@ -23,13 +22,11 @@ type BillingService struct {
 func NewBilling(
 	authenticator port.Authenticator,
 	repository port.BillRepository,
-	viewRepo port.BillViewRepository,
 	allPaymentsDoneEventPublisher port.AllPaymentsDoneEventPublisher,
 ) *BillingService {
 	return &BillingService{
 		authenticator:                 authenticator,
 		repository:                    repository,
-		viewRepo:                      viewRepo,
 		allPaymentsDoneEventPublisher: allPaymentsDoneEventPublisher,
 		log:                           logger.Instance(),
 	}
@@ -111,27 +108,13 @@ func (rcv *BillingService) Pay(idToken string, sessionID string, billItems *dto.
 	return rcv.repository.Save(bill)
 }
 
-func (rcv *BillingService) PastBills(idToken string) ([]dto.PastBill, error) {
-	customerID, err := rcv.authenticator.GetUserID(idToken)
-	if err != nil {
-		return nil, core.NewUnauthorizedError(err)
-	}
-
-	verifiedCustomerID, err := uuid.Parse(customerID)
-	if err != nil {
-		return nil, core.NewValidationFailureError(err)
-	}
-
-	return rcv.viewRepo.GetPastBills(verifiedCustomerID)
-}
-
-func (rcv *BillingService) pushEventsAsync(events []core.DomainEvent) {
+func (ss *BillingService) pushEventsAsync(events []core.DomainEvent) {
 	go func(events []core.DomainEvent) {
 		for _, e := range events {
 			if allPaymentsDoneEvent, ok := e.(core.AllPaymentsDoneEvent); ok {
-				rcv.allPaymentsDoneEventPublisher.NotifyEvent(allPaymentsDoneEvent)
+				ss.allPaymentsDoneEventPublisher.NotifyEvent(allPaymentsDoneEvent)
 			} else {
-				rcv.log.Warn("unsupported event type skipping event processing")
+				ss.log.Warn("unsupported event type skipping event processing")
 			}
 		}
 	}(events)

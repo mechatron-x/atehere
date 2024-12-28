@@ -38,21 +38,6 @@ type (
 	PayBillItems struct {
 		BillItems []PayBillItem `json:"bill_items"`
 	}
-
-	PastBillItem struct {
-		ItemName   string  `json:"item_name"`
-		Quantity   int     `json:"quantity"`
-		UnitPrice  float64 `json:"unit_price"`
-		OrderPrice float64 `json:"order_price"`
-		PaidPrice  float64 `json:"paid_price"`
-		Currency   string  `json:"currency"`
-	}
-
-	PastBill struct {
-		BillID         string         `json:"bill_id"`
-		RestaurantName string         `json:"restaurant_name"`
-		BillItems      []PastBillItem `json:"bill_items"`
-	}
 )
 
 func FromBill(requesterID uuid.UUID, bill *aggregate.Bill) *Bill {
