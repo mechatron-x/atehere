@@ -21,37 +21,47 @@ type (
 		Image          string        `json:"image"`
 		WorkingDays    []string      `json:"working_days"`
 		Tables         []TableCreate `json:"tables"`
+		Locations      []Location    `json:"locations"`
 	}
 
 	RestaurantFilter struct {
-		Name           string   `json:"name"`
-		FoundationYear string   `json:"foundation_year"`
-		WorkingDays    []string `json:"working_days"`
+		Name             string   `json:"name"`
+		FoundationYear   string   `json:"foundation_year"`
+		WorkingDays      []string `json:"working_days"`
+		CustomerLocation Location `json:"customer_location"`
+		SearchRadius     float64  `json:"search_radius"`
 	}
 
 	RestaurantSummary struct {
-		ID          string   `json:"id"`
-		Name        string   `json:"name"`
-		PhoneNumber string   `json:"phone_number"`
-		OpeningTime string   `json:"opening_time"`
-		ClosingTime string   `json:"closing_time"`
-		ImageURL    string   `json:"image_url"`
-		WorkingDays []string `json:"working_days"`
+		ID          string     `json:"id"`
+		Name        string     `json:"name"`
+		PhoneNumber string     `json:"phone_number"`
+		OpeningTime string     `json:"opening_time"`
+		ClosingTime string     `json:"closing_time"`
+		ImageURL    string     `json:"image_url"`
+		WorkingDays []string   `json:"working_days"`
+		Locations   []Location `json:"locations"`
 	}
 
 	Restaurant struct {
-		ID             string   `json:"id"`
-		Name           string   `json:"name"`
-		FoundationYear string   `json:"foundation_year"`
-		PhoneNumber    string   `json:"phone_number"`
-		OpeningTime    string   `json:"opening_time"`
-		ClosingTime    string   `json:"closing_time"`
-		ImageURL       string   `json:"image_url"`
-		WorkingDays    []string `json:"working_days"`
-		Tables         []Table  `json:"tables"`
+		ID             string     `json:"id"`
+		Name           string     `json:"name"`
+		FoundationYear string     `json:"foundation_year"`
+		PhoneNumber    string     `json:"phone_number"`
+		OpeningTime    string     `json:"opening_time"`
+		ClosingTime    string     `json:"closing_time"`
+		ImageURL       string     `json:"image_url"`
+		WorkingDays    []string   `json:"working_days"`
+		Tables         []Table    `json:"tables"`
+		Locations      []Location `json:"locations"`
 	}
 
 	ImageURLCreatorFunc func(imageName valueobject.Image) string
+
+	Location struct {
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	}
 )
 
 func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
@@ -103,6 +113,16 @@ func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
 		verifiedTables = append(verifiedTables, table)
 	}
 
+	verifiedLocations := make(valueobject.Locations, 0)
+	for _, location := range rc.Locations {
+		verifiedLocation, err := valueobject.NewLocation(location.Latitude, location.Longitude)
+		if err != nil {
+			return nil, err
+		}
+
+		verifiedLocations = append(verifiedLocations, verifiedLocation)
+	}
+
 	restaurant := aggregate.NewRestaurant()
 	restaurant.SetName(verifiedName)
 	restaurant.SetFoundationYear(verifiedFoundationYear)
@@ -111,13 +131,13 @@ func (rc RestaurantCreate) ToAggregate() (*aggregate.Restaurant, error) {
 	restaurant.SetClosingTime(verifiedClosingTime)
 	restaurant.AddWorkingDays(verifiedWorkingDays...)
 	restaurant.AddTables(verifiedTables...)
+	restaurant.AddLocations(verifiedLocations...)
 
 	return restaurant, nil
 }
 
 func (rf RestaurantFilter) ApplyFilter(restaurants []*aggregate.Restaurant) []*aggregate.Restaurant {
 	filteredRestaurants := make([]*aggregate.Restaurant, 0)
-
 	for _, restaurant := range restaurants {
 		if !core.IsEmptyString(rf.Name) {
 			if !strings.Contains(restaurant.Name().String(), rf.Name) {
@@ -135,6 +155,15 @@ func (rf RestaurantFilter) ApplyFilter(restaurants []*aggregate.Restaurant) []*a
 			continue
 		}
 
+		customerLocation, err := valueobject.NewLocation(rf.CustomerLocation.Latitude, rf.CustomerLocation.Longitude)
+		if err != nil {
+			return filteredRestaurants
+		}
+
+		if !restaurant.IsInRadius(customerLocation, rf.SearchRadius) {
+			continue
+		}
+
 		filteredRestaurants = append(filteredRestaurants, restaurant)
 	}
 
@@ -149,6 +178,7 @@ func ToRestaurantSummary(restaurant *aggregate.Restaurant, imageConverter ImageU
 		OpeningTime: restaurant.OpeningTime().String(),
 		ClosingTime: restaurant.ClosingTime().String(),
 		WorkingDays: toWorkingDays(restaurant.WorkingDays()),
+		Locations:   toLocations(restaurant.Locations()),
 		ImageURL:    imageConverter(restaurant.ImageName()),
 	}
 }
@@ -174,6 +204,7 @@ func ToRestaurant(restaurant *aggregate.Restaurant, imageConvertor ImageURLCreat
 		WorkingDays:    toWorkingDays(restaurant.WorkingDays()),
 		ImageURL:       imageConvertor(restaurant.ImageName()),
 		Tables:         toTableList(restaurant.Tables()),
+		Locations:      toLocations(restaurant.Locations()),
 	}
 }
 

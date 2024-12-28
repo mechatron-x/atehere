@@ -5,9 +5,9 @@ import (
 
 	"github.com/mechatron-x/atehere/internal/billing/dto"
 	"github.com/mechatron-x/atehere/internal/billing/service"
-	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
-	"github.com/mechatron-x/atehere/internal/httpserver/handler/request"
-	"github.com/mechatron-x/atehere/internal/httpserver/handler/response"
+	"github.com/mechatron-x/atehere/internal/handler/header"
+	"github.com/mechatron-x/atehere/internal/handler/request"
+	"github.com/mechatron-x/atehere/internal/handler/response"
 )
 
 type BillingHandler struct {
@@ -20,7 +20,7 @@ func NewBilling(service *service.BillingService) BillingHandler {
 	}
 }
 
-func (rcv BillingHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (rcv BillingHandler) GetBill(w http.ResponseWriter, r *http.Request) {
 	token, err := header.GetBearerToken(r.Header)
 	if err != nil {
 		response.Encode(w, nil, err)
@@ -59,4 +59,20 @@ func (rcv BillingHandler) Pay(w http.ResponseWriter, r *http.Request) {
 		response.Encode(w, nil, err)
 		return
 	}
+}
+
+func (rcv BillingHandler) GetPastBills(w http.ResponseWriter, r *http.Request) {
+	token, err := header.GetBearerToken(r.Header)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	pastBills, err := rcv.service.PastBills(token)
+	if err != nil {
+		response.Encode(w, nil, err)
+		return
+	}
+
+	response.Encode(w, pastBills, nil)
 }

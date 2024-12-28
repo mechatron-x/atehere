@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/mechatron-x/atehere/internal/httpserver/handler/header"
+	"github.com/mechatron-x/atehere/internal/handler/header"
 )
 
 func Header(next http.Handler) http.Handler {
