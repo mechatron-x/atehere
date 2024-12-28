@@ -234,12 +234,24 @@ func isMatchingWorkingDays(src []time.Weekday, filter []string) bool {
 			return false
 		}
 
-		if !slices.Contains(src, verifiedWeekday) {
-			return false
+		if slices.Contains(src, verifiedWeekday) {
+			return true
 		}
 	}
 
-	return true
+	return false
+}
+
+func toLocations(locations valueobject.Locations) []Location {
+	ls := make([]Location, 0)
+	for _, l := range locations {
+		ls = append(ls, Location{
+			Latitude:  l.Lat(),
+			Longitude: l.Long(),
+		})
+	}
+
+	return ls
 }
 
 func toLocations(locations valueobject.Locations) []Location {
