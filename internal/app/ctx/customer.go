@@ -1,7 +1,7 @@
 package ctx
 
 import (
-	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/handler"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/repository"
 	"github.com/mechatron-x/atehere/internal/usermanagement/port"
 	"github.com/mechatron-x/atehere/internal/usermanagement/service"

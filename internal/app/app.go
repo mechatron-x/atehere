@@ -7,10 +7,10 @@ import (
 	"github.com/mechatron-x/atehere/internal/app/ctx"
 	"github.com/mechatron-x/atehere/internal/config"
 	"github.com/mechatron-x/atehere/internal/core"
-	"github.com/mechatron-x/atehere/internal/httpserver"
-	"github.com/mechatron-x/atehere/internal/httpserver/handler"
+	"github.com/mechatron-x/atehere/internal/handler"
 	"github.com/mechatron-x/atehere/internal/infrastructure/authenticator"
 	"github.com/mechatron-x/atehere/internal/infrastructure/broker"
+	"github.com/mechatron-x/atehere/internal/infrastructure/httpserver"
 	"github.com/mechatron-x/atehere/internal/infrastructure/logger"
 	"github.com/mechatron-x/atehere/internal/infrastructure/notifier"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb"
@@ -38,6 +38,7 @@ func New(conf *config.App) (*App, error) {
 		&model.Manager{},
 		&model.Restaurant{},
 		&model.RestaurantTable{},
+		&model.RestaurantLocation{},
 		&model.Menu{},
 		&model.MenuItem{},
 		&model.Session{},
