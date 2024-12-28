@@ -20,6 +20,7 @@ type (
 		ImageName      string         `gorm:"not null;size:50"`
 		WorkingDays    pq.StringArray `gorm:"type:text[];size:10"`
 		Tables         []RestaurantTable
+		Locations      []RestaurantLocation
 		gorm.Model
 	}
 
@@ -29,5 +30,11 @@ type (
 		Name         string `gorm:"not null;size:10"`
 		CreatedAt    time.Time
 		UpdatedAt    time.Time
+	}
+
+	RestaurantLocation struct {
+		RestaurantID string  `gorm:"type:uuid"`
+		Latitude     float64 `gorm:"not null;numeric;precision:10;scale:8"`
+		Longitude    float64 `gorm:"not null;numeric;precision:11;scale:8"`
 	}
 )

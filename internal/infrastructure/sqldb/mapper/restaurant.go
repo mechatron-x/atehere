@@ -88,6 +88,16 @@ func (r Restaurant) FromModel(model *model.Restaurant) (*aggregate.Restaurant, e
 		tables = append(tables, table)
 	}
 
+	locations := make(valueobject.Locations, 0)
+	for _, l := range model.Locations {
+		location, err := valueobject.NewLocation(l.Latitude, l.Longitude)
+		if err != nil {
+			return nil, err
+		}
+
+		locations = append(locations, location)
+	}
+
 	restaurant.SetID(id)
 	restaurant.SetOwner(ownerID)
 	restaurant.SetName(name)
@@ -98,6 +108,7 @@ func (r Restaurant) FromModel(model *model.Restaurant) (*aggregate.Restaurant, e
 	restaurant.AddWorkingDays(workingDays...)
 	restaurant.SetImageName(imageName)
 	restaurant.AddTables(tables...)
+	restaurant.AddLocations(locations...)
 	restaurant.SetCreatedAt(model.CreatedAt)
 	restaurant.SetUpdatedAt(model.UpdatedAt)
 	if model.DeletedAt.Valid {
@@ -139,6 +150,17 @@ func (r Restaurant) FromAggregate(aggregate *aggregate.Restaurant) *model.Restau
 		tables = append(tables, table)
 	}
 
+	locations := make([]model.RestaurantLocation, 0)
+	for _, l := range aggregate.Locations() {
+		location := model.RestaurantLocation{
+			RestaurantID: aggregate.ID().String(),
+			Latitude:     l.Lat(),
+			Longitude:    l.Long(),
+		}
+
+		locations = append(locations, location)
+	}
+
 	return &model.Restaurant{
 		ID:             aggregate.ID().String(),
 		OwnerID:        aggregate.OwnerID().String(),
@@ -150,6 +172,7 @@ func (r Restaurant) FromAggregate(aggregate *aggregate.Restaurant) *model.Restau
 		WorkingDays:    workingDays,
 		ImageName:      aggregate.ImageName().String(),
 		Tables:         tables,
+		Locations:      locations,
 		Model: gorm.Model{
 			CreatedAt: aggregate.CreatedAt(),
 			UpdatedAt: aggregate.UpdatedAt(),

@@ -38,6 +38,7 @@ func New(conf *config.App) (*App, error) {
 		&model.Manager{},
 		&model.Restaurant{},
 		&model.RestaurantTable{},
+		&model.RestaurantLocation{},
 		&model.Menu{},
 		&model.MenuItem{},
 		&model.Session{},
