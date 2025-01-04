@@ -8,6 +8,7 @@ import (
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/model"
 	"github.com/mechatron-x/atehere/internal/infrastructure/sqldb/view"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type BillRepository struct {
@@ -54,6 +55,7 @@ func (rcv *BillRepository) Save(bill *aggregate.Bill) error {
 	}
 
 	err := tx.Model(billModel).
+		Clauses(clause.Locking{Strength: "SHARE"}).
 		Association("BillItems").
 		Unscoped().
 		Replace(billModel.BillItems)
